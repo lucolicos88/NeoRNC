@@ -418,41 +418,26 @@ dateFields.forEach(function(fieldName) {
   }
 });
 
-// Buscar anexos
-rnc._anexos = FileManager.getAnexosRnc(rncNumber);
-
-return rnc;
-    
-    // === NORMALIZAÇÃO: CONVERTER NÚMEROS EM STRINGS PARA SELECTS ===
-// Lista de campos que são selects e podem ter valores numéricos
+// === NORMALIZAÇÃO: CONVERTER NÚMEROS EM STRINGS PARA SELECTS ===
 var selectFields = [
   'Filial de Origem',
   'Código do Cliente',
   'Telefone do Cliente'
 ];
-
 selectFields.forEach(function(fieldName) {
   if (rnc[fieldName] !== undefined && rnc[fieldName] !== null && typeof rnc[fieldName] === 'number') {
     rnc[fieldName] = String(rnc[fieldName]);
-    Logger.logDebug('getRncByNumber_NUMBER_TO_STRING', {
-      field: fieldName,
-      originalValue: rnc[fieldName],
-      convertedValue: String(rnc[fieldName])
-    });
   }
 });
-// === FIM DA NORMALIZAÇÃO ===
-
+// Buscar anexos
+rnc._anexos = FileManager.getAnexosRnc(rncNumber);
+// ✅ CORRIGIDO Deploy 31: Apenas UM return (eram 3 antes - Problema #1)
 return rnc;
-
-    return rnc;
-    
   } catch (error) {
     Logger.logError('getRncByNumber', error, { rncNumber: rncNumber });
     return null;
   }
 }
-  
   /**
    * Busca todas as RNCs
    * @param {Object} filters - Filtros opcionais

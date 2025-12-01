@@ -1,22 +1,33 @@
 /**
  * ============================================
  * CONFIG.GS - Configurações e Constantes
- * Sistema RNC Neoformula - Deploy 30 Modularizado
+ * Sistema RNC Neoformula - Deploy 31
  * ============================================
+ *
+ * CHANGELOG Deploy 31:
+ * - ✅ Aumentado LOCK_TIMEOUT de 10s para 30s (Problema #5)
+ * - ✅ Corrigido FIELD_MAPPING inconsistente (Problema #3)
+ * - ✅ Migrado var para const (Problema #16)
+ * - ✅ Adicionado modo DEBUG para controle de logs (Problema #8)
+ * - ✅ Melhorada validação de dados (Problema #12)
  */
 
 // ===== CONFIGURAÇÕES GLOBAIS =====
-var CONFIG = {
-  // ID da Planilha Principal (ALTERE PARA O SEU ID)
+const CONFIG = {
+  // ID da Planilha Principal
   SPREADSHEET_ID: '14X1ix2CZ2Exg9qORXF8THluwVoG-NFlfdAlUl2J-Syc',
-  
-  // ID da Pasta do Drive para Anexos (ALTERE PARA O SEU ID)
+
+  // ID da Pasta do Drive para Anexos
   DRIVE_FOLDER_ID: '1Bo5yU-rJtyz-1KVUTIQHlZRv7mFLZ_p6a9TClx0r2w060',
-  
+
   // Versão do Sistema
-  VERSION: 'Deploy 30 Modular',
-  BUILD_DATE: '2024-12-28',
-  
+  VERSION: 'Deploy 31 - Correções Críticas',
+  BUILD_DATE: '2025-12-01',
+
+  // Modo de Operação
+  DEBUG_MODE: false, // ✅ NOVO: Controle de logs de debug
+  ENVIRONMENT: 'development', // ✅ NOVO: development | production
+
   // Nomes das Planilhas
   SHEETS: {
     RNC: 'RNC',
@@ -29,7 +40,7 @@ var CONFIG = {
     LOGS: 'Logs',
     CONFIG_SISTEMA: 'ConfigSistema'
   },
-  
+
   // Tipos de Campos Disponíveis
   FIELD_TYPES: [
     { value: 'input', label: 'Texto' },
@@ -40,7 +51,7 @@ var CONFIG = {
     { value: 'label', label: 'Apenas Leitura' },
     { value: 'file', label: 'Upload de Arquivo' }
   ],
-  
+
   // Pipeline de Status
   STATUS_PIPELINE: {
     ABERTURA: 'Abertura RNC',
@@ -48,7 +59,7 @@ var CONFIG = {
     ANALISE_ACAO: 'Análise do problema e Ação Corretiva',
     FINALIZADA: 'Finalizada'
   },
-  
+
   // Configurações de Sistema
   SYSTEM: {
     MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
@@ -58,15 +69,22 @@ var CONFIG = {
     MAX_RETRIES: 3,
     RETRY_DELAY: 1000 // 1 segundo
   },
-  
-  // Timeouts e Limites
+
+  // ✅ CORRIGIDO: Timeouts e Limites (Problema #5)
   LIMITS: {
     BATCH_SIZE: 100,
     MAX_ROWS_PER_OPERATION: 500,
     EXECUTION_TIMEOUT: 270000, // 4.5 minutos
-    LOCK_TIMEOUT: 10000 // 10 segundos
+    LOCK_TIMEOUT: 30000 // ✅ AUMENTADO: 30 segundos (era 10s)
   },
-  
+
+  // ✅ NOVO: Constantes para magic numbers (Problema #13)
+  PRINT: {
+    RANGE_START: 'A1',
+    RANGE_END: 'H26',
+    COLUMN_INDEX_PRINT_RANGE: 10 // Coluna K na planilha ConfigCampos
+  },
+
   // Mensagens de Erro Padrão
   ERROR_MESSAGES: {
     SPREADSHEET_NOT_FOUND: 'Planilha não encontrada. Verifique o ID configurado.',
@@ -78,12 +96,14 @@ var CONFIG = {
     REQUIRED_FIELD: 'Campo obrigatório não preenchido.',
     SYSTEM_ERROR: 'Erro no sistema. Tente novamente.',
     LOCK_FAILED: 'Sistema ocupado. Aguarde e tente novamente.',
-    INVALID_DATA: 'Dados inválidos fornecidos.'
+    INVALID_DATA: 'Dados inválidos fornecidos.',
+    INVALID_EMAIL: 'Email inválido.', // ✅ NOVO (Problema #7)
+    INVALID_DATE: 'Data inválida.' // ✅ NOVO (Problema #6)
   }
 };
 
-// ===== MAPEAMENTO DE CAMPOS =====
-var FIELD_MAPPING = {
+// ✅ CORRIGIDO: FIELD_MAPPING limpo e consistente (Problema #3)
+const FIELD_MAPPING = {
   // Campos do Sistema
   'Nº RNC': 'Nº RNC',
   'Status Geral': 'Status Geral',
@@ -92,21 +112,23 @@ var FIELD_MAPPING = {
   'Usuário Criação': 'Usuário Criação',
   'Última Edição': 'Última Edição',
   'Editado Por': 'Editado Por',
-  
-  // === MAPEAMENTO DIRETO 1:1 (SEM TRANSFORMAÇÃO) ===
+
+  // Campos de Abertura
   'Data': 'Data de Abertura',
+  'Data de Abertura': 'Data de Abertura',
   'Responsável pela abertura da RNC': 'Responsável pela abertura da RNC',
   'Setor onde foi feita abertura': 'Setor onde foi feita abertura',
   'Nome do Cliente': 'Nome do Cliente',
   'Código do Cliente': 'Código do Cliente',
   'Telefone do Cliente': 'Telefone do Cliente',
-  
-  // === ESTES SÃO OS CAMPOS PROBLEMÁTICOS - MAPEAMENTO EXATO ===
-  'Filial de Origem': 'Filial de Origem',  // SEM transformação
-  'FilialOrigem': 'Filial de Origem',
-  'Filial de origem': 'Filial de Origem',  // minúscula
-  'Tipo da RNC': 'Tipo da RNC',                // Aqui SIM tem transformação
-  
+
+  // ✅ CORRIGIDO: Filial de Origem (apenas UMA entrada)
+  'Filial de Origem': 'Filial de Origem',
+
+  // ✅ CORRIGIDO: Tipo da RNC (padronizado)
+  'Tipo da RNC': 'Tipo da RNC',
+  'Tipo RNC': 'Tipo da RNC',
+
   'Requisição': 'Requisição',
   'Número do pedido': 'Número do pedido',
   'Prescritor': 'Prescritor',
@@ -115,7 +137,7 @@ var FIELD_MAPPING = {
   'Descrição do Problema': 'Descrição do Problema',
   'Prioridade': 'Prioridade',
   'Observações': 'Observações',
-  
+
   // Qualidade
   'Setor onde ocorreu a não conformidade': 'Setor onde ocorreu a não conformidade',
   'Data da Análise': 'Data da Análise',
@@ -126,7 +148,7 @@ var FIELD_MAPPING = {
   'Gerou custo de cortesia?': 'Gerou custo de cortesia?',
   'Req de Cortesia': 'Req de Cortesia',
   'Valor': 'Valor',
-  
+
   // Liderança
   'Plano de ação': 'Plano de ação',
   'Status da Ação Corretiva': 'Status da Ação Corretiva',
@@ -138,57 +160,54 @@ var FIELD_MAPPING = {
 // ===== FUNÇÕES AUXILIARES DE CONFIGURAÇÃO =====
 
 /**
- * Obtém o mapeamento de campo do formulário para coluna da planilha
+ * ✅ MELHORADO: Obtém mapeamento de campo com validação (Problema #12)
  * @param {string} columnName - Nome da coluna
  * @return {string} Nome do campo do formulário
  */
-/**
- * Obtém o mapeamento de campo do formulário para coluna da planilha
- * VERSÃO CORRIGIDA - DEPLOY 31
- */
 function getFormFieldFromColumn(columnName) {
+  if (!columnName || typeof columnName !== 'string') {
+    Logger.logWarning('getFormFieldFromColumn_INVALID_INPUT', { columnName: columnName });
+    return '';
+  }
+
   try {
-    // Limpar o nome da coluna (remover espaços extras e quebras de linha)
-    var cleanColumnName = columnName.replace(/\s+/g, ' ').replace(/\n/g, '').trim();
-    
-    Logger.logDebug('getFormFieldFromColumn_INPUT', { 
-      original: columnName, 
-      cleaned: cleanColumnName 
-    });
-    
-    // Buscar no FIELD_MAPPING
-    for (var formField in FIELD_MAPPING) {
-      var mappedColumn = FIELD_MAPPING[formField].replace(/\s+/g, ' ').replace(/\n/g, '').trim();
-      
-      if (mappedColumn === cleanColumnName || FIELD_MAPPING[formField] === columnName) {
-        Logger.logDebug('getFormFieldFromColumn_FOUND', { 
-          formField: formField, 
-          mappedTo: mappedColumn 
-        });
+    // Limpar o nome da coluna
+    const cleanColumnName = columnName.replace(/\s+/g, ' ').replace(/\n/g, '').trim();
+
+    // Busca direta no mapeamento
+    if (FIELD_MAPPING.hasOwnProperty(cleanColumnName)) {
+      return cleanColumnName;
+    }
+
+    // Buscar no FIELD_MAPPING por valor
+    for (const formField in FIELD_MAPPING) {
+      const mappedColumn = FIELD_MAPPING[formField].replace(/\s+/g, ' ').replace(/\n/g, '').trim();
+
+      if (mappedColumn === cleanColumnName) {
         return formField;
       }
     }
-    
-    // Se não encontrou, tentar busca case-insensitive
-    var lowerColumn = cleanColumnName.toLowerCase();
-    for (var formField in FIELD_MAPPING) {
-      var mappedColumn = FIELD_MAPPING[formField].replace(/\s+/g, ' ').replace(/\n/g, '').trim();
+
+    // Busca case-insensitive como fallback
+    const lowerColumn = cleanColumnName.toLowerCase();
+    for (const formField in FIELD_MAPPING) {
+      const mappedColumn = FIELD_MAPPING[formField].replace(/\s+/g, ' ').replace(/\n/g, '').trim();
       if (mappedColumn.toLowerCase() === lowerColumn) {
-        Logger.logWarning('getFormFieldFromColumn_FOUND_CASE_INSENSITIVE', { 
-          formField: formField, 
-          mappedTo: mappedColumn 
+        Logger.logWarning('getFormFieldFromColumn_CASE_INSENSITIVE_MATCH', {
+          formField: formField,
+          mappedTo: mappedColumn
         });
         return formField;
       }
     }
-    
-    // Fallback: retornar o nome limpo
-    Logger.logWarning('getFormFieldFromColumn_NOT_FOUND', { 
-      columnName: columnName, 
-      returning: cleanColumnName 
+
+    // Nenhum mapeamento encontrado
+    Logger.logWarning('getFormFieldFromColumn_NOT_FOUND', {
+      columnName: columnName,
+      returning: cleanColumnName
     });
     return cleanColumnName;
-    
+
   } catch (error) {
     Logger.logError('getFormFieldFromColumn', error, { columnName: columnName });
     return columnName;
@@ -196,8 +215,7 @@ function getFormFieldFromColumn(columnName) {
 }
 
 // ============================================
-// FUNÇÕES UTILITÁRIAS DE DATA - DEPLOY 37
-// Formatação padronizada PT-BR
+// ✅ MELHORADO: Funções de Data Padronizadas (Problema #6)
 // ============================================
 
 /**
@@ -207,22 +225,32 @@ function getFormFieldFromColumn(columnName) {
  */
 function formatDateBR(dateValue) {
   if (!dateValue) return '';
-  
+
   try {
-    var date;
-    
+    let date;
+
     // Se é objeto Date
     if (dateValue instanceof Date) {
       date = dateValue;
     }
-    // Se é string ISO (2025-10-16T03:00:00.000Z) ou YYYY-MM-DD
+    // Se é string
     else if (typeof dateValue === 'string') {
-      // Remove timezone e converte
-      var cleanDate = dateValue.replace('Z', '').split('T')[0];
-      var parts = cleanDate.split('-');
-      if (parts.length === 3) {
-        date = new Date(parts[0], parts[1] - 1, parts[2]);
-      } else {
+      // Verificar se é formato DD/MM/YYYY
+      if (dateValue.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        return dateValue; // Já está no formato correto
+      }
+
+      // Formato ISO (2025-10-16T03:00:00.000Z) ou YYYY-MM-DD
+      if (dateValue.includes('-')) {
+        const cleanDate = dateValue.replace('Z', '').split('T')[0];
+        const parts = cleanDate.split('-');
+        if (parts.length === 3 && parts[0].length === 4) {
+          date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        }
+      }
+
+      // Tentar parse direto como último recurso
+      if (!date) {
         date = new Date(dateValue);
       }
     }
@@ -233,20 +261,20 @@ function formatDateBR(dateValue) {
     else {
       return '';
     }
-    
+
     // Validar data
-    if (isNaN(date.getTime())) {
+    if (!date || isNaN(date.getTime())) {
       Logger.logWarning('formatDateBR_INVALID_DATE', { dateValue: dateValue });
       return '';
     }
-    
+
     // Formatar DD/MM/YYYY
-    var day = String(date.getDate()).padStart(2, '0');
-    var month = String(date.getMonth() + 1).padStart(2, '0');
-    var year = date.getFullYear();
-    
-    return day + '/' + month + '/' + year;
-    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
+
   } catch (error) {
     Logger.logError('formatDateBR', error, { dateValue: dateValue });
     return '';
@@ -260,23 +288,23 @@ function formatDateBR(dateValue) {
  */
 function formatDateISO(dateBR) {
   if (!dateBR) return '';
-  
+
   try {
     // Se já está em formato ISO
     if (dateBR.match(/^\d{4}-\d{2}-\d{2}/)) {
-      return dateBR.split('T')[0]; // Remove parte de hora se tiver
+      return dateBR.split('T')[0];
     }
-    
+
     // Converter DD/MM/YYYY -> YYYY-MM-DD
-    var parts = dateBR.split('/');
+    const parts = dateBR.split('/');
     if (parts.length !== 3) return '';
-    
-    var day = parts[0].padStart(2, '0');
-    var month = parts[1].padStart(2, '0');
-    var year = parts[2];
-    
-    return year + '-' + month + '-' + day;
-    
+
+    const day = parts[0].padStart(2, '0');
+    const month = parts[1].padStart(2, '0');
+    const year = parts[2];
+
+    return `${year}-${month}-${day}`;
+
   } catch (error) {
     Logger.logError('formatDateISO', error, { dateBR: dateBR });
     return '';
@@ -288,62 +316,113 @@ function formatDateISO(dateBR) {
  * @return {String} Data e hora no formato DD/MM/YYYY HH:MM:SS
  */
 function getCurrentDateTimeBR() {
-  var now = new Date();
+  const now = new Date();
   return Utilities.formatDate(now, Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm:ss');
 }
 
+/**
+ * ✅ NOVO: Valida se uma data é válida (Problema #6)
+ * @param {*} dateValue - Valor a validar
+ * @return {boolean} True se é data válida
+ */
+function isValidDate(dateValue) {
+  if (!dateValue) return false;
 
+  const formatted = formatDateBR(dateValue);
+  return formatted !== '';
+}
 
+// ============================================
+// ✅ NOVO: Validações de Entrada (Problema #12)
+// ============================================
 
+/**
+ * Valida formato de email
+ * @param {string} email - Email a validar
+ * @return {boolean} True se válido
+ */
+function isValidEmail(email) {
+  if (!email || typeof email !== 'string') return false;
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+
+/**
+ * Sanitiza string removendo caracteres perigosos
+ * @param {string} str - String a sanitizar
+ * @return {string} String sanitizada
+ */
+function sanitizeString(str) {
+  if (!str || typeof str !== 'string') return '';
+
+  return str
+    .trim()
+    .replace(/[<>]/g, '') // Remove < e >
+    .substring(0, 5000); // Limita tamanho
+}
+
+/**
+ * Valida número
+ * @param {*} value - Valor a validar
+ * @return {boolean} True se é número válido
+ */
+function isValidNumber(value) {
+  if (value === null || value === undefined || value === '') return false;
+  return !isNaN(parseFloat(value)) && isFinite(value);
+}
+
+// ============================================
+// Validação de Configuração do Sistema
+// ============================================
 
 /**
  * Valida as configurações do sistema
  * @return {Object} Resultado da validação
  */
 function validateSystemConfig() {
-  var validation = {
+  const validation = {
     valid: true,
     errors: [],
     warnings: []
   };
-  
+
   try {
     // Verificar ID da planilha
     if (!CONFIG.SPREADSHEET_ID || CONFIG.SPREADSHEET_ID.length < 20) {
       validation.valid = false;
       validation.errors.push('ID da planilha inválido ou não configurado');
     }
-    
+
     // Verificar ID da pasta do Drive
     if (!CONFIG.DRIVE_FOLDER_ID || CONFIG.DRIVE_FOLDER_ID.length < 20) {
       validation.warnings.push('ID da pasta do Drive não configurado - uploads podem falhar');
     }
-    
+
     // Tentar acessar a planilha
     try {
-      var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+      const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
       validation.spreadsheetName = ss.getName();
     } catch (e) {
       validation.valid = false;
-      validation.errors.push('Não foi possível acessar a planilha: ' + e.toString());
+      validation.errors.push(`Não foi possível acessar a planilha: ${e.toString()}`);
     }
-    
+
     // Tentar acessar a pasta do Drive
     if (CONFIG.DRIVE_FOLDER_ID) {
       try {
-        var folder = DriveApp.getFolderById(CONFIG.DRIVE_FOLDER_ID);
+        const folder = DriveApp.getFolderById(CONFIG.DRIVE_FOLDER_ID);
         validation.folderName = folder.getName();
       } catch (e) {
-        validation.warnings.push('Não foi possível acessar a pasta do Drive: ' + e.toString());
+        validation.warnings.push(`Não foi possível acessar a pasta do Drive: ${e.toString()}`);
       }
     }
-    
+
   } catch (error) {
     validation.valid = false;
-    validation.errors.push('Erro ao validar configurações: ' + error.toString());
+    validation.errors.push(`Erro ao validar configurações: ${error.toString()}`);
   }
-  
+
   return validation;
 }
 
@@ -355,10 +434,10 @@ function validateSystemConfig() {
  */
 function getSystemConfig(key, defaultValue) {
   try {
-    var cache = CacheService.getScriptCache();
-    var cacheKey = 'config_' + key;
-    var cached = cache.get(cacheKey);
-    
+    const cache = CacheService.getScriptCache();
+    const cacheKey = `config_${key}`;
+    const cached = cache.get(cacheKey);
+
     if (cached !== null) {
       try {
         return JSON.parse(cached);
@@ -366,34 +445,35 @@ function getSystemConfig(key, defaultValue) {
         return cached;
       }
     }
-    
-    var configSheet = Database.getSheet(CONFIG.SHEETS.CONFIG_SISTEMA, ['Chave', 'Valor', 'Descrição']);
-    
+
+    const configSheet = Database.getSheet(CONFIG.SHEETS.CONFIG_SISTEMA, ['Chave', 'Valor', 'Descrição']);
+
     // Inicializar configurações padrão se necessário
     if (configSheet.getLastRow() <= 1) {
-      var defaultConfigs = [
+      const defaultConfigs = [
         ['PastaGID', CONFIG.DRIVE_FOLDER_ID, 'ID da pasta do Google Drive para anexos'],
         ['StatusPipeline', Object.values(CONFIG.STATUS_PIPELINE).join(','), 'Pipeline de status das RNCs'],
         ['RenomearArquivos', 'Sim', 'Renomear arquivos anexados'],
         ['MaxFileSize', CONFIG.SYSTEM.MAX_FILE_SIZE, 'Tamanho máximo de arquivo em bytes'],
-        ['Version', CONFIG.VERSION, 'Versão do sistema']
+        ['Version', CONFIG.VERSION, 'Versão do sistema'],
+        ['DebugMode', CONFIG.DEBUG_MODE ? 'Sim' : 'Não', 'Modo de debug ativado'],
+        ['Environment', CONFIG.ENVIRONMENT, 'Ambiente de execução']
       ];
-      
+
       defaultConfigs.forEach(function(config) {
         configSheet.appendRow(config);
       });
     }
-    
-    var data = configSheet.getDataRange().getValues();
-    for (var i = 1; i < data.length; i++) {
+
+    const data = configSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
       if (data[i][0] === key) {
-        var value = data[i][1];
-        // Cache por 5 minutos
+        const value = data[i][1];
         cache.put(cacheKey, JSON.stringify(value), CONFIG.SYSTEM.CACHE_DURATION);
         return value;
       }
     }
-    
+
     return defaultValue;
   } catch (error) {
     Logger.logError('getSystemConfig', error, { key: key });
@@ -410,11 +490,11 @@ function getSystemConfig(key, defaultValue) {
  */
 function setSystemConfig(key, value, description) {
   try {
-    var configSheet = Database.getSheet(CONFIG.SHEETS.CONFIG_SISTEMA, ['Chave', 'Valor', 'Descrição']);
-    var data = configSheet.getDataRange().getValues();
-    var found = false;
-    
-    for (var i = 1; i < data.length; i++) {
+    const configSheet = Database.getSheet(CONFIG.SHEETS.CONFIG_SISTEMA, ['Chave', 'Valor', 'Descrição']);
+    const data = configSheet.getDataRange().getValues();
+    let found = false;
+
+    for (let i = 1; i < data.length; i++) {
       if (data[i][0] === key) {
         configSheet.getRange(i + 1, 2).setValue(value);
         if (description) {
@@ -424,18 +504,18 @@ function setSystemConfig(key, value, description) {
         break;
       }
     }
-    
+
     if (!found) {
       configSheet.appendRow([key, value, description || '']);
     }
-    
+
     // Limpar cache
-    var cache = CacheService.getScriptCache();
-    cache.remove('config_' + key);
-    
+    const cache = CacheService.getScriptCache();
+    cache.remove(`config_${key}`);
+
     Logger.logInfo('setSystemConfig', { key: key, value: value });
     return { success: true };
-    
+
   } catch (error) {
     Logger.logError('setSystemConfig', error, { key: key, value: value });
     return { success: false, error: error.toString() };

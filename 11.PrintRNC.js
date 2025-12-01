@@ -55,7 +55,7 @@ function getPrintPdfUrl(rncNumber) {
     // var lastCol = printSheet.getLastColumn();
     
     // ✅ OPÇÃO 2: RANGE FIXO (ex: A1:H50)
-    var rangeNotation = 'A1:H26'; // AJUSTE CONFORME NECESSÁRIO
+    var rangeNotation = CONFIG.PRINT.RANGE_START + ':' + CONFIG.PRINT.RANGE_END; // AJUSTE CONFORME NECESSÁRIO
     var range = printSheet.getRange(rangeNotation);
     
     var printRange = objectToQueryString({
@@ -121,7 +121,7 @@ var PrintManager = (function() {
     }
     
     var configData = configCamposSheet.getDataRange().getValues();
-    var printRangeColumnIndex = 10; // Coluna K
+    var printRangeColumnIndex = CONFIG.PRINT.COLUMN_INDEX_PRINT_RANGE; // Coluna K
     
     var rangesToClear = [];
     
