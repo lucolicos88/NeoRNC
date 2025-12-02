@@ -2,19 +2,98 @@
  * ============================================
  * CONFIGMANAGER.GS - Gerenciamento de Configurações
  * Sistema RNC Neoformula - Deploy 30 Modularizado
+ * Deploy 33 - Cache de configuração
  * ============================================
  */
 
 var ConfigManager = (function() {
   'use strict';
-  
+
+  /**
+   * ============================================
+   * DEPLOY 33: Cache de Configuração
+   * ============================================
+   */
+
+  var CACHE_TTL = 600; // 10 minutos
+  var CACHE_PREFIX = 'config_';
+
+  /**
+   * Obtém valor do cache
+   * @param {string} key - Chave do cache
+   * @return {*} Valor ou null
+   * @private
+   */
+  function getFromCache(key) {
+    try {
+      var cache = CacheService.getScriptCache();
+      var cached = cache.get(CACHE_PREFIX + key);
+      if (cached) {
+        Logger.logDebug('getFromCache_HIT', { key: key });
+        return JSON.parse(cached);
+      }
+      Logger.logDebug('getFromCache_MISS', { key: key });
+      return null;
+    } catch (error) {
+      Logger.logWarning('getFromCache_ERROR', { key: key, error: error.toString() });
+      return null;
+    }
+  }
+
+  /**
+   * Salva valor no cache
+   * @param {string} key - Chave do cache
+   * @param {*} value - Valor a cachear
+   * @private
+   */
+  function saveToCache(key, value) {
+    try {
+      var cache = CacheService.getScriptCache();
+      cache.put(CACHE_PREFIX + key, JSON.stringify(value), CACHE_TTL);
+      Logger.logDebug('saveToCache_SUCCESS', { key: key, ttl: CACHE_TTL });
+    } catch (error) {
+      Logger.logWarning('saveToCache_ERROR', { key: key, error: error.toString() });
+    }
+  }
+
+  /**
+   * Limpa cache específico
+   * @param {string} key - Chave do cache
+   */
+  function clearCache(key) {
+    try {
+      var cache = CacheService.getScriptCache();
+      if (key) {
+        cache.remove(CACHE_PREFIX + key);
+        Logger.logInfo('clearCache_KEY', { key: key });
+      } else {
+        // Limpar todos os caches de configuração
+        cache.remove(CACHE_PREFIX + 'sections');
+        cache.remove(CACHE_PREFIX + 'lists');
+        cache.remove(CACHE_PREFIX + 'permissions');
+        Logger.logInfo('clearCache_ALL');
+      }
+    } catch (error) {
+      Logger.logError('clearCache_ERROR', error);
+    }
+  }
+
   /**
  * Obtém campos configurados para uma seção
+ * Deploy 33 - Com cache (10 minutos)
  * @param {string} sectionName - Nome da seção
  * @return {Array} Lista de campos
  */
 function getFieldsForSection(sectionName) {
   try {
+    // ✅ DEPLOY 33: Tentar obter do cache
+    var cacheKey = 'fields_' + sectionName;
+    var cached = getFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Cache miss - buscar do banco
     var fields = Database.findData(CONFIG.SHEETS.CONFIG_CAMPOS, {
       'Seção': sectionName,
       'Ativo': 'Sim'
@@ -34,12 +113,15 @@ function getFieldsForSection(sectionName) {
         order: parseInt(field['Ordem']) || 999  // ✅ BONUS: padronizar 'order' também
       });
     }
-    
+
     Logger.logDebug('getFieldsForSection', {
       section: sectionName,
       fieldsCount: result.length
     });
-    
+
+    // ✅ DEPLOY 33: Salvar no cache
+    saveToCache(cacheKey, result);
+
     return result;
     
   } catch (error) {
@@ -50,16 +132,24 @@ function getFieldsForSection(sectionName) {
   
   /**
    * Obtém todas as seções configuradas
+   * Deploy 33 - Com cache (10 minutos)
    * @return {Array} Lista de seções
    */
   function getSections() {
     try {
+      // ✅ DEPLOY 33: Tentar obter do cache
+      var cached = getFromCache('sections');
+      if (cached) {
+        return cached;
+      }
+
+      // Cache miss - buscar do banco
       var sections = Database.findData(CONFIG.SHEETS.CONFIG_SECOES, {
         'Ativo': 'Sim'
       }, {
         orderBy: 'Ordem'
       });
-      
+
       var result = [];
       for (var i = 0; i < sections.length; i++) {
         result.push({
@@ -69,8 +159,12 @@ function getFieldsForSection(sectionName) {
           ativo: sections[i]['Ativo']
         });
       }
-      
+
       Logger.logDebug('getSections', { count: result.length });
+
+      // ✅ DEPLOY 33: Salvar no cache
+      saveToCache('sections', result);
+
       return result;
       
     } catch (error) {
@@ -81,25 +175,33 @@ function getFieldsForSection(sectionName) {
   
   /**
    * Obtém listas configuradas
+   * Deploy 33 - Com cache (10 minutos)
    * @return {Object} Objeto com todas as listas
    */
   function getLists() {
     try {
+      // ✅ DEPLOY 33: Tentar obter do cache
+      var cached = getFromCache('lists');
+      if (cached) {
+        return cached;
+      }
+
+      // Cache miss - buscar do banco
       var sheet = Database.getSheet(CONFIG.SHEETS.LISTAS);
-      
+
       if (sheet.getLastRow() <= 1) {
         return {};
       }
-      
+
       var data = sheet.getDataRange().getValues();
       var lists = {};
-      
+
       // Headers são os nomes das listas
       var headers = data[0];
       for (var i = 0; i < headers.length; i++) {
         if (headers[i]) {
           lists[headers[i]] = [];
-          
+
           // Adicionar valores da lista
           for (var j = 1; j < data.length; j++) {
             if (data[j][i] && String(data[j][i]).trim() !== '') {
@@ -108,8 +210,12 @@ function getFieldsForSection(sectionName) {
           }
         }
       }
-      
+
       Logger.logDebug('getLists', { listsCount: Object.keys(lists).length });
+
+      // ✅ DEPLOY 33: Salvar no cache
+      saveToCache('lists', lists);
+
       return lists;
       
     } catch (error) {
@@ -730,7 +836,8 @@ return {
   deleteSection: deleteSection,
   addFieldColumn: addFieldColumn,
   removeFieldColumn: removeFieldColumn,
-  fullSyncRncWithConfig: fullSyncRncWithConfig,     // NOVO
-  updateAttachmentStatus: updateAttachmentStatus    // NOVO
+  fullSyncRncWithConfig: fullSyncRncWithConfig,
+  updateAttachmentStatus: updateAttachmentStatus,
+  clearCache: clearCache                            // ✅ DEPLOY 33: Novo
 };
 })();

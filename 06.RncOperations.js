@@ -635,6 +635,7 @@ function prepareRncData(formData, rncNumber, user, isNew) {
   
   /**
    * Valida dados da RNC
+   * Deploy 33 - Adicionada validação por tipo de campo
    * @private
    */
   function validateRncData(rncData, section) {
@@ -648,19 +649,67 @@ function prepareRncData(formData, rncNumber, user, isNew) {
       // Obter campos obrigatórios da configuração
       var fieldsConfig = ConfigManager.getFieldsForSection(section);
 
+      // ✅ DEPLOY 33: Definir validações por tipo de campo
+      var fieldValidations = {
+        'Email': { type: 'email' },
+        'E-mail': { type: 'email' },
+        'Telefone': { type: 'phone' },
+        'Celular': { type: 'phone' },
+        'CPF': { type: 'cpf' },
+        'CNPJ': { type: 'cnpj' },
+        'CEP': { type: 'cep' }
+      };
+
       for (var i = 0; i < fieldsConfig.length; i++) {
         var field = fieldsConfig[i];
+        var columnName = FIELD_MAPPING[field.name] || field.name;
+        var value = rncData[columnName];
 
+        // 1. Validar campos obrigatórios
         if (field.required) {
-          var columnName = FIELD_MAPPING[field.name] || field.name;
-          var value = rncData[columnName];
-
           if (!value || (typeof value === 'string' && value.trim() === '')) {
             validation.valid = false;
             validation.errors.push('Campo obrigatório não preenchido: ' + field.name);
+            continue; // Skip field-level validation if empty
+          }
+        }
+
+        // 2. ✅ DEPLOY 33: Validar formato do campo (se houver valor)
+        if (value && value !== '') {
+          var fieldConfig = fieldValidations[field.name];
+
+          if (fieldConfig) {
+            var fieldValidation = validateField(
+              field.name,
+              value,
+              fieldConfig.type,
+              { required: false } // Already checked above
+            );
+
+            if (!fieldValidation.valid) {
+              validation.valid = false;
+              validation.errors.push(fieldValidation.error);
+            }
+          }
+
+          // 3. ✅ DEPLOY 33: Validação especial para campos de data
+          if (field.type === 'date' || field.name.toLowerCase().includes('data')) {
+            // Verificar se está no formato brasileiro DD/MM/YYYY
+            var dateValidation = isValidDate(value, 'DD/MM/YYYY', {});
+
+            if (!dateValidation.valid) {
+              validation.valid = false;
+              validation.errors.push('Campo "' + field.name + '": ' + dateValidation.error);
+            }
           }
         }
       }
+
+      Logger.logDebug('validateRncData_COMPLETE', {
+        section: section,
+        valid: validation.valid,
+        errorCount: validation.errors.length
+      });
 
     } catch (error) {
       Logger.logError('validateRncData', error);

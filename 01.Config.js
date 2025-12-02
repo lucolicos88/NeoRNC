@@ -680,3 +680,552 @@ function validateSafeInput(value) {
 
   return result;
 }
+
+/**
+ * ============================================
+ * DEPLOY 33: Mensagens de Erro Amigáveis
+ * ============================================
+ */
+
+/**
+ * Converte erro técnico em mensagem amigável para o usuário
+ * @param {Error|string} error - Erro a converter
+ * @param {string} context - Contexto da operação (opcional)
+ * @return {string} Mensagem amigável
+ */
+function getUserFriendlyError(error, context) {
+  var errorStr = (error && error.toString) ? error.toString().toLowerCase() : String(error).toLowerCase();
+  var friendlyMessage = '';
+
+  // Erros de Lock/Concorrência
+  if (errorStr.includes('lock') || errorStr.includes('ocupado') || errorStr.includes('busy')) {
+    return 'O sistema está ocupado no momento. Por favor, aguarde alguns segundos e tente novamente.';
+  }
+
+  // Erros de Permissão
+  if (errorStr.includes('permission') || errorStr.includes('permissão') || errorStr.includes('denied') || errorStr.includes('não autorizado')) {
+    return 'Você não tem permissão para realizar esta operação. Entre em contato com o administrador.';
+  }
+
+  // Erros de Validação
+  if (errorStr.includes('validação') || errorStr.includes('validation') || errorStr.includes('obrigatório') || errorStr.includes('required')) {
+    if (errorStr.includes('campos obrigatórios')) {
+      return 'Alguns campos obrigatórios não foram preenchidos. Por favor, verifique o formulário.';
+    }
+    return 'Os dados fornecidos não são válidos. Por favor, verifique e tente novamente.';
+  }
+
+  // Erros de Status
+  if (errorStr.includes('status') && errorStr.includes('transição')) {
+    return 'Não é possível mudar para este status. Preencha os campos obrigatórios da etapa atual primeiro.';
+  }
+
+  // Erros de RNC não encontrada
+  if (errorStr.includes('não foi encontrada') || errorStr.includes('not found') || errorStr.includes('não existe')) {
+    return 'A RNC solicitada não foi encontrada. Ela pode ter sido excluída ou o número está incorreto.';
+  }
+
+  // Erros de Rede/Timeout
+  if (errorStr.includes('timeout') || errorStr.includes('time out') || errorStr.includes('timed out')) {
+    return 'A operação demorou muito tempo. Por favor, tente novamente. Se o problema persistir, contate o suporte.';
+  }
+
+  if (errorStr.includes('network') || errorStr.includes('rede') || errorStr.includes('connection')) {
+    return 'Erro de conexão. Verifique sua internet e tente novamente.';
+  }
+
+  // Erros de Arquivo/Upload
+  if (errorStr.includes('arquivo') || errorStr.includes('file') || errorStr.includes('upload')) {
+    if (errorStr.includes('size') || errorStr.includes('tamanho') || errorStr.includes('large')) {
+      return 'O arquivo é muito grande. O tamanho máximo permitido é 10MB.';
+    }
+    if (errorStr.includes('type') || errorStr.includes('tipo')) {
+      return 'Tipo de arquivo não suportado. Por favor, use PDF, imagens ou documentos.';
+    }
+    return 'Erro ao processar o arquivo. Verifique o arquivo e tente novamente.';
+  }
+
+  // Erros de Quota/Limite
+  if (errorStr.includes('quota') || errorStr.includes('limit') || errorStr.includes('limite')) {
+    return 'Limite de armazenamento ou uso atingido. Entre em contato com o administrador do sistema.';
+  }
+
+  // Erros de Banco de Dados
+  if (errorStr.includes('database') || errorStr.includes('planilha') || errorStr.includes('spreadsheet')) {
+    return 'Erro ao acessar os dados. Por favor, tente novamente. Se o problema persistir, contate o suporte.';
+  }
+
+  // Erros de Dados Inválidos
+  if (errorStr.includes('invalid') || errorStr.includes('inválido')) {
+    if (errorStr.includes('email')) {
+      return 'O email fornecido não é válido. Por favor, verifique e tente novamente.';
+    }
+    if (errorStr.includes('date') || errorStr.includes('data')) {
+      return 'A data fornecida não é válida. Use o formato DD/MM/YYYY.';
+    }
+    if (errorStr.includes('number') || errorStr.includes('número')) {
+      return 'O número fornecido não é válido. Por favor, use apenas números.';
+    }
+    return 'Dados inválidos. Por favor, verifique as informações fornecidas.';
+  }
+
+  // Erros de Duplicação
+  if (errorStr.includes('duplicate') || errorStr.includes('duplicado') || errorStr.includes('já existe')) {
+    return 'Este registro já existe no sistema. Por favor, verifique os dados.';
+  }
+
+  // Erro genérico com contexto
+  if (context) {
+    switch(context) {
+      case 'save':
+      case 'salvar':
+        return 'Erro ao salvar os dados. Por favor, tente novamente.';
+      case 'update':
+      case 'atualizar':
+        return 'Erro ao atualizar os dados. Por favor, tente novamente.';
+      case 'delete':
+      case 'excluir':
+        return 'Erro ao excluir o registro. Por favor, tente novamente.';
+      case 'load':
+      case 'carregar':
+        return 'Erro ao carregar os dados. Por favor, recarregue a página.';
+      default:
+        return 'Ocorreu um erro inesperado. Por favor, tente novamente ou contate o suporte.';
+    }
+  }
+
+  // Mensagem genérica
+  return 'Ocorreu um erro inesperado. Por favor, tente novamente. Se o problema persistir, contate o suporte.';
+}
+
+/**
+ * Formata erro para exibição ao usuário
+ * Inclui código de erro técnico para suporte
+ * @param {Error|string} error - Erro original
+ * @param {string} context - Contexto da operação
+ * @return {Object} { message: string, technicalError: string }
+ */
+function formatErrorForUser(error, context) {
+  var friendlyMessage = getUserFriendlyError(error, context);
+  var technicalError = error.toString();
+
+  // Gerar código de erro para referência
+  var errorCode = 'ERR-' + Date.now().toString(36).toUpperCase();
+
+  return {
+    message: friendlyMessage,
+    technicalError: technicalError,
+    errorCode: errorCode,
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * ========================================
+ * FIELD-LEVEL VALIDATION FUNCTIONS
+ * Deploy 33 - Melhoria #11
+ * ========================================
+ */
+
+/**
+ * Validates email format
+ * @param {string} email - Email to validate
+ * @return {Object} - { valid: boolean, error: string }
+ */
+function isValidEmail(email) {
+  if (!email || email.trim() === '') {
+    return { valid: false, error: 'Email não pode estar vazio' };
+  }
+
+  var emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  if (!emailRegex.test(email)) {
+    return { valid: false, error: 'Email inválido. Use o formato: exemplo@dominio.com' };
+  }
+
+  if (email.length > 100) {
+    return { valid: false, error: 'Email muito longo (máximo 100 caracteres)' };
+  }
+
+  return { valid: true, error: null };
+}
+
+/**
+ * Validates Brazilian phone format
+ * @param {string} phone - Phone to validate
+ * @return {Object} - { valid: boolean, error: string }
+ */
+function isValidPhone(phone) {
+  if (!phone || phone.trim() === '') {
+    return { valid: false, error: 'Telefone não pode estar vazio' };
+  }
+
+  // Remove formatting characters
+  var digits = phone.replace(/\D/g, '');
+
+  // Brazilian phones: 10 digits (landline) or 11 digits (mobile)
+  if (digits.length < 10 || digits.length > 11) {
+    return { valid: false, error: 'Telefone inválido. Use o formato: (XX) XXXXX-XXXX' };
+  }
+
+  // Check if DDD (area code) is valid (11-99)
+  var ddd = parseInt(digits.substring(0, 2));
+  if (ddd < 11 || ddd > 99) {
+    return { valid: false, error: 'DDD inválido. Use um código de área válido (11-99)' };
+  }
+
+  return { valid: true, error: null };
+}
+
+/**
+ * Validates Brazilian CPF
+ * @param {string} cpf - CPF to validate
+ * @return {Object} - { valid: boolean, error: string }
+ */
+function isValidCPF(cpf) {
+  if (!cpf || cpf.trim() === '') {
+    return { valid: false, error: 'CPF não pode estar vazio' };
+  }
+
+  // Remove formatting
+  var digits = cpf.replace(/\D/g, '');
+
+  // CPF must have 11 digits
+  if (digits.length !== 11) {
+    return { valid: false, error: 'CPF deve ter 11 dígitos' };
+  }
+
+  // Check if all digits are the same (invalid CPF)
+  if (/^(\d)\1{10}$/.test(digits)) {
+    return { valid: false, error: 'CPF inválido' };
+  }
+
+  // Validate checksum digits
+  var sum = 0;
+  var remainder;
+
+  // First digit
+  for (var i = 1; i <= 9; i++) {
+    sum += parseInt(digits.substring(i - 1, i)) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(digits.substring(9, 10))) {
+    return { valid: false, error: 'CPF inválido' };
+  }
+
+  // Second digit
+  sum = 0;
+  for (var i = 1; i <= 10; i++) {
+    sum += parseInt(digits.substring(i - 1, i)) * (12 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(digits.substring(10, 11))) {
+    return { valid: false, error: 'CPF inválido' };
+  }
+
+  return { valid: true, error: null };
+}
+
+/**
+ * Validates Brazilian CNPJ
+ * @param {string} cnpj - CNPJ to validate
+ * @return {Object} - { valid: boolean, error: string }
+ */
+function isValidCNPJ(cnpj) {
+  if (!cnpj || cnpj.trim() === '') {
+    return { valid: false, error: 'CNPJ não pode estar vazio' };
+  }
+
+  // Remove formatting
+  var digits = cnpj.replace(/\D/g, '');
+
+  // CNPJ must have 14 digits
+  if (digits.length !== 14) {
+    return { valid: false, error: 'CNPJ deve ter 14 dígitos' };
+  }
+
+  // Check if all digits are the same (invalid CNPJ)
+  if (/^(\d)\1{13}$/.test(digits)) {
+    return { valid: false, error: 'CNPJ inválido' };
+  }
+
+  // Validate first checksum digit
+  var size = digits.length - 2;
+  var numbers = digits.substring(0, size);
+  var digits_check = digits.substring(size);
+  var sum = 0;
+  var pos = size - 7;
+
+  for (var i = size; i >= 1; i--) {
+    sum += parseInt(numbers.charAt(size - i)) * pos--;
+    if (pos < 2) pos = 9;
+  }
+
+  var result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (result !== parseInt(digits_check.charAt(0))) {
+    return { valid: false, error: 'CNPJ inválido' };
+  }
+
+  // Validate second checksum digit
+  size = size + 1;
+  numbers = digits.substring(0, size);
+  sum = 0;
+  pos = size - 7;
+
+  for (var i = size; i >= 1; i--) {
+    sum += parseInt(numbers.charAt(size - i)) * pos--;
+    if (pos < 2) pos = 9;
+  }
+
+  result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (result !== parseInt(digits_check.charAt(1))) {
+    return { valid: false, error: 'CNPJ inválido' };
+  }
+
+  return { valid: true, error: null };
+}
+
+/**
+ * Validates date format and range
+ * @param {string} dateStr - Date string to validate
+ * @param {string} format - Expected format ('DD/MM/YYYY' or 'YYYY-MM-DD')
+ * @param {Object} options - { minDate, maxDate, allowFuture, allowPast }
+ * @return {Object} - { valid: boolean, error: string }
+ */
+function isValidDate(dateStr, format, options) {
+  options = options || {};
+  format = format || 'DD/MM/YYYY';
+
+  if (!dateStr || dateStr.trim() === '') {
+    return { valid: false, error: 'Data não pode estar vazia' };
+  }
+
+  var date;
+
+  // Parse date based on format
+  if (format === 'DD/MM/YYYY') {
+    var parts = dateStr.split('/');
+    if (parts.length !== 3) {
+      return { valid: false, error: 'Data inválida. Use o formato DD/MM/AAAA' };
+    }
+
+    var day = parseInt(parts[0]);
+    var month = parseInt(parts[1]);
+    var year = parseInt(parts[2]);
+
+    if (isNaN(day) || isNaN(month) || isNaN(year)) {
+      return { valid: false, error: 'Data contém valores não numéricos' };
+    }
+
+    date = new Date(year, month - 1, day);
+  } else if (format === 'YYYY-MM-DD') {
+    date = new Date(dateStr);
+  } else {
+    return { valid: false, error: 'Formato de data não suportado: ' + format };
+  }
+
+  // Check if date is valid
+  if (isNaN(date.getTime())) {
+    return { valid: false, error: 'Data inválida' };
+  }
+
+  // Check date ranges
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (options.allowFuture === false && date > today) {
+    return { valid: false, error: 'Data não pode ser no futuro' };
+  }
+
+  if (options.allowPast === false && date < today) {
+    return { valid: false, error: 'Data não pode ser no passado' };
+  }
+
+  if (options.minDate) {
+    var minDate = new Date(options.minDate);
+    if (date < minDate) {
+      return { valid: false, error: 'Data anterior ao mínimo permitido' };
+    }
+  }
+
+  if (options.maxDate) {
+    var maxDate = new Date(options.maxDate);
+    if (date > maxDate) {
+      return { valid: false, error: 'Data posterior ao máximo permitido' };
+    }
+  }
+
+  return { valid: true, error: null };
+}
+
+/**
+ * Validates numeric value and range
+ * @param {*} value - Value to validate
+ * @param {Object} options - { min, max, integer, positive }
+ * @return {Object} - { valid: boolean, error: string }
+ */
+function isValidNumber(value, options) {
+  options = options || {};
+
+  if (value === null || value === undefined || value === '') {
+    return { valid: false, error: 'Valor numérico não pode estar vazio' };
+  }
+
+  var num = Number(value);
+
+  if (isNaN(num)) {
+    return { valid: false, error: 'Valor não é um número válido' };
+  }
+
+  if (options.integer === true && !Number.isInteger(num)) {
+    return { valid: false, error: 'Valor deve ser um número inteiro' };
+  }
+
+  if (options.positive === true && num <= 0) {
+    return { valid: false, error: 'Valor deve ser positivo' };
+  }
+
+  if (options.min !== undefined && num < options.min) {
+    return { valid: false, error: 'Valor mínimo permitido: ' + options.min };
+  }
+
+  if (options.max !== undefined && num > options.max) {
+    return { valid: false, error: 'Valor máximo permitido: ' + options.max };
+  }
+
+  return { valid: true, error: null };
+}
+
+/**
+ * Validates Brazilian CEP (postal code)
+ * @param {string} cep - CEP to validate
+ * @return {Object} - { valid: boolean, error: string }
+ */
+function isValidCEP(cep) {
+  if (!cep || cep.trim() === '') {
+    return { valid: false, error: 'CEP não pode estar vazio' };
+  }
+
+  // Remove formatting
+  var digits = cep.replace(/\D/g, '');
+
+  // CEP must have 8 digits
+  if (digits.length !== 8) {
+    return { valid: false, error: 'CEP deve ter 8 dígitos. Use o formato: XXXXX-XXX' };
+  }
+
+  // Check if all digits are the same (invalid CEP)
+  if (/^(\d)\1{7}$/.test(digits)) {
+    return { valid: false, error: 'CEP inválido' };
+  }
+
+  return { valid: true, error: null };
+}
+
+/**
+ * Validates field based on its type
+ * @param {string} fieldName - Name of the field
+ * @param {*} value - Value to validate
+ * @param {string} fieldType - Type of validation (email, phone, cpf, cnpj, date, number, cep)
+ * @param {Object} options - Additional validation options
+ * @return {Object} - { valid: boolean, error: string, fieldName: string }
+ */
+function validateField(fieldName, value, fieldType, options) {
+  options = options || {};
+
+  var result = { valid: true, error: null, fieldName: fieldName };
+
+  // Skip validation if field is empty and not required
+  if ((value === null || value === undefined || value === '') && !options.required) {
+    return result;
+  }
+
+  // Check required fields
+  if (options.required && (value === null || value === undefined || value === '')) {
+    result.valid = false;
+    result.error = 'Campo "' + fieldName + '" é obrigatório';
+    return result;
+  }
+
+  // Skip further validation if empty (and not required)
+  if (value === null || value === undefined || value === '') {
+    return result;
+  }
+
+  // Validate based on type
+  var validation;
+
+  switch (fieldType) {
+    case 'email':
+      validation = isValidEmail(value);
+      break;
+    case 'phone':
+    case 'telefone':
+      validation = isValidPhone(value);
+      break;
+    case 'cpf':
+      validation = isValidCPF(value);
+      break;
+    case 'cnpj':
+      validation = isValidCNPJ(value);
+      break;
+    case 'cep':
+      validation = isValidCEP(value);
+      break;
+    case 'date':
+    case 'data':
+      validation = isValidDate(value, options.format, options);
+      break;
+    case 'number':
+    case 'numero':
+      validation = isValidNumber(value, options);
+      break;
+    default:
+      // Unknown type, skip validation
+      return result;
+  }
+
+  if (!validation.valid) {
+    result.valid = false;
+    result.error = 'Campo "' + fieldName + '": ' + validation.error;
+  }
+
+  return result;
+}
+
+/**
+ * Validates multiple fields at once
+ * @param {Object} data - Object with field names and values
+ * @param {Object} fieldValidations - Object mapping field names to validation configs
+ *   Example: { 'Email': { type: 'email', required: true }, 'Telefone': { type: 'phone' } }
+ * @return {Object} - { valid: boolean, errors: Array, fieldErrors: Object }
+ */
+function validateFields(data, fieldValidations) {
+  var result = {
+    valid: true,
+    errors: [],
+    fieldErrors: {}
+  };
+
+  for (var fieldName in fieldValidations) {
+    var config = fieldValidations[fieldName];
+    var value = data[fieldName];
+
+    var validation = validateField(
+      fieldName,
+      value,
+      config.type,
+      config.options || {}
+    );
+
+    if (!validation.valid) {
+      result.valid = false;
+      result.errors.push(validation.error);
+      result.fieldErrors[fieldName] = validation.error;
+    }
+  }
+
+  return result;
+}
