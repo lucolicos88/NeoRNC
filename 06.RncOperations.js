@@ -84,11 +84,20 @@ var RncOperations = (function() {
       
       // Preparar dados para inserção
       var rncData = prepareRncData(formData, rncNumber, user, true);
-      
-      // Validar dados obrigatórios
+
+      // ✅ DEPLOY 33: Validar dados obrigatórios e formato
       var validation = validateRncData(rncData, 'Abertura');
       if (!validation.valid) {
-        throw new Error('Validação falhou: ' + validation.errors.join(', '));
+        Logger.logWarning('saveRnc_VALIDATION_FAILED', {
+          rncNumber: rncNumber,
+          errors: validation.errors
+        });
+
+        return {
+          success: false,
+          error: validation.errors.join('\n'),
+          validationErrors: validation.errors
+        };
       }
       
       // Inserir na planilha
@@ -98,27 +107,50 @@ var RncOperations = (function() {
         throw new Error('Falha ao inserir RNC na planilha');
       }
       
-      // Processar arquivos se houver
+      // ✅ DEPLOY 33: Processar arquivos e retornar mensagens de erro
+      var fileErrors = [];
+      var fileWarnings = [];
+
       if (files && files.length > 0) {
         var fileResults = FileManager.uploadFiles(rncNumber, files, 'Abertura');
-        Logger.logInfo('saveRnc_FILES', { 
+        Logger.logInfo('saveRnc_FILES', {
           rncNumber: rncNumber,
           filesUploaded: fileResults.uploaded,
           filesFailed: fileResults.failed
         });
+
+        // ✅ Coletar erros de arquivo para mostrar ao usuário
+        if (fileResults.errors && fileResults.errors.length > 0) {
+          fileResults.errors.forEach(function(err) {
+            fileErrors.push(err.userMessage || err.error);
+          });
+        }
+
+        // Avisar sobre retries
+        if (fileResults.warnings && fileResults.warnings.length > 0) {
+          fileWarnings = fileResults.warnings;
+        }
       }
-      
+
       // Log de auditoria
-      Logger.logInfo('saveRnc_SUCCESS', { 
+      Logger.logInfo('saveRnc_SUCCESS', {
         rncNumber: rncNumber,
         user: user,
         duration: Logger.logPerformance('saveRnc', startTime)
       });
-      
-      return { 
-        success: true, 
+
+      // ✅ Retornar sucesso com mensagens de arquivo
+      var successMessage = 'RNC criada com sucesso';
+      if (fileErrors.length > 0) {
+        successMessage += ', mas alguns arquivos falharam:\n' + fileErrors.join('\n');
+      }
+
+      return {
+        success: true,
         rncNumber: rncNumber,
-        message: 'RNC criada com sucesso'
+        message: successMessage,
+        fileErrors: fileErrors,
+        fileWarnings: fileWarnings
       };
       
     } catch (error) {
@@ -635,7 +667,7 @@ function prepareRncData(formData, rncNumber, user, isNew) {
   
   /**
    * Valida dados da RNC
-   * Deploy 33 - Adicionada validação por tipo de campo
+   * Deploy 33 - Usa ValidaçãoRegex da planilha ConfigCampos
    * @private
    */
   function validateRncData(rncData, section) {
@@ -646,61 +678,72 @@ function prepareRncData(formData, rncNumber, user, isNew) {
     };
 
     try {
-      // Obter campos obrigatórios da configuração
-      var fieldsConfig = ConfigManager.getFieldsForSection(section);
+      // Obter campos da configuração (incluindo ValidaçãoRegex)
+      var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEETS.CONFIG_CAMPOS);
+      var data = sheet.getDataRange().getValues();
+      var headers = data[0];
 
-      // ✅ DEPLOY 33: Definir validações por tipo de campo
-      var fieldValidations = {
-        'Email': { type: 'email' },
-        'E-mail': { type: 'email' },
-        'Telefone': { type: 'phone' },
-        'Celular': { type: 'phone' },
-        'CPF': { type: 'cpf' },
-        'CNPJ': { type: 'cnpj' },
-        'CEP': { type: 'cep' }
-      };
+      // Encontrar índices das colunas
+      var colSeção = headers.indexOf('Seção');
+      var colCampo = headers.indexOf('Campo');
+      var colObrigatório = headers.indexOf('Obrigatório');
+      var colValidaçãoRegex = headers.indexOf('ValidaçãoRegex');
+      var colMensagemErro = headers.indexOf('MensagemErro');
+      var colAtivo = headers.indexOf('Ativo');
 
-      for (var i = 0; i < fieldsConfig.length; i++) {
-        var field = fieldsConfig[i];
-        var columnName = FIELD_MAPPING[field.name] || field.name;
+      // Processar campos da seção
+      for (var i = 1; i < data.length; i++) {
+        var row = data[i];
+
+        // Filtrar por seção e ativo
+        if (row[colSeção] !== section || row[colAtivo] !== 'Sim') {
+          continue;
+        }
+
+        var fieldName = row[colCampo];
+        var isRequired = row[colObrigatório] === 'Sim';
+        var regexPattern = row[colValidaçãoRegex];
+        var errorMessage = row[colMensagemErro];
+
+        var columnName = FIELD_MAPPING[fieldName] || fieldName;
         var value = rncData[columnName];
 
         // 1. Validar campos obrigatórios
-        if (field.required) {
+        if (isRequired) {
           if (!value || (typeof value === 'string' && value.trim() === '')) {
             validation.valid = false;
-            validation.errors.push('Campo obrigatório não preenchido: ' + field.name);
-            continue; // Skip field-level validation if empty
+            validation.errors.push('Campo obrigatório não preenchido: ' + fieldName);
+            continue; // Skip regex validation if empty
           }
         }
 
-        // 2. ✅ DEPLOY 33: Validar formato do campo (se houver valor)
-        if (value && value !== '') {
-          var fieldConfig = fieldValidations[field.name];
+        // 2. ✅ DEPLOY 33: Validar usando ValidaçãoRegex da planilha
+        if (value && value !== '' && regexPattern && regexPattern.trim() !== '') {
+          try {
+            var regex = new RegExp(regexPattern);
 
-          if (fieldConfig) {
-            var fieldValidation = validateField(
-              field.name,
-              value,
-              fieldConfig.type,
-              { required: false } // Already checked above
-            );
-
-            if (!fieldValidation.valid) {
+            if (!regex.test(String(value))) {
               validation.valid = false;
-              validation.errors.push(fieldValidation.error);
-            }
-          }
 
-          // 3. ✅ DEPLOY 33: Validação especial para campos de data
-          if (field.type === 'date' || field.name.toLowerCase().includes('data')) {
-            // Verificar se está no formato brasileiro DD/MM/YYYY
-            var dateValidation = isValidDate(value, 'DD/MM/YYYY', {});
+              // Usar MensagemErro customizada ou mensagem padrão
+              var errorMsg = errorMessage && errorMessage.trim() !== ''
+                ? errorMessage
+                : 'Campo "' + fieldName + '" está em formato inválido';
 
-            if (!dateValidation.valid) {
-              validation.valid = false;
-              validation.errors.push('Campo "' + field.name + '": ' + dateValidation.error);
+              validation.errors.push(errorMsg);
+
+              Logger.logDebug('validateRncData_REGEX_FAIL', {
+                field: fieldName,
+                value: value,
+                pattern: regexPattern
+              });
             }
+          } catch (regexError) {
+            Logger.logWarning('validateRncData_INVALID_REGEX', {
+              field: fieldName,
+              pattern: regexPattern,
+              error: regexError.toString()
+            });
           }
         }
       }
