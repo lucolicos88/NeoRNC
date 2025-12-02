@@ -201,18 +201,20 @@ var Database = (function() {
   
   /**
    * Insere dados na planilha
+   * Deploy 32 - Lock otimizado (10s para escrita)
    * @param {string} sheetName - Nome da aba
    * @param {Object|Array} data - Dados a inserir
    * @return {Object} Resultado da operação
    */
   function insertData(sheetName, data) {
     var lock = LockService.getScriptLock();
-    
+
     try {
-      // Tentar obter lock para evitar conflitos
-      var hasLock = lock.tryLock(CONFIG.LIMITS.LOCK_TIMEOUT);
+      // ✅ DEPLOY 32: Lock reduzido para escritas (10s)
+      var lockTimeout = CONFIG.LIMITS.LOCK_TIMEOUT_WRITE || 10000;
+      var hasLock = lock.tryLock(lockTimeout);
       if (!hasLock) {
-        throw new Error(CONFIG.ERROR_MESSAGES.LOCK_FAILED);
+        throw new Error('Sistema ocupado. Aguarde alguns segundos e tente novamente.');
       }
       
       var sheet = getSheet(sheetName);
@@ -266,6 +268,7 @@ var Database = (function() {
   
   /**
    * Atualiza dados na planilha
+   * Deploy 32 - Lock otimizado (10s para escrita)
    * @param {string} sheetName - Nome da aba
    * @param {Object} filters - Filtros para encontrar as linhas
    * @param {Object} updates - Campos a atualizar
@@ -273,11 +276,13 @@ var Database = (function() {
    */
   function updateData(sheetName, filters, updates) {
     var lock = LockService.getScriptLock();
-    
+
     try {
-      var hasLock = lock.tryLock(CONFIG.LIMITS.LOCK_TIMEOUT);
+      // ✅ DEPLOY 32: Lock reduzido para escritas (10s)
+      var lockTimeout = CONFIG.LIMITS.LOCK_TIMEOUT_WRITE || 10000;
+      var hasLock = lock.tryLock(lockTimeout);
       if (!hasLock) {
-        throw new Error(CONFIG.ERROR_MESSAGES.LOCK_FAILED);
+        throw new Error('Sistema ocupado. Aguarde alguns segundos e tente novamente.');
       }
       
       var sheet = getSheet(sheetName);
@@ -346,17 +351,20 @@ var Database = (function() {
   
   /**
    * Deleta dados da planilha
+   * Deploy 32 - Lock otimizado (10s para escrita)
    * @param {string} sheetName - Nome da aba
    * @param {Object} filters - Filtros para encontrar as linhas
    * @return {Object} Resultado da operação
    */
   function deleteData(sheetName, filters) {
     var lock = LockService.getScriptLock();
-    
+
     try {
-      var hasLock = lock.tryLock(CONFIG.LIMITS.LOCK_TIMEOUT);
+      // ✅ DEPLOY 32: Lock reduzido para escritas (10s)
+      var lockTimeout = CONFIG.LIMITS.LOCK_TIMEOUT_WRITE || 10000;
+      var hasLock = lock.tryLock(lockTimeout);
       if (!hasLock) {
-        throw new Error(CONFIG.ERROR_MESSAGES.LOCK_FAILED);
+        throw new Error('Sistema ocupado. Aguarde alguns segundos e tente novamente.');
       }
       
       var sheet = getSheet(sheetName);

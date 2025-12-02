@@ -70,12 +70,15 @@ const CONFIG = {
     RETRY_DELAY: 1000 // 1 segundo
   },
 
-  // ✅ CORRIGIDO: Timeouts e Limites (Problema #5)
+  // ✅ CORRIGIDO: Timeouts e Limites (Problema #5 - Deploy 31)
+  // ✅ OTIMIZADO: Lock por operação (Deploy 32)
   LIMITS: {
     BATCH_SIZE: 100,
     MAX_ROWS_PER_OPERATION: 500,
     EXECUTION_TIMEOUT: 270000, // 4.5 minutos
-    LOCK_TIMEOUT: 30000 // ✅ AUMENTADO: 30 segundos (era 10s)
+    LOCK_TIMEOUT: 30000, // ✅ Deploy 31: 30 segundos (compatibilidade)
+    LOCK_TIMEOUT_WRITE: 10000, // ✅ Deploy 32: 10s para escritas (INSERT/UPDATE/DELETE)
+    LOCK_TIMEOUT_READ: 0 // ✅ Deploy 32: Sem lock para leituras (SELECT)
   },
 
   // ✅ NOVO: Constantes para magic numbers (Problema #13)
@@ -520,4 +523,160 @@ function setSystemConfig(key, value, description) {
     Logger.logError('setSystemConfig', error, { key: key, value: value });
     return { success: false, error: error.toString() };
   }
+}
+
+/**
+ * ============================================
+ * SANITIZAÇÃO E SEGURANÇA - Deploy 32
+ * ============================================
+ */
+
+/**
+ * Sanitiza input do usuário para prevenir injeções e corrupção de dados
+ * Remove scripts, HTML tags, fórmulas Excel e limita tamanho
+ * @param {*} value - Valor a ser sanitizado
+ * @param {number} maxLength - Tamanho máximo permitido (padrão: 5000)
+ * @return {string} Valor sanitizado
+ */
+function sanitizeUserInput(value, maxLength) {
+  maxLength = maxLength || 5000;
+
+  // Se valor vazio ou null, retornar string vazia
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  // Converter para string
+  var str = String(value).trim();
+
+  // Se string vazia, retornar
+  if (str === '') {
+    return '';
+  }
+
+  // Remover tags <script>
+  str = str.replace(/<script[^>]*>.*?<\/script>/gi, '');
+
+  // Remover todas as tags HTML
+  str = str.replace(/<[^>]+>/g, '');
+
+  // Remover caracteres que podem iniciar fórmulas do Excel/Sheets
+  // =, +, -, @ no início da string são perigosos
+  if (/^[=+\-@]/.test(str)) {
+    str = "'" + str; // Adiciona apóstrofo para forçar texto
+  }
+
+  // Remover caracteres de controle (exceto quebras de linha e tabs)
+  str = str.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+
+  // Limitar tamanho
+  if (str.length > maxLength) {
+    str = str.substring(0, maxLength);
+  }
+
+  return str;
+}
+
+/**
+ * Sanitiza objeto completo de dados do formulário
+ * @param {Object} formData - Dados do formulário
+ * @param {Object} fieldLimits - Limites específicos por campo (opcional)
+ * @return {Object} Dados sanitizados
+ */
+function sanitizeFormData(formData, fieldLimits) {
+  fieldLimits = fieldLimits || {};
+  var sanitized = {};
+
+  // Limites padrão por tipo de campo
+  var defaultLimits = {
+    'email': 100,
+    'telefone': 20,
+    'cpf': 14,
+    'cnpj': 18,
+    'cep': 10,
+    'número': 50,
+    'código': 50,
+    'nome': 200,
+    'descrição': 5000,
+    'observação': 5000,
+    'observações': 5000,
+    'comentário': 5000,
+    'comentários': 5000,
+    'plano': 5000,
+    'ação': 5000
+  };
+
+  for (var field in formData) {
+    var value = formData[field];
+    var limit = fieldLimits[field];
+
+    // Se não tem limite específico, tentar inferir pelo nome do campo
+    if (!limit) {
+      var fieldLower = field.toLowerCase();
+      for (var key in defaultLimits) {
+        if (fieldLower.includes(key)) {
+          limit = defaultLimits[key];
+          break;
+        }
+      }
+    }
+
+    // Limite padrão se não encontrou nenhum
+    if (!limit) {
+      limit = 5000;
+    }
+
+    // Sanitizar valor
+    sanitized[field] = sanitizeUserInput(value, limit);
+  }
+
+  return sanitized;
+}
+
+/**
+ * Valida se um valor é seguro para armazenamento
+ * @param {*} value - Valor a validar
+ * @return {Object} { safe: boolean, reason: string }
+ */
+function validateSafeInput(value) {
+  var result = { safe: true, reason: '' };
+
+  if (value === null || value === undefined || value === '') {
+    return result;
+  }
+
+  var str = String(value);
+
+  // Verificar tags script
+  if (/<script[^>]*>/i.test(str)) {
+    result.safe = false;
+    result.reason = 'Contém tags de script não permitidas';
+    return result;
+  }
+
+  // Verificar múltiplas fórmulas suspeitas
+  var formulaCount = (str.match(/^[=+\-@]/gm) || []).length;
+  if (formulaCount > 1) {
+    result.safe = false;
+    result.reason = 'Contém múltiplas fórmulas suspeitas';
+    return result;
+  }
+
+  // Verificar SQL injection básico
+  var sqlPatterns = [
+    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b.*\b(FROM|INTO|TABLE|DATABASE)\b)/gi,
+    /(UNION\s+SELECT)/gi,
+    /(OR\s+1\s*=\s*1)/gi,
+    /(';|'--|\*\/|\/\*)/g
+  ];
+
+  for (var i = 0; i < sqlPatterns.length; i++) {
+    if (sqlPatterns[i].test(str)) {
+      result.safe = false;
+      result.reason = 'Contém padrões de SQL injection';
+      return result;
+    }
+  }
+
+  return result;
 }

@@ -10,6 +10,7 @@ var FileManager = (function() {
   
   /**
    * Faz upload de arquivos para o Google Drive
+   * Deploy 32 - Retry automático e mensagens amigáveis
    * @param {string} rncNumber - Número da RNC
    * @param {Array} files - Array de arquivos
    * @param {string} section - Seção de origem
@@ -20,103 +21,130 @@ var FileManager = (function() {
       uploaded: 0,
       failed: 0,
       files: [],
-      errors: []
+      errors: [],
+      warnings: []
     };
-    
+
     if (!files || files.length === 0) {
       return results;
     }
-    
+
     try {
       var user = Session.getActiveUser().getEmail() || 'system';
-      
+
       Logger.logInfo('uploadFiles_START', {
         rncNumber: rncNumber,
         filesCount: files.length,
         section: section
       });
-      
+
       // Obter ou criar pasta da RNC
       var rncFolder = getRncFolder(rncNumber);
       if (!rncFolder) {
         throw new Error('Não foi possível criar pasta para a RNC');
       }
-      
+
       // Configurações
       var renomearArquivos = getSystemConfig('RenomearArquivos', 'Sim') === 'Sim';
       var anexosExistentes = getAnexosRnc(rncNumber);
       var proximoNumero = anexosExistentes.length + 1;
-      
+
       // Processar cada arquivo
       for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        var fileName = file.name;
+
         try {
-          var file = files[i];
-          
           // Validar arquivo
           var validation = validateFile(file);
           if (!validation.valid) {
             results.failed++;
             results.errors.push({
-              filename: file.name,
-              error: validation.error
+              filename: fileName,
+              error: validation.error,
+              userMessage: 'Arquivo rejeitado: ' + validation.error,
+              canRetry: false
             });
             continue;
           }
-          
+
           // Preparar nome do arquivo
-          var fileName = file.name;
           if (renomearArquivos) {
             fileName = generateFileName(rncNumber, proximoNumero + i, files.length + anexosExistentes.length, file.name);
           }
-          
-          // Criar blob e fazer upload
-          var blob = Utilities.newBlob(
-            Utilities.base64Decode(file.content),
-            file.mimeType || 'application/octet-stream',
-            fileName
-          );
-          
-          var driveFile = rncFolder.createFile(blob);
-          
+
+          // ✅ DEPLOY 32: Tentar upload com retry
+          var uploadResult = uploadFileWithRetry(file, fileName, rncFolder, 3);
+
+          if (!uploadResult.success) {
+            results.failed++;
+            results.errors.push({
+              filename: file.name,
+              error: uploadResult.error,
+              userMessage: uploadResult.userMessage,
+              canRetry: uploadResult.canRetry,
+              attempts: uploadResult.attempts
+            });
+            continue;
+          }
+
+          var driveFile = uploadResult.file;
+
           // Registrar na planilha de anexos
           var anexoData = {
             'RncNumero': rncNumber,
             'NomeArquivo': fileName,
             'NomeOriginal': file.name,
             'TipoArquivo': file.mimeType || 'unknown',
-            'Tamanho': file.size || blob.getBytes().length,
+            'Tamanho': file.size || uploadResult.size,
             'DriveFileId': driveFile.getId(),
             'DataUpload': new Date(),
             'UsuarioUpload': user,
             'Seção': section,
             'Url': driveFile.getUrl()
           };
-          
+
           Database.insertData(CONFIG.SHEETS.ANEXOS, anexoData);
-          
+
           results.uploaded++;
           results.files.push({
             name: fileName,
+            originalName: file.name,
             id: driveFile.getId(),
-            url: driveFile.getUrl()
+            url: driveFile.getUrl(),
+            attempts: uploadResult.attempts
           });
-          
+
+          // Avisar se precisou de retry
+          if (uploadResult.attempts > 1) {
+            results.warnings.push({
+              filename: file.name,
+              message: 'Arquivo enviado após ' + uploadResult.attempts + ' tentativas'
+            });
+          }
+
           Logger.logDebug('uploadFiles_FILE_SUCCESS', {
             rncNumber: rncNumber,
             fileName: fileName,
-            fileId: driveFile.getId()
+            fileId: driveFile.getId(),
+            attempts: uploadResult.attempts
           });
-          
+
         } catch (fileError) {
           results.failed++;
+          var errorInfo = getFileErrorInfo(fileError);
+
           results.errors.push({
             filename: file.name || 'unknown',
-            error: fileError.toString()
+            error: fileError.toString(),
+            userMessage: errorInfo.userMessage,
+            canRetry: errorInfo.canRetry
           });
-          
+
           Logger.logError('uploadFiles_FILE_ERROR', fileError, {
             rncNumber: rncNumber,
-            fileName: file.name
+            fileName: file.name,
+            errorType: errorInfo.type
           });
         }
       }
@@ -419,14 +447,173 @@ function downloadAnexo(fileId) {
    * Limpa anexos órfãos (sem RNC associada)
    * @return {Object} Resultado da limpeza
    */
+  /**
+   * ============================================
+   * DEPLOY 32: Funções de Retry e Error Handling
+   * ============================================
+   */
+
+  /**
+   * Tenta fazer upload de arquivo com retry automático
+   * @param {Object} file - Arquivo a fazer upload
+   * @param {string} fileName - Nome do arquivo
+   * @param {Folder} folder - Pasta de destino
+   * @param {number} maxAttempts - Número máximo de tentativas
+   * @return {Object} Resultado do upload
+   * @private
+   */
+  function uploadFileWithRetry(file, fileName, folder, maxAttempts) {
+    var attempts = 0;
+    var lastError = null;
+
+    while (attempts < maxAttempts) {
+      attempts++;
+
+      try {
+        // Criar blob
+        var blob = Utilities.newBlob(
+          Utilities.base64Decode(file.content),
+          file.mimeType || 'application/octet-stream',
+          fileName
+        );
+
+        // Tentar upload
+        var driveFile = folder.createFile(blob);
+
+        Logger.logDebug('uploadFileWithRetry_SUCCESS', {
+          fileName: fileName,
+          attempts: attempts
+        });
+
+        return {
+          success: true,
+          file: driveFile,
+          size: blob.getBytes().length,
+          attempts: attempts
+        };
+
+      } catch (error) {
+        lastError = error;
+
+        Logger.logWarning('uploadFileWithRetry_ATTEMPT_FAILED', {
+          fileName: fileName,
+          attempt: attempts,
+          maxAttempts: maxAttempts,
+          error: error.toString()
+        });
+
+        // Se não é o último attempt, aguardar antes de tentar novamente
+        if (attempts < maxAttempts) {
+          var waitTime = Math.pow(2, attempts) * 1000; // Backoff exponencial: 2s, 4s, 8s
+          Utilities.sleep(waitTime);
+        }
+      }
+    }
+
+    // Todas as tentativas falharam
+    var errorInfo = getFileErrorInfo(lastError);
+
+    return {
+      success: false,
+      error: lastError.toString(),
+      userMessage: errorInfo.userMessage,
+      canRetry: errorInfo.canRetry,
+      attempts: attempts
+    };
+  }
+
+  /**
+   * Analisa erro e retorna informações amigáveis para o usuário
+   * @param {Error} error - Erro a analisar
+   * @return {Object} Informações do erro
+   * @private
+   */
+  function getFileErrorInfo(error) {
+    var errorStr = error.toString().toLowerCase();
+    var info = {
+      type: 'unknown',
+      userMessage: 'Erro ao enviar arquivo. Tente novamente.',
+      canRetry: true
+    };
+
+    // Quota excedida
+    if (errorStr.includes('quota') || errorStr.includes('storage') || errorStr.includes('limite')) {
+      info.type = 'quota_exceeded';
+      info.userMessage = 'Limite de armazenamento atingido. Contate o administrador do sistema.';
+      info.canRetry = false;
+      return info;
+    }
+
+    // Permissão negada
+    if (errorStr.includes('permission') || errorStr.includes('permissão') || errorStr.includes('denied')) {
+      info.type = 'permission_denied';
+      info.userMessage = 'Sem permissão para salvar arquivo no Drive. Contate o administrador.';
+      info.canRetry = false;
+      return info;
+    }
+
+    // Arquivo muito grande
+    if (errorStr.includes('size') || errorStr.includes('tamanho') || errorStr.includes('large')) {
+      info.type = 'file_too_large';
+      info.userMessage = 'Arquivo muito grande. O tamanho máximo é 10MB.';
+      info.canRetry = false;
+      return info;
+    }
+
+    // Tipo de arquivo não suportado
+    if (errorStr.includes('type') || errorStr.includes('tipo') || errorStr.includes('format')) {
+      info.type = 'invalid_type';
+      info.userMessage = 'Tipo de arquivo não suportado.';
+      info.canRetry = false;
+      return info;
+    }
+
+    // Timeout
+    if (errorStr.includes('timeout') || errorStr.includes('time out')) {
+      info.type = 'timeout';
+      info.userMessage = 'Tempo esgotado ao enviar arquivo. Tente novamente.';
+      info.canRetry = true;
+      return info;
+    }
+
+    // Erro de rede
+    if (errorStr.includes('network') || errorStr.includes('connection') || errorStr.includes('conexão')) {
+      info.type = 'network_error';
+      info.userMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      info.canRetry = true;
+      return info;
+    }
+
+    // Serviço indisponível
+    if (errorStr.includes('unavailable') || errorStr.includes('indisponível') || errorStr.includes('service')) {
+      info.type = 'service_unavailable';
+      info.userMessage = 'Serviço temporariamente indisponível. Aguarde alguns minutos e tente novamente.';
+      info.canRetry = true;
+      return info;
+    }
+
+    // Erro genérico
+    info.type = 'generic_error';
+    info.userMessage = 'Erro ao enviar arquivo: ' + error.toString();
+    info.canRetry = true;
+
+    return info;
+  }
+
+  /**
+   * ============================================
+   * Função de Limpeza
+   * ============================================
+   */
+
   function cleanOrphanAttachments() {
     try {
       Logger.logInfo('cleanOrphanAttachments_START');
-      
+
       var anexos = Database.findData(CONFIG.SHEETS.ANEXOS, {});
       var rncs = RncOperations.getAllRncNumbers();
       var orphans = [];
-      
+
       for (var i = 0; i < anexos.length; i++) {
         if (rncs.indexOf(anexos[i]['RncNumero']) === -1) {
           orphans.push(anexos[i]);

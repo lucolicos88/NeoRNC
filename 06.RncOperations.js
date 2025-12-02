@@ -246,25 +246,44 @@ function updateRnc(rncNumber, formData, files) {
         
         // Preparar dados com status
         var updates = prepareRncData(formData, rncNumber, user, false);
-        
-        // Determinar novo status ANTES de salvar
+
+        // ✅ DEPLOY 32: Determinar novo status ANTES de salvar (com validação)
         var simulatedRnc = Object.assign({}, currentRnc, updates);
-        var newStatus = determineNewStatus(currentRnc, simulatedRnc);
-        
+        var statusResult = determineNewStatus(currentRnc, simulatedRnc);
+
         Logger.logInfo('updateRnc_STATUS_CHECK', {
             rncNumber: rncNumber,
             currentStatus: currentRnc['Status Geral'],
-            calculatedStatus: newStatus,
-            willChange: newStatus !== currentRnc['Status Geral']
+            calculatedStatus: statusResult.status,
+            willChange: statusResult.statusChanged,
+            validationErrors: statusResult.validation.errors,
+            validationWarnings: statusResult.validation.warnings
         });
-        
+
+        // Verificar se houve erro de validação
+        if (!statusResult.validation.valid) {
+            return {
+                success: false,
+                error: 'Validação de status falhou: ' + statusResult.validation.errors.join('; '),
+                validationErrors: statusResult.validation.errors
+            };
+        }
+
         // Aplicar novo status se mudou
-        if (newStatus && newStatus !== currentRnc['Status Geral']) {
-            updates['Status Geral'] = newStatus;
-            Logger.logInfo('updateRnc_STATUS_CHANGE', { 
+        if (statusResult.statusChanged) {
+            updates['Status Geral'] = statusResult.status;
+            Logger.logInfo('updateRnc_STATUS_CHANGE', {
                 rncNumber: rncNumber,
                 oldStatus: currentRnc['Status Geral'],
-                newStatus: newStatus
+                newStatus: statusResult.status
+            });
+        }
+
+        // Se houve warnings, logar mas continuar
+        if (statusResult.validation.warnings.length > 0) {
+            Logger.logWarning('updateRnc_STATUS_WARNINGS', {
+                rncNumber: rncNumber,
+                warnings: statusResult.validation.warnings
             });
         }
         
@@ -555,49 +574,62 @@ return rnc;
   
 /**
  * Prepara dados da RNC para inserção/atualização
+ * Deploy 32 - Sanitização de input adicionada
  * Deploy 37 - Formatação de datas padronizada
  * @private
  */
 function prepareRncData(formData, rncNumber, user, isNew) {
   var rncData = {};
-  
+
+  // ✅ DEPLOY 32: Sanitizar dados antes de processar
+  Logger.logDebug('prepareRncData_SANITIZING', {
+    fieldCount: Object.keys(formData).length
+  });
+
+  var sanitizedData = sanitizeFormData(formData);
+
   // Mapear campos do formulário para colunas da planilha
-  for (var formField in formData) {
+  for (var formField in sanitizedData) {
     var columnName = FIELD_MAPPING[formField] || formField;
-    var value = formData[formField];
-    
+    var value = sanitizedData[formField];
+
     // ✅ TRATAMENTO ESPECIAL PARA CAMPOS DE DATA
-    if (formField.toLowerCase().includes('data') || 
-        formField === 'Data' || 
+    if (formField.toLowerCase().includes('data') ||
+        formField === 'Data' ||
         columnName.toLowerCase().includes('data')) {
-      
+
       // Converter para formato brasileiro DD/MM/YYYY
       rncData[columnName] = formatDateBR(value);
-      
+
       Logger.logDebug('prepareRncData_DATE_CONVERTED', {
         field: formField,
         original: value,
         converted: rncData[columnName]
       });
-      
+
     } else {
-      // Campos normais
+      // Campos normais - já sanitizados
       rncData[columnName] = value;
     }
   }
-  
+
   // Adicionar campos do sistema se for nova
   if (isNew) {
     rncData['Nº RNC'] = rncNumber;
     rncData['Status Geral'] = CONFIG.STATUS_PIPELINE.ABERTURA;
-    
+
     var dataHoraAtual = getCurrentDateTimeBR();
     rncData['Data Criação'] = dataHoraAtual;
     rncData['Usuário Criação'] = user;
     rncData['Última Edição'] = dataHoraAtual;
     rncData['Editado Por'] = user;
   }
-  
+
+  Logger.logInfo('prepareRncData_COMPLETE', {
+    sanitized: true,
+    fieldCount: Object.keys(rncData).length
+  });
+
   return rncData;
 }
   
@@ -611,137 +643,322 @@ function prepareRncData(formData, rncNumber, user, isNew) {
       errors: [],
       warnings: []
     };
-    
+
     try {
       // Obter campos obrigatórios da configuração
       var fieldsConfig = ConfigManager.getFieldsForSection(section);
-      
+
       for (var i = 0; i < fieldsConfig.length; i++) {
         var field = fieldsConfig[i];
-        
+
         if (field.required) {
           var columnName = FIELD_MAPPING[field.name] || field.name;
           var value = rncData[columnName];
-          
+
           if (!value || (typeof value === 'string' && value.trim() === '')) {
             validation.valid = false;
             validation.errors.push('Campo obrigatório não preenchido: ' + field.name);
           }
         }
       }
-      
+
     } catch (error) {
       Logger.logError('validateRncData', error);
       validation.warnings.push('Não foi possível validar completamente os dados');
     }
-    
+
+    return validation;
+  }
+
+  /**
+   * ============================================
+   * DEPLOY 32: Validação de Transição de Status
+   * ============================================
+   */
+
+  /**
+   * Valida se uma transição de status é permitida
+   * @param {string} currentStatus - Status atual
+   * @param {string} newStatus - Novo status desejado
+   * @param {Object} rncData - Dados completos da RNC (atuais + updates)
+   * @return {Object} { valid: boolean, errors: Array }
+   * @private
+   */
+  function validateStatusTransition(currentStatus, newStatus, rncData) {
+    var validation = {
+      valid: true,
+      errors: [],
+      warnings: []
+    };
+
+    // Se status não mudou, é válido
+    if (currentStatus === newStatus) {
+      return validation;
+    }
+
+    Logger.logDebug('validateStatusTransition', {
+      from: currentStatus,
+      to: newStatus
+    });
+
+    // Definir transições válidas
+    var validTransitions = {
+      'Abertura RNC': ['Análise Qualidade', 'Finalizada'],
+      'Análise Qualidade': ['Análise do problema e Ação Corretiva', 'Finalizada'],
+      'Análise do problema e Ação Corretiva': ['Finalizada'],
+      'Finalizada': [] // Não pode sair de Finalizada
+    };
+
+    // Verificar se transição é válida
+    var allowedNextStates = validTransitions[currentStatus] || [];
+    if (allowedNextStates.indexOf(newStatus) === -1) {
+      validation.valid = false;
+      validation.errors.push(
+        'Transição de status inválida: "' + currentStatus + '" para "' + newStatus + '". ' +
+        'Status permitidos: ' + (allowedNextStates.length > 0 ? allowedNextStates.join(', ') : 'nenhum')
+      );
+      return validation;
+    }
+
+    // Definir campos obrigatórios para cada status
+    var requiredFieldsByStatus = {
+      'Análise Qualidade': [
+        'Data da Análise',
+        'Risco',
+        'Tipo de Falha'
+      ],
+      'Análise do problema e Ação Corretiva': [
+        'Plano de ação',
+        'Responsável pela ação corretiva'
+      ],
+      'Finalizada': [
+        'Status da Ação Corretiva'
+      ]
+    };
+
+    // Validar campos obrigatórios para o novo status
+    var requiredFields = requiredFieldsByStatus[newStatus] || [];
+    var missingFields = [];
+
+    for (var i = 0; i < requiredFields.length; i++) {
+      var fieldName = requiredFields[i];
+      var value = rncData[fieldName];
+
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        missingFields.push(fieldName);
+      }
+    }
+
+    if (missingFields.length > 0) {
+      validation.valid = false;
+      validation.errors.push(
+        'Campos obrigatórios não preenchidos para o status "' + newStatus + '": ' +
+        missingFields.join(', ')
+      );
+    }
+
+    // Validações especiais
+    if (newStatus === 'Finalizada') {
+      // Verificar se tem pelo menos um dos critérios de finalização
+      var tipoRnc = rncData['Tipo RNC'] || rncData['Tipo da RNC'] || '';
+      var statusAcao = rncData['Status da Ação Corretiva'] || '';
+
+      var isNaoProcede = tipoRnc.toLowerCase().includes('não procede') ||
+                         tipoRnc.toLowerCase().includes('nao procede');
+      var isAcaoConcluida = statusAcao.toLowerCase().includes('concluída') ||
+                           statusAcao.toLowerCase().includes('concluida');
+
+      if (!isNaoProcede && !isAcaoConcluida) {
+        validation.warnings.push(
+          'RNC sendo finalizada sem "Tipo RNC = Não Procede" ou "Status da Ação = Concluída". ' +
+          'Verifique se está correto.'
+        );
+      }
+    }
+
+    Logger.logInfo('validateStatusTransition_RESULT', {
+      from: currentStatus,
+      to: newStatus,
+      valid: validation.valid,
+      errors: validation.errors,
+      warnings: validation.warnings
+    });
+
     return validation;
   }
   
  /**
  * Determina novo status baseado nos campos preenchidos
+ * Deploy 32 - Validação de transição adicionada
  * REGRAS:
  * 1. Nova RNC → Abertura RNC
  * 2. Campo de Qualidade preenchido → Análise Qualidade
  * 3. Campo de Liderança preenchido → Análise do problema e Ação Corretiva
  * 4. Status Ação = Concluída OU Tipo RNC = Não Procede → Finalizada
+ * @return {Object} { status: string, validation: Object }
  */
 function determineNewStatus(currentRnc, updates) {
     try {
         var currentStatus = currentRnc['Status Geral'] || CONFIG.STATUS_PIPELINE.ABERTURA;
-        
+        var proposedStatus = currentStatus; // Status proposto
+
         Logger.logInfo('determineNewStatus_START', {
             currentStatus: currentStatus,
             updateFields: Object.keys(updates)
         });
-        
+
         // === REGRA 1: NÃO PROCEDE = FINALIZADA IMEDIATAMENTE ===
         var tipoRnc = updates['Tipo RNC'] || updates['Tipo da RNC'] || currentRnc['Tipo RNC'] || currentRnc['Tipo da RNC'];
-        
+
         if (tipoRnc && (tipoRnc.toLowerCase().includes('não procede'))) {
-            Logger.logInfo('determineNewStatus_NAO_PROCEDE', { 
+            Logger.logInfo('determineNewStatus_NAO_PROCEDE', {
                 rncNumber: currentRnc['Nº RNC'],
                 changing: currentStatus + ' -> Finalizada'
             });
-            return CONFIG.STATUS_PIPELINE.FINALIZADA;
+            proposedStatus = CONFIG.STATUS_PIPELINE.FINALIZADA;
         }
-        
+
         // === REGRA 4: STATUS DA AÇÃO CORRETIVA = CONCLUÍDA → FINALIZADA ===
-        var statusAcao = updates['Status da Ação Corretiva'] || currentRnc['Status da Ação Corretiva'];
-        
-        if (statusAcao && (
-            statusAcao.toLowerCase().includes('concluída') || 
-            statusAcao.toLowerCase().includes('concluida')
-        )) {
-            Logger.logInfo('determineNewStatus_ACAO_CONCLUIDA', { 
-                rncNumber: currentRnc['Nº RNC'],
-                statusAcao: statusAcao,
-                changing: currentStatus + ' -> Finalizada'
+        else {
+          var statusAcao = updates['Status da Ação Corretiva'] || currentRnc['Status da Ação Corretiva'];
+
+          if (statusAcao && (
+              statusAcao.toLowerCase().includes('concluída') ||
+              statusAcao.toLowerCase().includes('concluida')
+          )) {
+              Logger.logInfo('determineNewStatus_ACAO_CONCLUIDA', {
+                  rncNumber: currentRnc['Nº RNC'],
+                  statusAcao: statusAcao,
+                  changing: currentStatus + ' -> Finalizada'
+              });
+              proposedStatus = CONFIG.STATUS_PIPELINE.FINALIZADA;
+          }
+
+          // === REGRA 2: CAMPOS DE LIDERANÇA = ANÁLISE E AÇÃO ===
+          else {
+            var camposLideranca = [
+                'Plano de ação',
+                'Status da Ação Corretiva',
+                'Data limite para execução',
+                'Data da conclusão da Ação',
+                'Responsável pela ação corretiva'
+            ];
+
+            var liderancaFilled = false;
+            for (var i = 0; i < camposLideranca.length; i++) {
+                var campo = camposLideranca[i];
+                var valor = updates[campo];
+
+                if (valor && String(valor).trim() !== '') {
+                    Logger.logInfo('determineNewStatus_LIDERANCA_FILLED', {
+                        campo: campo,
+                        currentStatus: currentStatus
+                    });
+
+                    if (currentStatus !== CONFIG.STATUS_PIPELINE.ANALISE_ACAO &&
+                        currentStatus !== CONFIG.STATUS_PIPELINE.FINALIZADA) {
+                        proposedStatus = CONFIG.STATUS_PIPELINE.ANALISE_ACAO;
+                        liderancaFilled = true;
+                        break;
+                    }
+                }
+            }
+
+            // === REGRA 3: CAMPOS DE QUALIDADE = ANÁLISE QUALIDADE ===
+            if (!liderancaFilled) {
+              var camposQualidade = [
+                  'Setor onde ocorreu a não conformidade',
+                  'Data da Análise',
+                  'Risco',
+                  'Tipo de Falha',
+                  'Análise da Causa Raiz (relatório)',
+                  'Ação Corretiva Imediata'
+              ];
+
+              for (var j = 0; j < camposQualidade.length; j++) {
+                  var campoQ = camposQualidade[j];
+                  var valorQ = updates[campoQ];
+
+                  if (valorQ && String(valorQ).trim() !== '') {
+                      Logger.logInfo('determineNewStatus_QUALIDADE_FILLED', {
+                          campo: campoQ,
+                          currentStatus: currentStatus
+                      });
+
+                      if (currentStatus === CONFIG.STATUS_PIPELINE.ABERTURA) {
+                          proposedStatus = CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE;
+                          break;
+                      }
+                  }
+              }
+            }
+          }
+        }
+
+        // ✅ DEPLOY 32: Validar transição de status
+        if (proposedStatus !== currentStatus) {
+          // Merge de dados atuais + updates para validação
+          var mergedData = {};
+          for (var key in currentRnc) {
+            mergedData[key] = currentRnc[key];
+          }
+          for (var key in updates) {
+            mergedData[key] = updates[key];
+          }
+
+          var validation = validateStatusTransition(currentStatus, proposedStatus, mergedData);
+
+          if (!validation.valid) {
+            Logger.logWarning('determineNewStatus_VALIDATION_FAILED', {
+              from: currentStatus,
+              to: proposedStatus,
+              errors: validation.errors
             });
-            return CONFIG.STATUS_PIPELINE.FINALIZADA;
+
+            // Retornar status atual se validação falhou
+            return {
+              status: currentStatus,
+              validation: validation,
+              statusChanged: false
+            };
+          }
+
+          // Transição válida
+          Logger.logInfo('determineNewStatus_VALIDATED', {
+            from: currentStatus,
+            to: proposedStatus,
+            warnings: validation.warnings
+          });
+
+          return {
+            status: proposedStatus,
+            validation: validation,
+            statusChanged: true
+          };
         }
-        
-        // === REGRA 2: CAMPOS DE LIDERANÇA = ANÁLISE E AÇÃO ===
-        var camposLideranca = [
-            'Plano de ação',
-            'Status da Ação Corretiva',
-            'Data limite para execução',
-            'Data da conclusão da Ação',
-            'Responsável pela ação corretiva'
-        ];
-        
-        for (var i = 0; i < camposLideranca.length; i++) {
-            var campo = camposLideranca[i];
-            var valor = updates[campo];
-            
-            if (valor && String(valor).trim() !== '') {
-                Logger.logInfo('determineNewStatus_LIDERANCA_FILLED', {
-                    campo: campo,
-                    currentStatus: currentStatus
-                });
-                
-                if (currentStatus !== CONFIG.STATUS_PIPELINE.ANALISE_ACAO && 
-                    currentStatus !== CONFIG.STATUS_PIPELINE.FINALIZADA) {
-                    return CONFIG.STATUS_PIPELINE.ANALISE_ACAO;
-                }
-            }
-        }
-        
-        // === REGRA 3: CAMPOS DE QUALIDADE = ANÁLISE QUALIDADE ===
-        var camposQualidade = [
-            'Setor onde ocorreu a não conformidade',
-            'Data da Análise',
-            'Risco',
-            'Tipo de Falha',
-            'Análise da Causa Raiz (relatório)',
-            'Ação Corretiva Imediata'
-        ];
-        
-        for (var j = 0; j < camposQualidade.length; j++) {
-            var campoQ = camposQualidade[j];
-            var valorQ = updates[campoQ];
-            
-            if (valorQ && String(valorQ).trim() !== '') {
-                Logger.logInfo('determineNewStatus_QUALIDADE_FILLED', {
-                    campo: campoQ,
-                    currentStatus: currentStatus
-                });
-                
-                if (currentStatus === CONFIG.STATUS_PIPELINE.ABERTURA) {
-                    return CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE;
-                }
-            }
-        }
-        
-        // === NENHUMA REGRA APLICADA: MANTER STATUS ATUAL ===
-        Logger.logInfo('determineNewStatus_NO_CHANGE', { 
-            currentStatus: currentStatus 
+
+        // === NENHUMA MUDANÇA DE STATUS ===
+        Logger.logInfo('determineNewStatus_NO_CHANGE', {
+            currentStatus: currentStatus
         });
-        return currentStatus;
-        
+
+        return {
+          status: currentStatus,
+          validation: { valid: true, errors: [], warnings: [] },
+          statusChanged: false
+        };
+
     } catch (error) {
         Logger.logError('determineNewStatus_ERROR', error);
-        return currentStatus || CONFIG.STATUS_PIPELINE.ABERTURA;
+        return {
+          status: currentStatus || CONFIG.STATUS_PIPELINE.ABERTURA,
+          validation: {
+            valid: false,
+            errors: ['Erro ao determinar status: ' + error.toString()],
+            warnings: []
+          },
+          statusChanged: false
+        };
     }
 }
   

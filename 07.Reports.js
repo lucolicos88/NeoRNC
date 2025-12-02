@@ -2,27 +2,46 @@
  * ============================================
  * REPORTS.GS - Relatórios e Dashboard
  * Sistema RNC Neoformula - Deploy 30 Modularizado
+ * Deploy 32 - Performance otimizada com cache
  * ============================================
  */
 
 var Reports = (function() {
   'use strict';
-  
+
   /**
- * Obtém dados do dashboard - VERSÃO REORGANIZADA
- * @return {Object} Estatísticas do dashboard
- */
-/**
- * Obtém dados do Dashboard com KPIs AVANÇADOS
- * Deploy 31 - 8 KPIs Implementados
- */
-function getDashboardData() {
-  var startTime = new Date().getTime();
-  
-  try {
-    Logger.logInfo('getDashboardData_START');
-    
-    var rncs = RncOperations.getAllRncs();
+   * ============================================
+   * DEPLOY 32: Cache de Dashboard
+   * ============================================
+   */
+
+  /**
+   * Obtém dados do dashboard com cache
+   * Cache de 5 minutos para evitar recálculo constante
+   * @param {boolean} forceRefresh - Força atualização ignorando cache
+   * @return {Object} Estatísticas do dashboard
+   */
+  function getDashboardData(forceRefresh) {
+    var startTime = new Date().getTime();
+
+    try {
+      // ✅ DEPLOY 32: Tentar obter do cache primeiro
+      if (!forceRefresh) {
+        var cached = getDashboardFromCache();
+        if (cached) {
+          Logger.logInfo('getDashboardData_CACHE_HIT', {
+            cacheAge: cached.cacheAge,
+            loadTime: new Date().getTime() - startTime
+          });
+          return cached.data;
+        }
+      }
+
+      Logger.logInfo('getDashboardData_START', {
+        forceRefresh: forceRefresh || false
+      });
+
+      var rncs = RncOperations.getAllRncs();
     
     // ============================================
     // ESTRUTURA DE DADOS DOS KPIs
@@ -306,9 +325,12 @@ function getDashboardData() {
       taxaPrazo: stats.taxaCumprimentoPrazo + '%',
       duration: Logger.logPerformance('getDashboardData', startTime)
     });
-    
+
+    // ✅ DEPLOY 32: Salvar no cache (5 minutos)
+    saveDashboardToCache(stats);
+
     return stats;
-    
+
   } catch (error) {
     Logger.logError('getDashboardData_ERROR', error);
     return {
@@ -317,6 +339,96 @@ function getDashboardData() {
     };
   }
 }
+
+  /**
+   * ============================================
+   * DEPLOY 32: Funções de Cache do Dashboard
+   * ============================================
+   */
+
+  /**
+   * Obtém dashboard do cache
+   * @return {Object|null} { data, cacheAge } ou null se não cached
+   * @private
+   */
+  function getDashboardFromCache() {
+    try {
+      var cache = CacheService.getScriptCache();
+      var cacheKey = 'dashboard_data_v1';
+      var cached = cache.get(cacheKey);
+
+      if (cached) {
+        var parsedData = JSON.parse(cached);
+        var cacheTimestamp = parsedData.timestamp || 0;
+        var now = new Date().getTime();
+        var cacheAge = Math.floor((now - cacheTimestamp) / 1000); // segundos
+
+        Logger.logDebug('getDashboardFromCache_HIT', {
+          cacheAge: cacheAge + 's',
+          dataSize: cached.length
+        });
+
+        return {
+          data: parsedData.stats,
+          cacheAge: cacheAge
+        };
+      }
+
+      Logger.logDebug('getDashboardFromCache_MISS');
+      return null;
+
+    } catch (error) {
+      Logger.logWarning('getDashboardFromCache_ERROR', {
+        error: error.toString()
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Salva dashboard no cache
+   * @param {Object} stats - Estatísticas do dashboard
+   * @private
+   */
+  function saveDashboardToCache(stats) {
+    try {
+      var cache = CacheService.getScriptCache();
+      var cacheKey = 'dashboard_data_v1';
+      var cacheData = {
+        stats: stats,
+        timestamp: new Date().getTime()
+      };
+
+      var cacheTTL = 300; // 5 minutos
+      cache.put(cacheKey, JSON.stringify(cacheData), cacheTTL);
+
+      Logger.logDebug('saveDashboardToCache_SUCCESS', {
+        ttl: cacheTTL + 's',
+        dataSize: JSON.stringify(cacheData).length
+      });
+
+    } catch (error) {
+      Logger.logWarning('saveDashboardToCache_ERROR', {
+        error: error.toString()
+      });
+    }
+  }
+
+  /**
+   * Limpa cache do dashboard
+   * @return {boolean} Sucesso
+   */
+  function clearDashboardCache() {
+    try {
+      var cache = CacheService.getScriptCache();
+      cache.remove('dashboard_data_v1');
+      Logger.logInfo('clearDashboardCache_SUCCESS');
+      return true;
+    } catch (error) {
+      Logger.logError('clearDashboardCache_ERROR', error);
+      return false;
+    }
+  }
   
   /**
    * Obtém dados do Kanban
@@ -905,6 +1017,7 @@ function calculateReportStats(rncs) {
     getDashboardData: getDashboardData,
     getKanbanData: getKanbanData,
     generateReport: generateReport,
+    clearDashboardCache: clearDashboardCache,
     getReportFilterOptions: getReportFilterOptions
   };
 })();

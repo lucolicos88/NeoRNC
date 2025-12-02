@@ -3,7 +3,14 @@
     "allow": [
       "Bash(python fix-deploy31.py:*)",
       "Bash(python fix-deploy31-simple.py:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(clasp --version:*)",
+      "Bash(clasp push:*)",
+      "Bash(clasp deploy:*)",
+      "Bash(clasp deployments:*)",
+      "Bash(clasp open:*)"
     ],
     "deny": [],
     "ask": []
