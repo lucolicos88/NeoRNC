@@ -3390,23 +3390,40 @@ function renderField(field, value, secao, isEditContext = false) {
         
         function handleFiles(files, isEdit = false) {
             debugLog('info', '📂 Processando arquivos DEPLOY 30', { count: files.length, isEdit });
-            
+
             files.forEach(file => {
-                // Validar tamanho (10MB)
+                // ✅ DEPLOY 33 FIX: Validar tamanho (10MB) com modal visível
                 if (file.size > 10 * 1024 * 1024) {
-                    showError(`Arquivo "${file.name}" é muito grande. Máximo: 10MB`);
+                    const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                    showErrorModal(
+                        '❌ Arquivo Muito Grande',
+                        `<strong>Arquivo:</strong> ${file.name}<br>` +
+                        `<strong>Tamanho:</strong> ${sizeInMB} MB<br><br>` +
+                        `<strong>Tamanho máximo permitido:</strong> 10 MB<br><br>` +
+                        `Por favor, reduza o tamanho do arquivo ou divida-o em partes menores.`
+                    );
+                    debugLog('error', `❌ Arquivo rejeitado (muito grande): ${file.name}`, { size: sizeInMB + ' MB' });
                     return;
                 }
-                
-                // Validar tipo
+
+                // ✅ DEPLOY 33 FIX: Validar tipo com modal visível
                 const allowedTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png'];
                 const extension = '.' + file.name.split('.').pop().toLowerCase();
-                
+
                 if (!allowedTypes.includes(extension)) {
-                    showError(`Tipo de arquivo "${extension}" não permitido.`);
+                    showErrorModal(
+                        '❌ Tipo de Arquivo Não Permitido',
+                        `<strong>Arquivo:</strong> ${file.name}<br>` +
+                        `<strong>Tipo:</strong> ${extension}<br><br>` +
+                        `<strong>Tipos permitidos:</strong><br>` +
+                        `• Documentos: .pdf, .doc, .docx<br>` +
+                        `• Planilhas: .xls, .xlsx<br>` +
+                        `• Imagens: .jpg, .jpeg, .png`
+                    );
+                    debugLog('error', `❌ Arquivo rejeitado (tipo não permitido): ${file.name}`, { extension });
                     return;
                 }
-                
+
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const fileData = {
@@ -3415,11 +3432,11 @@ function renderField(field, value, secao, isEditContext = false) {
                         mimeType: file.type,
                         content: e.target.result.split(',')[1] // Remove data:type;base64,
                     };
-                    
+
                     selectedFiles.push(fileData);
                     updateFileList(isEdit);
-                    
-                    debugLog('success', `✅ Arquivo carregado DEPLOY 30: ${file.name}`, { 
+
+                    debugLog('success', `✅ Arquivo carregado DEPLOY 30: ${file.name}`, {
                         size: formatFileSize(file.size)
                     });
                 };
@@ -3527,6 +3544,80 @@ function validatePermissionsBeforeSave() {
 }
 
 /**
+ * Modal de ERRO customizado - Deploy 33 Fix
+ * Mostra erros de validação de forma MUITO visível
+ */
+function showErrorModal(title, message) {
+    return new Promise((resolve) => {
+        // Remover modais anteriores
+        const oldModal = document.getElementById('errorModal');
+        if (oldModal) oldModal.remove();
+
+        const modalHtml = `
+            <div id="errorModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s;">
+                <div style="background: white; padding: 2.5rem; border-radius: 16px; max-width: 600px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.3s;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">❌</div>
+                    <h2 style="color: #f44336; margin-bottom: 15px; font-size: 24px; font-weight: 700;">${title}</h2>
+                    <div style="color: #666; font-size: 15px; line-height: 1.8; margin-bottom: 30px; text-align: left; max-height: 300px; overflow-y: auto; padding: 15px; background: #fff3cd; border-left: 4px solid #f44336; border-radius: 8px;">${message}</div>
+                    <button id="errorModalOk" style="
+                        background: #f44336;
+                        color: white;
+                        border: none;
+                        padding: 14px 40px;
+                        border-radius: 8px;
+                        font-size: 16px;
+                        font-weight: 700;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        min-width: 150px;
+                        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+                    " onmouseover="this.style.background='#d32f2f'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f44336'; this.style.transform='scale(1)';">
+                        ENTENDI
+                    </button>
+                </div>
+            </div>
+            <style>
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideUp {
+                    from { transform: translateY(50px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+            </style>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const modal = document.getElementById('errorModal');
+        const btnOk = document.getElementById('errorModalOk');
+
+        // Função para remover modal
+        const removeModal = () => {
+            if (modal && modal.parentNode) {
+                modal.style.animation = 'fadeOut 0.3s';
+                setTimeout(() => modal.remove(), 300);
+            }
+        };
+
+        // Evento de clique no OK
+        btnOk.addEventListener('click', () => {
+            removeModal();
+            resolve(true);
+        });
+
+        // Fechar ao clicar fora
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                removeModal();
+                resolve(true);
+            }
+        });
+    });
+}
+
+/**
  * Modal de confirmação customizado
  * Deploy 35 - Padronização de UI
  */
@@ -3581,26 +3672,26 @@ function showConfirmModal(title, message) {
                 }
             </style>
         `;
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
+
         const modal = document.getElementById('confirmModal');
         const btnOk = document.getElementById('confirmOk');
         const btnCancel = document.getElementById('confirmCancel');
-        
+
         // Função para remover modal
         const removeModal = () => {
             if (modal && modal.parentNode) {
                 modal.remove();
             }
         };
-        
+
         // Evento de clique no OK
         btnOk.addEventListener('click', () => {
             removeModal();
             resolve(true);
         });
-        
+
         // Evento de clique no Cancelar
         btnCancel.addEventListener('click', () => {
             removeModal();
@@ -3804,20 +3895,27 @@ async function saveRnc() {
             multiselectCount: multiselectInputs.length
         });
         
-        // Validar campos obrigatórios
+        // ✅ DEPLOY 33 FIX: Validar campos obrigatórios com modal visível
         const aberturaFields = appContext.fieldsConfig.Abertura || [];
         const requiredFields = aberturaFields.filter(f => f.required);
         const missingFields = [];
-        
+
         requiredFields.forEach(field => {
             // Ignorar campo de arquivo na validação
             if (field.type !== 'file' && (!data[field.name] || data[field.name].trim() === '')) {
                 missingFields.push(field.name);
             }
         });
-        
+
         if (missingFields.length > 0) {
-            showError(`Campos obrigatórios não preenchidos:\n• ${missingFields.join('\n• ')}`);
+            const fieldsList = missingFields.map(f => `• ${f}`).join('<br>');
+            await showErrorModal(
+                '⚠️ Campos Obrigatórios Não Preenchidos',
+                `<strong>Você precisa preencher os seguintes campos antes de salvar a RNC:</strong><br><br>` +
+                fieldsList +
+                `<br><br>Por favor, volte e preencha todos os campos obrigatórios (marcados com <span style="color: red;">*</span>).`
+            );
+            debugLog('warning', '⚠️ Validação falhou - campos obrigatórios', { missingFields });
             return;
         }
         
@@ -3873,13 +3971,31 @@ async function saveRnc() {
             
         } else {
             hideLoading();
-            throw new Error(result.error || 'Erro desconhecido ao salvar RNC');
+
+            // ✅ DEPLOY 33 FIX: Mostrar erros de validação do backend com modal
+            if (result.validationErrors && result.validationErrors.length > 0) {
+                const errorsList = result.validationErrors.map(e => `• ${e}`).join('<br>');
+                await showErrorModal(
+                    '⚠️ Erro de Validação',
+                    `<strong>Os seguintes erros foram encontrados:</strong><br><br>` +
+                    errorsList
+                );
+            } else {
+                throw new Error(result.error || 'Erro desconhecido ao salvar RNC');
+            }
         }
-        
+
     } catch (error) {
         debugLog('error', '❌ Erro ao salvar RNC', { error: error.message });
-        showError('Erro ao salvar RNC: ' + error.message);
         hideLoading();
+
+        // ✅ DEPLOY 33 FIX: Modal de erro para exceções
+        await showErrorModal(
+            '❌ Erro ao Salvar RNC',
+            `<strong>Ocorreu um erro ao tentar salvar a RNC:</strong><br><br>` +
+            `${error.message}<br><br>` +
+            `Por favor, tente novamente. Se o erro persistir, entre em contato com o suporte.`
+        );
     }
 }
 
