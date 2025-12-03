@@ -3544,77 +3544,98 @@ function validatePermissionsBeforeSave() {
 }
 
 /**
- * Modal de ERRO customizado - Deploy 33 Fix
+ * Modal de ERRO customizado - Deploy 33 Fix v3
  * Mostra erros de validação de forma MUITO visível
+ * COM FALLBACK para alert()
  */
 function showErrorModal(title, message) {
-    return new Promise((resolve) => {
-        // Remover modais anteriores
-        const oldModal = document.getElementById('errorModal');
-        if (oldModal) oldModal.remove();
+    console.log('🔴 showErrorModal chamado:', title, message);
 
-        const modalHtml = `
-            <div id="errorModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s;">
-                <div style="background: white; padding: 2.5rem; border-radius: 16px; max-width: 600px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.3s;">
-                    <div style="font-size: 64px; margin-bottom: 20px;">❌</div>
-                    <h2 style="color: #f44336; margin-bottom: 15px; font-size: 24px; font-weight: 700;">${title}</h2>
-                    <div style="color: #666; font-size: 15px; line-height: 1.8; margin-bottom: 30px; text-align: left; max-height: 300px; overflow-y: auto; padding: 15px; background: #fff3cd; border-left: 4px solid #f44336; border-radius: 8px;">${message}</div>
-                    <button id="errorModalOk" style="
-                        background: #f44336;
-                        color: white;
-                        border: none;
-                        padding: 14px 40px;
-                        border-radius: 8px;
-                        font-size: 16px;
-                        font-weight: 700;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        min-width: 150px;
-                        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
-                    " onmouseover="this.style.background='#d32f2f'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f44336'; this.style.transform='scale(1)';">
-                        ENTENDI
-                    </button>
+    try {
+        return new Promise((resolve) => {
+            // Remover modais anteriores
+            const oldModal = document.getElementById('errorModal');
+            if (oldModal) oldModal.remove();
+
+            const modalHtml = `
+                <div id="errorModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s;">
+                    <div style="background: white; padding: 2.5rem; border-radius: 16px; max-width: 600px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.3s;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">❌</div>
+                        <h2 style="color: #f44336; margin-bottom: 15px; font-size: 24px; font-weight: 700;">${title}</h2>
+                        <div style="color: #666; font-size: 15px; line-height: 1.8; margin-bottom: 30px; text-align: left; max-height: 300px; overflow-y: auto; padding: 15px; background: #fff3cd; border-left: 4px solid #f44336; border-radius: 8px;">${message}</div>
+                        <button id="errorModalOk" style="
+                            background: #f44336;
+                            color: white;
+                            border: none;
+                            padding: 14px 40px;
+                            border-radius: 8px;
+                            font-size: 16px;
+                            font-weight: 700;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                            min-width: 150px;
+                            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+                        " onmouseover="this.style.background='#d32f2f'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f44336'; this.style.transform='scale(1)';">
+                            ENTENDI
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <style>
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideUp {
-                    from { transform: translateY(50px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-            </style>
-        `;
+                <style>
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes slideUp {
+                        from { transform: translateY(50px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                </style>
+            `;
 
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            console.log('✅ Modal inserido no DOM');
 
-        const modal = document.getElementById('errorModal');
-        const btnOk = document.getElementById('errorModalOk');
+            const modal = document.getElementById('errorModal');
+            const btnOk = document.getElementById('errorModalOk');
 
-        // Função para remover modal
-        const removeModal = () => {
-            if (modal && modal.parentNode) {
-                modal.style.animation = 'fadeOut 0.3s';
-                setTimeout(() => modal.remove(), 300);
+            if (!modal || !btnOk) {
+                console.error('❌ Modal ou botão não encontrado!');
+                // Fallback para alert
+                alert(title + '\n\n' + message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, ''));
+                resolve(true);
+                return;
             }
-        };
 
-        // Evento de clique no OK
-        btnOk.addEventListener('click', () => {
-            removeModal();
-            resolve(true);
-        });
+            // Função para remover modal
+            const removeModal = () => {
+                if (modal && modal.parentNode) {
+                    modal.style.animation = 'fadeOut 0.3s';
+                    setTimeout(() => modal.remove(), 300);
+                }
+            };
 
-        // Fechar ao clicar fora
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
+            // Evento de clique no OK
+            btnOk.addEventListener('click', () => {
+                console.log('✅ Botão OK clicado');
                 removeModal();
                 resolve(true);
-            }
+            });
+
+            // Fechar ao clicar fora
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    console.log('✅ Clicado fora do modal');
+                    removeModal();
+                    resolve(true);
+                }
+            });
         });
-    });
+    } catch (error) {
+        console.error('❌ Erro ao mostrar modal:', error);
+        // Fallback definitivo para alert
+        alert(title + '\n\n' + message.replace(/<br>/g, '\n').replace(/<[^>]*>/g, ''));
+        return Promise.resolve(true);
+    }
 }
 
 /**
