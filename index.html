@@ -1920,37 +1920,6 @@ textarea.form-control,
             animation: spin 1s linear infinite;
             margin: 0 auto 1rem;
         }
-
-        /* ✅ Deploy 35: Barra de progresso melhorada */
-        .loading-progress {
-            width: 100%;
-            max-width: 300px;
-            height: 6px;
-            background: var(--border);
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 1rem auto 0;
-        }
-
-        .loading-progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            border-radius: 3px;
-            animation: progress 2s ease-in-out infinite;
-        }
-
-        @keyframes progress {
-            0% { width: 0%; }
-            50% { width: 70%; }
-            100% { width: 100%; }
-        }
-
-        .loading-text {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-top: 0.75rem;
-            font-weight: 500;
-        }
         
         /* Responsive Design */
         @media (max-width: 1024px) {
@@ -3904,35 +3873,10 @@ if (!document.getElementById('modal-animations')) {
 
 
        /**
- * Salva nova RNC - Deploy 35 com proteção contra cliques múltiplos
+ * Salva nova RNC - Deploy 40 com suporte a Multiselect
  */
 async function saveRnc() {
     console.log('🟢🟢🟢 saveRnc() CHAMADA! 🟢🟢🟢');
-
-    // ✅ Deploy 35: Pegar referência do botão
-    const submitBtn = document.getElementById('submitRnc');
-    const submitTextSpan = document.getElementById('submitText');
-
-    // Helper para resetar botão
-    const resetButton = () => {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitTextSpan.innerHTML = '💾 Criar RNC';
-            submitBtn.style.opacity = '1';
-            submitBtn.style.cursor = 'pointer';
-        }
-    };
-
-    if (!submitBtn) {
-        console.error('❌ Botão submitRnc não encontrado!');
-        return;
-    }
-
-    if (submitBtn.disabled) {
-        console.warn('⚠️ Botão já desabilitado, ignorando clique');
-        return;
-    }
-
     try {
         // Validar permissões primeiro
         console.log('🟢 Validando permissões...');
@@ -3943,7 +3887,7 @@ async function saveRnc() {
         console.log('✅ Permissões OK');
 
         debugLog('info', '💾 Iniciando salvamento da RNC');
-
+        
         const form = document.getElementById('rncForm');
         const formData = new FormData(form);
         const data = {};
@@ -4016,72 +3960,59 @@ async function saveRnc() {
         }
 
         console.log('✅ Validação passou! Continuando com save...');
-
+        
         // Confirmação antes de salvar
         const confirmed = await showConfirmModal(
             'Deseja realmente criar esta RNC?',
             'Após confirmar, os dados serão salvos permanentemente.'
         );
-
+        
         if (!confirmed) {
             debugLog('info', '❌ Usuário cancelou o salvamento');
             return;
         }
-
-        // ✅ Deploy 35: Desabilitar botão APÓS confirmação
-        submitBtn.disabled = true;
-        const originalText = submitTextSpan.innerHTML;
-        submitTextSpan.innerHTML = '⏳ Criando RNC...';
-        submitBtn.style.opacity = '0.6';
-        submitBtn.style.cursor = 'not-allowed';
-
+        
         showLoading('Salvando RNC...');
-
-        debugLog('info', '🚀 Enviando dados para o backend', {
+        
+        debugLog('info', '🚀 Enviando dados para o backend', { 
             dataKeys: Object.keys(data),
-            filesCount: selectedFiles.length
+            filesCount: selectedFiles.length 
         });
-
+        
         // Chamar backend
         const result = await apiCall('saveRnc', [data, selectedFiles]);
         
         if (result.success) {
-            debugLog('success', '✅ RNC salva com sucesso', {
-                rncNumber: result.rncNumber
+            debugLog('success', '✅ RNC salva com sucesso', { 
+                rncNumber: result.rncNumber 
             });
-
+            
             // Limpar formulário e arquivos
             form.reset();
             selectedFiles = [];
             updateFileList();
-
+            
             // Limpar containers de chips
             document.querySelectorAll('.chips-container').forEach(container => {
                 container.innerHTML = '';
                 container.classList.add('empty');
             });
-
+            
             // Limpar inputs hidden de multiselect
             document.querySelectorAll('.multiselect-wrapper input[type="hidden"]').forEach(input => {
                 input.value = '';
             });
-
-            // ✅ Deploy 35: Reabilitar botão após sucesso
-            resetButton();
-
+            
             // Esconder loading
             hideLoading();
-
+            
             // Mostrar modal de sucesso
             showSuccessModal(result.rncNumber);
-
+            
             debugLog('info', '✅ Formulário resetado e pronto para nova RNC');
-
+            
         } else {
             hideLoading();
-
-            // ✅ Deploy 35: Reabilitar botão em caso de erro
-            resetButton();
 
             // ✅ DEPLOY 33 FIX: Mostrar erros de validação do backend com modal
             if (result.validationErrors && result.validationErrors.length > 0) {
@@ -4099,9 +4030,6 @@ async function saveRnc() {
     } catch (error) {
         debugLog('error', '❌ Erro ao salvar RNC', { error: error.message });
         hideLoading();
-
-        // ✅ Deploy 35: Reabilitar botão em caso de exceção
-        resetButton();
 
         // ✅ DEPLOY 33 FIX: Modal de erro para exceções
         await showErrorModal(
@@ -5501,28 +5429,12 @@ function valuesAreDifferent(oldValue, newValue, fieldName) {
 
 
 /**
- * Atualiza RNC existente - Deploy 35 com UX melhorado
+ * Atualiza RNC existente - Deploy 40 com suporte a Multiselect
  */
 async function updateRnc() {
     try {
-        // ✅ Deploy 35: Desabilitar botão para evitar cliques múltiplos
-        const updateBtn = document.getElementById('updateRnc');
-        const updateTextSpan = document.getElementById('updateText');
-
-        if (updateBtn.disabled) {
-            debugLog('warning', '⚠️ Salvamento já em andamento, ignorando clique');
-            return; // Já está processando
-        }
-
-        // Desabilitar botão e mostrar feedback visual
-        updateBtn.disabled = true;
-        const originalText = updateTextSpan.innerHTML;
-        updateTextSpan.innerHTML = '⏳ Salvando...';
-        updateBtn.style.opacity = '0.6';
-        updateBtn.style.cursor = 'not-allowed';
-
         debugLog('info', '💾 Atualizando RNC', { currentRnc });
-
+        
         const form = document.getElementById('rncEditForm');
         const formData = new FormData(form);
         const data = {};
@@ -5642,63 +5554,42 @@ console.log('🔍 RESULTADO DA COMPARAÇÃO:', {
         
         if (!confirmed) {
             debugLog('info', '❌ Usuário cancelou a atualização');
-            // ✅ Deploy 35: Reabilitar botão se cancelar
-            updateBtn.disabled = false;
-            updateTextSpan.innerHTML = originalText;
-            updateBtn.style.opacity = '1';
-            updateBtn.style.cursor = 'pointer';
             return;
         }
-
+        
         showLoading('Salvando alterações...');
-
+        
         // Chamar backend
         const result = await apiCall('updateRnc', [currentRnc, data, selectedFiles]);
-
+        
         if (result.success) {
-            debugLog('success', '✅ RNC atualizada', {
+            debugLog('success', '✅ RNC atualizada', { 
                 rncNumber: currentRnc,
                 changesCount: changes.length
             });
-
+            
             // Exibir modal de sucesso com resumo
             showEditSuccessModal(currentRnc, changes);
-
+            
             // Limpar arquivos selecionados
             selectedFiles = [];
             updateFileList();
-
-            // ✅ Deploy 35: Reabilitar botão após sucesso
-            updateBtn.disabled = false;
-            updateTextSpan.innerHTML = originalText;
-            updateBtn.style.opacity = '1';
-            updateBtn.style.cursor = 'pointer';
-
+            
             // Recarregar RNC atualizada
             setTimeout(() => {
                 loadRncForEdit(currentRnc);
             }, 2000);
-
+            
         } else {
             throw new Error(result.error || 'Erro ao atualizar RNC');
         }
-
+        
         hideLoading();
-
+        
     } catch (error) {
         debugLog('error', '❌ Erro ao atualizar RNC', { error: error.message });
         showError('Erro ao atualizar: ' + error.message);
         hideLoading();
-
-        // ✅ Deploy 35: Reabilitar botão em caso de erro
-        const updateBtn = document.getElementById('updateRnc');
-        const updateTextSpan = document.getElementById('updateText');
-        if (updateBtn) {
-            updateBtn.disabled = false;
-            updateTextSpan.innerHTML = '💾 Salvar Alterações';
-            updateBtn.style.opacity = '1';
-            updateBtn.style.cursor = 'pointer';
-        }
     }
 }
         
@@ -8154,21 +8045,13 @@ function formatDate(dateStr) {
     }
 }
         
-        /**
-         * ✅ Deploy 35: Loading melhorado com barra de progresso
-         */
         function showLoading(message = 'Carregando...') {
             const overlay = document.getElementById('loadingOverlay');
             const messageEl = document.getElementById('loadingMessage');
-            messageEl.innerHTML = `
-                ${message}
-                <div class="loading-progress">
-                    <div class="loading-progress-bar"></div>
-                </div>
-            `;
+            messageEl.textContent = message;
             overlay.classList.remove('hidden');
         }
-
+        
         function hideLoading() {
             const overlay = document.getElementById('loadingOverlay');
             overlay.classList.add('hidden');
