@@ -3876,12 +3876,16 @@ if (!document.getElementById('modal-animations')) {
  * Salva nova RNC - Deploy 40 com suporte a Multiselect
  */
 async function saveRnc() {
+    console.log('🟢🟢🟢 saveRnc() CHAMADA! 🟢🟢🟢');
     try {
         // Validar permissões primeiro
+        console.log('🟢 Validando permissões...');
         if (!validatePermissionsBeforeSave()) {
+            console.log('🔴 Permissões falharam!');
             return;
         }
-        
+        console.log('✅ Permissões OK');
+
         debugLog('info', '💾 Iniciando salvamento da RNC');
         
         const form = document.getElementById('rncForm');
@@ -8103,17 +8107,20 @@ var loadedTabs = {
             
             // Formulário de abertura
             document.getElementById('rncForm').addEventListener('submit', function(e) {
+                console.log('🔴🔴🔴 FORM SUBMIT CAPTURADO! 🔴🔴🔴');
                 e.preventDefault();
-                
+
                 const submitBtn = document.getElementById('submitRnc');
                 const submitText = document.getElementById('submitText');
                 const submitLoading = document.getElementById('submitLoading');
-                
+
                 submitBtn.disabled = true;
                 submitText.classList.add('hidden');
                 submitLoading.classList.remove('hidden');
-                
+
+                console.log('🔴 Chamando saveRnc()...');
                 saveRnc().finally(() => {
+                    console.log('🔴 saveRnc() finalizado');
                     submitBtn.disabled = false;
                     submitText.classList.remove('hidden');
                     submitLoading.classList.add('hidden');
