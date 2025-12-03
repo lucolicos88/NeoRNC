@@ -196,14 +196,20 @@ var HistoricoManager = (function() {
         }
 
         if (String(rowRnc).trim() === String(rncNumber).trim()) {
+          // ✅ Converter Date para string para evitar problemas de serialização
+          var timestampStr = row[colTimestamp];
+          if (timestampStr instanceof Date) {
+            timestampStr = timestampStr.toISOString();
+          }
+
           historico.push({
-            timestamp: row[colTimestamp],
-            usuario: row[colUsuario],
-            secao: row[colSecao],
-            campo: row[colCampo],
-            valorAnterior: row[colAnterior],
-            valorNovo: row[colNovo],
-            tipo: row[colTipo]
+            timestamp: timestampStr,
+            usuario: String(row[colUsuario] || ''),
+            secao: String(row[colSecao] || ''),
+            campo: String(row[colCampo] || ''),
+            valorAnterior: String(row[colAnterior] || ''),
+            valorNovo: String(row[colNovo] || ''),
+            tipo: String(row[colTipo] || '')
           });
         }
       }

@@ -618,7 +618,26 @@ function searchRncs(searchTerm) { return RncOperations.searchRncs(searchTerm); }
 function getRncsBySetor(setor) { return RncOperations.getRncsBySetor(setor); }
 
 // ✅ Deploy 34: Histórico de alterações
-function getHistoricoRnc(rncNumber) { return HistoricoManager.getHistoricoRnc(rncNumber); }
+function getHistoricoRnc(rncNumber) {
+  try {
+    var result = HistoricoManager.getHistoricoRnc(rncNumber);
+
+    Logger.logInfo('getHistoricoRnc_WRAPPER', {
+      rncNumber: rncNumber,
+      resultType: typeof result,
+      isArray: Array.isArray(result),
+      length: result ? result.length : 'null/undefined',
+      firstItem: result && result.length > 0 ? JSON.stringify(result[0]) : 'empty'
+    });
+
+    return result;
+  } catch (error) {
+    Logger.logError('getHistoricoRnc_WRAPPER_ERROR', error, {
+      rncNumber: rncNumber
+    });
+    return [];
+  }
+}
 //function getSetoresUnicos() { return RncOperations.getSetoresUnicos(); }
 //function getRncNumbersBySetor(setor) { return RncOperations.getRncNumbersBySetor(setor); }
 
