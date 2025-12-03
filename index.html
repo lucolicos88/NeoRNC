@@ -3904,10 +3904,35 @@ if (!document.getElementById('modal-animations')) {
 
 
        /**
- * Salva nova RNC - Deploy 40 com suporte a Multiselect
+ * Salva nova RNC - Deploy 35 com proteção contra cliques múltiplos
  */
 async function saveRnc() {
     console.log('🟢🟢🟢 saveRnc() CHAMADA! 🟢🟢🟢');
+
+    // ✅ Deploy 35: Pegar referência do botão
+    const submitBtn = document.getElementById('submitRnc');
+    const submitTextSpan = document.getElementById('submitText');
+
+    // Helper para resetar botão
+    const resetButton = () => {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitTextSpan.innerHTML = '💾 Criar RNC';
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        }
+    };
+
+    if (!submitBtn) {
+        console.error('❌ Botão submitRnc não encontrado!');
+        return;
+    }
+
+    if (submitBtn.disabled) {
+        console.warn('⚠️ Botão já desabilitado, ignorando clique');
+        return;
+    }
+
     try {
         // Validar permissões primeiro
         console.log('🟢 Validando permissões...');
@@ -3918,7 +3943,7 @@ async function saveRnc() {
         console.log('✅ Permissões OK');
 
         debugLog('info', '💾 Iniciando salvamento da RNC');
-        
+
         const form = document.getElementById('rncForm');
         const formData = new FormData(form);
         const data = {};
@@ -3992,15 +4017,6 @@ async function saveRnc() {
 
         console.log('✅ Validação passou! Continuando com save...');
 
-        // ✅ Deploy 35: Desabilitar botão para evitar cliques múltiplos
-        const submitBtn = document.getElementById('submitRnc');
-        const submitTextSpan = document.getElementById('submitText');
-
-        if (submitBtn.disabled) {
-            debugLog('warning', '⚠️ Criação já em andamento, ignorando clique');
-            return;
-        }
-
         // Confirmação antes de salvar
         const confirmed = await showConfirmModal(
             'Deseja realmente criar esta RNC?',
@@ -4012,7 +4028,7 @@ async function saveRnc() {
             return;
         }
 
-        // Desabilitar botão e mostrar feedback visual
+        // ✅ Deploy 35: Desabilitar botão APÓS confirmação
         submitBtn.disabled = true;
         const originalText = submitTextSpan.innerHTML;
         submitTextSpan.innerHTML = '⏳ Criando RNC...';
@@ -4051,10 +4067,7 @@ async function saveRnc() {
             });
 
             // ✅ Deploy 35: Reabilitar botão após sucesso
-            submitBtn.disabled = false;
-            submitTextSpan.innerHTML = originalText;
-            submitBtn.style.opacity = '1';
-            submitBtn.style.cursor = 'pointer';
+            resetButton();
 
             // Esconder loading
             hideLoading();
@@ -4068,10 +4081,7 @@ async function saveRnc() {
             hideLoading();
 
             // ✅ Deploy 35: Reabilitar botão em caso de erro
-            submitBtn.disabled = false;
-            submitTextSpan.innerHTML = originalText;
-            submitBtn.style.opacity = '1';
-            submitBtn.style.cursor = 'pointer';
+            resetButton();
 
             // ✅ DEPLOY 33 FIX: Mostrar erros de validação do backend com modal
             if (result.validationErrors && result.validationErrors.length > 0) {
@@ -4091,14 +4101,7 @@ async function saveRnc() {
         hideLoading();
 
         // ✅ Deploy 35: Reabilitar botão em caso de exceção
-        const submitBtn = document.getElementById('submitRnc');
-        const submitTextSpan = document.getElementById('submitText');
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitTextSpan.innerHTML = '💾 Criar RNC';
-            submitBtn.style.opacity = '1';
-            submitBtn.style.cursor = 'pointer';
-        }
+        resetButton();
 
         // ✅ DEPLOY 33 FIX: Modal de erro para exceções
         await showErrorModal(
