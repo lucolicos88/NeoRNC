@@ -153,6 +153,7 @@ const HistoricoManager = (function() {
       const sheet = ss.getSheetByName('Historico');
 
       if (!sheet) {
+        Logger.logWarning('getHistoricoRnc_NO_SHEET', { rncNumber: rncNumber });
         return [];
       }
 
@@ -170,11 +171,31 @@ const HistoricoManager = (function() {
       const colNovo = headers.indexOf('Valor Novo');
       const colTipo = headers.indexOf('Tipo Alteração');
 
+      Logger.logInfo('getHistoricoRnc_DEBUG', {
+        rncNumber: rncNumber,
+        totalRows: data.length - 1,
+        colRncIndex: colRnc,
+        headers: headers
+      });
+
       // Filtrar por RNC e ordenar por data (mais recente primeiro)
       for (let i = 1; i < data.length; i++) {
         const row = data[i];
+        const rowRnc = row[colRnc];
 
-        if (row[colRnc] === rncNumber) {
+        // Debug: Log comparação
+        if (i <= 5) {  // Log apenas primeiras 5 linhas
+          Logger.logInfo('getHistoricoRnc_ROW_CHECK', {
+            row: i,
+            rowRnc: rowRnc,
+            rncNumber: rncNumber,
+            match: rowRnc === rncNumber,
+            rowRncType: typeof rowRnc,
+            rncNumberType: typeof rncNumber
+          });
+        }
+
+        if (String(rowRnc).trim() === String(rncNumber).trim()) {
           historico.push({
             timestamp: row[colTimestamp],
             usuario: row[colUsuario],

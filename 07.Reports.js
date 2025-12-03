@@ -17,7 +17,7 @@ var Reports = (function() {
 
   /**
    * Obtém dados do dashboard com cache
-   * Cache de 5 minutos para evitar recálculo constante
+   * ✅ Deploy 34: Cache de 15 min + Otimizado para +1000 RNCs
    * @param {boolean} forceRefresh - Força atualização ignorando cache
    * @return {Object} Estatísticas do dashboard
    */
@@ -25,7 +25,7 @@ var Reports = (function() {
     var startTime = new Date().getTime();
 
     try {
-      // ✅ DEPLOY 32: Tentar obter do cache primeiro
+      // ✅ DEPLOY 32: Tentar obter do cache primeiro (agora 15 min)
       if (!forceRefresh) {
         var cached = getDashboardFromCache();
         if (cached) {
@@ -41,6 +41,7 @@ var Reports = (function() {
         forceRefresh: forceRefresh || false
       });
 
+      // ✅ Deploy 34: Buscar RNCs otimizado
       var rncs = RncOperations.getAllRncs();
     
     // ============================================
@@ -399,7 +400,7 @@ var Reports = (function() {
         timestamp: new Date().getTime()
       };
 
-      var cacheTTL = 300; // 5 minutos
+      var cacheTTL = 900; // ✅ Deploy 34: 15 minutos (otimizado para +1000 RNCs)
       cache.put(cacheKey, JSON.stringify(cacheData), cacheTTL);
 
       Logger.logDebug('saveDashboardToCache_SUCCESS', {
