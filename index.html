@@ -3949,10 +3949,6 @@ async function saveRnc() {
             console.log('🚨 VALIDAÇÃO FALHOU! Chamando showErrorModal...');
             const fieldsList = missingFields.map(f => `• ${f}`).join('<br>');
 
-            // Tentar com alert primeiro para garantir que funciona
-            alert('⚠️ CAMPOS OBRIGATÓRIOS NÃO PREENCHIDOS:\n\n' + missingFields.join('\n'));
-
-            // Depois tentar o modal
             await showErrorModal(
                 '⚠️ Campos Obrigatórios Não Preenchidos',
                 `<strong>Você precisa preencher os seguintes campos antes de salvar a RNC:</strong><br><br>` +
