@@ -616,6 +616,9 @@ function getAllRncs(filters) { return RncOperations.getAllRncs(filters); }
 function getAllRncNumbers() { return RncOperations.getAllRncNumbers(); }
 function searchRncs(searchTerm) { return RncOperations.searchRncs(searchTerm); }
 function getRncsBySetor(setor) { return RncOperations.getRncsBySetor(setor); }
+
+// ✅ Deploy 34: Histórico de alterações
+function getHistoricoRnc(rncNumber) { return HistoricoManager.getHistoricoRnc(rncNumber); }
 //function getSetoresUnicos() { return RncOperations.getSetoresUnicos(); }
 //function getRncNumbersBySetor(setor) { return RncOperations.getRncNumbersBySetor(setor); }
 

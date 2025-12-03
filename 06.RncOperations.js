@@ -139,6 +139,9 @@ var RncOperations = (function() {
         duration: Logger.logPerformance('saveRnc', startTime)
       });
 
+      // ✅ Deploy 34: Registrar criação no histórico
+      HistoricoManager.registrarCriacao(rncNumber, user, rncData);
+
       // ✅ Retornar sucesso com mensagens de arquivo
       var successMessage = 'RNC criada com sucesso';
       if (fileErrors.length > 0) {
@@ -326,15 +329,20 @@ function updateRnc(rncNumber, formData, files) {
         
         // Atualizar na planilha
         var updateResult = Database.updateData(
-            CONFIG.SHEETS.RNC, 
-            { 'Nº RNC': rncNumber }, 
+            CONFIG.SHEETS.RNC,
+            { 'Nº RNC': rncNumber },
             updates
         );
-        
+
         if (!updateResult.success) {
             throw new Error('Falha ao atualizar RNC na planilha');
         }
-        
+
+        // ✅ Deploy 34: Registrar histórico de alterações
+        if (Object.keys(modifiedFields).length > 0) {
+            HistoricoManager.registrarAlteracoes(rncNumber, modifiedFields, user);
+        }
+
         // Processar arquivos se houver
         if (files && files.length > 0) {
             var fileResults = FileManager.uploadFiles(rncNumber, files, 'Edição');

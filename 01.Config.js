@@ -38,7 +38,8 @@ const CONFIG = {
     PERMISSOES_SECOES: 'PermissoesSecoes',
     ANEXOS: 'Anexos',
     LOGS: 'Logs',
-    CONFIG_SISTEMA: 'ConfigSistema'
+    CONFIG_SISTEMA: 'ConfigSistema',
+    HISTORICO: 'Historico' // ✅ Deploy 34: Histórico de alterações
   },
 
   // Tipos de Campos Disponíveis

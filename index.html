@@ -4197,9 +4197,10 @@ async function loadRncForEdit(rncNumber) {
         // Renderizar formulário de edição
         renderEditForm(rncData);
         
-        // ✅ ADICIONAR BOTÃO DE IMPRESSÃO AQUI
+        // ✅ ADICIONAR BOTÕES AQUI
         addPrintButtonToEditForm(rncNumber);
-        
+        addHistoricoButtonToEditForm(rncNumber); // ✅ Deploy 34: Botão de histórico
+
         document.getElementById('editForm').classList.remove('hidden');
         hideLoading();
         
@@ -4257,13 +4258,225 @@ function addPrintButtonToEditForm(rncNumber) {
     `;
     
     buttonContainer.appendChild(printButton);
-    
-    debugLog('info', '✅ Botão de impressão adicionado', { 
+
+    debugLog('info', '✅ Botão de impressão adicionado', {
         rncNumber,
-        buttonId: printButton.id 
+        buttonId: printButton.id
     });
 }
-        
+
+// ✅ Deploy 34: Adicionar botão de histórico no formulário de edição
+function addHistoricoButtonToEditForm(rncNumber) {
+    const editForm = document.getElementById('editForm');
+
+    if (!editForm) return;
+
+    // Remover botões de histórico existentes
+    const existingButtons = editForm.querySelectorAll('.btn-historico-rnc');
+    existingButtons.forEach(btn => btn.remove());
+
+    let buttonContainer = editForm.querySelector('.form-actions, .modal-footer, .edit-actions');
+
+    if (!buttonContainer) {
+        const saveButton = editForm.querySelector('button[onclick*="saveEdit"], button[onclick*="save"]');
+        if (saveButton && saveButton.parentElement) {
+            buttonContainer = saveButton.parentElement;
+        }
+    }
+
+    if (!buttonContainer) {
+        buttonContainer = document.createElement('div');
+        buttonContainer.style.cssText = 'display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end;';
+        editForm.appendChild(buttonContainer);
+    }
+
+    const historicoButton = document.createElement('button');
+    historicoButton.type = 'button';
+    historicoButton.className = 'btn btn-secondary btn-historico-rnc';
+    historicoButton.id = 'historicoRncBtn_' + rncNumber.replace('/', '_');
+    historicoButton.onclick = function() { showHistoricoModal(rncNumber); };
+    historicoButton.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+    historicoButton.innerHTML = `
+        <span>📜</span>
+        <span>Ver Histórico</span>
+    `;
+
+    buttonContainer.appendChild(historicoButton);
+
+    debugLog('info', '✅ Botão de histórico adicionado', {
+        rncNumber,
+        buttonId: historicoButton.id
+    });
+}
+
+// ✅ Deploy 34: Mostrar modal com histórico de alterações
+async function showHistoricoModal(rncNumber) {
+    try {
+        showLoading('Carregando histórico...');
+
+        const historico = await apiCall('getHistoricoRnc', [rncNumber]);
+
+        hideLoading();
+
+        if (!historico || historico.length === 0) {
+            showErrorModal(
+                'Sem Histórico',
+                'Não há alterações registradas para esta RNC ainda.'
+            );
+            return;
+        }
+
+        // Criar modal HTML
+        const modalHtml = `
+            <div id="historicoModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s;">
+                <div style="background: white; padding: 0; border-radius: 16px; max-width: 900px; width: 90%; max-height: 80vh; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.3s; overflow: hidden; display: flex; flex-direction: column;">
+                    <!-- Header -->
+                    <div style="padding: 25px 30px; background: linear-gradient(135deg, #009688 0%, #00796B 100%); color: white;">
+                        <h2 style="margin: 0; font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+                            <span>📜</span>
+                            <span>Histórico de Alterações - RNC ${rncNumber}</span>
+                        </h2>
+                        <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 14px;">${historico.length} alterações registradas</p>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div style="flex: 1; overflow-y: auto; padding: 30px;">
+                        <div class="timeline">
+                            ${historico.map((item, index) => `
+                                <div class="timeline-item" style="position: relative; padding-left: 40px; padding-bottom: ${index === historico.length - 1 ? '0' : '30px'}; border-left: ${index === historico.length - 1 ? 'none' : '3px solid #e0e0e0'}; margin-left: 10px;">
+                                    <div class="timeline-marker" style="position: absolute; left: -11px; top: 0; width: 20px; height: 20px; border-radius: 50%; background: ${getTimelineColor(item.tipo)}; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"></div>
+
+                                    <div style="background: #f8f9fa; padding: 18px; border-radius: 12px; border-left: 4px solid ${getTimelineColor(item.tipo)};">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                            <div>
+                                                <div style="font-weight: 700; font-size: 15px; color: #333; margin-bottom: 4px;">
+                                                    ${getTimelineIcon(item.tipo)} ${item.campo}
+                                                </div>
+                                                <div style="font-size: 13px; color: #666;">
+                                                    ${item.secao} • ${item.tipo}
+                                                </div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="font-size: 12px; color: #666; font-weight: 500;">
+                                                    ${formatarDataHora(item.timestamp)}
+                                                </div>
+                                                <div style="font-size: 12px; color: #999;">
+                                                    ${item.usuario}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        ${item.tipo !== 'Criação' ? `
+                                            <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 15px; align-items: center; margin-top: 12px;">
+                                                <div style="background: #fff3cd; padding: 10px; border-radius: 6px; border-left: 3px solid #ffc107;">
+                                                    <div style="font-size: 11px; color: #856404; font-weight: 600; margin-bottom: 4px;">ANTERIOR</div>
+                                                    <div style="font-size: 13px; color: #333; word-break: break-word;">${item.valorAnterior}</div>
+                                                </div>
+                                                <div style="color: #999;">→</div>
+                                                <div style="background: #d4edda; padding: 10px; border-radius: 6px; border-left: 3px solid #28a745;">
+                                                    <div style="font-size: 11px; color: #155724; font-weight: 600; margin-bottom: 4px;">NOVO</div>
+                                                    <div style="font-size: 13px; color: #333; word-break: break-word;">${item.valorNovo}</div>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="padding: 20px 30px; background: #f5f5f5; border-top: 1px solid #ddd; text-align: right;">
+                        <button id="historicoModalClose" style="
+                            background: #009688;
+                            color: white;
+                            border: none;
+                            padding: 12px 30px;
+                            border-radius: 8px;
+                            font-size: 15px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='#00796B'" onmouseout="this.style.background='#009688'">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <style>
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideUp {
+                    from { transform: translateY(50px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+            </style>
+        `;
+
+        // Remover modal anterior
+        const oldModal = document.getElementById('historicoModal');
+        if (oldModal) oldModal.remove();
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const modal = document.getElementById('historicoModal');
+        const btnClose = document.getElementById('historicoModalClose');
+
+        const closeModal = () => {
+            if (modal && modal.parentNode) {
+                modal.remove();
+            }
+        };
+
+        btnClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+    } catch (error) {
+        hideLoading();
+        console.error('Erro ao carregar histórico:', error);
+        showErrorModal('Erro', 'Não foi possível carregar o histórico: ' + error.message);
+    }
+}
+
+// Helper: Cor da timeline por tipo
+function getTimelineColor(tipo) {
+    const cores = {
+        'Criação': '#4CAF50',
+        'Edição': '#2196F3',
+        'Mudança Status': '#FF9800',
+        'Arquivo': '#9C27B0',
+        'Remoção': '#F44336'
+    };
+    return cores[tipo] || '#757575';
+}
+
+// Helper: Ícone da timeline por tipo
+function getTimelineIcon(tipo) {
+    const icones = {
+        'Criação': '✨',
+        'Edição': '✏️',
+        'Mudança Status': '🔄',
+        'Arquivo': '📎',
+        'Remoção': '🗑️'
+    };
+    return icones[tipo] || '📝';
+}
+
+// Helper: Formatar data/hora
+function formatarDataHora(timestamp) {
+    const date = new Date(timestamp);
+    const dia = String(date.getDate()).padStart(2, '0');
+    const mes = String(date.getMonth() + 1).padStart(2, '0');
+    const ano = date.getFullYear();
+    const hora = String(date.getHours()).padStart(2, '0');
+    const minuto = String(date.getMinutes()).padStart(2, '0');
+    return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+}
+
        /**
  * Renderiza formulário de edição COM ANEXOS NA SEÇÃO ABERTURA
  * Deploy 36.1 - Reposicionamento de Anexos
