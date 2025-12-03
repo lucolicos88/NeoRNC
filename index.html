@@ -9471,22 +9471,26 @@ function updateHiddenInput(containerId, fieldName) {
  */
 function initializeMultiselectChips(containerId, savedValue, fieldName, isReadOnly) {
     const container = document.getElementById(containerId);
-    
-    if (!container || !savedValue) {
-        if (container) container.classList.add('empty');
+
+    if (!container) {
         return;
     }
-    
+
+    // ✅ SEMPRE limpar container primeiro (corrige bug de valores persistentes)
+    container.innerHTML = '';
+
+    if (!savedValue) {
+        container.classList.add('empty');
+        return;
+    }
+
     // Dividir valores salvos
     const values = savedValue.split(';').map(v => v.trim()).filter(v => v);
-    
+
     if (values.length === 0) {
         container.classList.add('empty');
         return;
     }
-    
-    // Limpar container
-    container.innerHTML = '';
     
     // Criar chips para cada valor
     values.forEach(value => {
