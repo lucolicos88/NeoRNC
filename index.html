@@ -3910,26 +3910,45 @@ async function saveRnc() {
             }
         });
         
-        debugLog('info', '📋 Dados coletados do formulário', { 
+        debugLog('info', '📋 Dados coletados do formulário', {
             fields: Object.keys(data),
             hasFiles: selectedFiles.length > 0,
             multiselectCount: multiselectInputs.length
         });
-        
+
+        console.log('🔍 DEBUG: Iniciando validação de campos obrigatórios');
+        console.log('🔍 DEBUG: appContext.fieldsConfig:', appContext.fieldsConfig);
+
         // ✅ DEPLOY 33 FIX: Validar campos obrigatórios com modal visível
         const aberturaFields = appContext.fieldsConfig.Abertura || [];
+        console.log('🔍 DEBUG: aberturaFields:', aberturaFields);
+
         const requiredFields = aberturaFields.filter(f => f.required);
+        console.log('🔍 DEBUG: requiredFields:', requiredFields);
+
         const missingFields = [];
 
         requiredFields.forEach(field => {
             // Ignorar campo de arquivo na validação
-            if (field.type !== 'file' && (!data[field.name] || data[field.name].trim() === '')) {
+            const fieldValue = data[field.name];
+            console.log(`🔍 DEBUG: Verificando campo "${field.name}": valor = "${fieldValue}"`);
+
+            if (field.type !== 'file' && (!fieldValue || fieldValue.trim() === '')) {
+                console.log(`❌ Campo obrigatório vazio: ${field.name}`);
                 missingFields.push(field.name);
             }
         });
 
+        console.log('🔍 DEBUG: missingFields:', missingFields);
+
         if (missingFields.length > 0) {
+            console.log('🚨 VALIDAÇÃO FALHOU! Chamando showErrorModal...');
             const fieldsList = missingFields.map(f => `• ${f}`).join('<br>');
+
+            // Tentar com alert primeiro para garantir que funciona
+            alert('⚠️ CAMPOS OBRIGATÓRIOS NÃO PREENCHIDOS:\n\n' + missingFields.join('\n'));
+
+            // Depois tentar o modal
             await showErrorModal(
                 '⚠️ Campos Obrigatórios Não Preenchidos',
                 `<strong>Você precisa preencher os seguintes campos antes de salvar a RNC:</strong><br><br>` +
@@ -3939,6 +3958,8 @@ async function saveRnc() {
             debugLog('warning', '⚠️ Validação falhou - campos obrigatórios', { missingFields });
             return;
         }
+
+        console.log('✅ Validação passou! Continuando com save...');
         
         // Confirmação antes de salvar
         const confirmed = await showConfirmModal(
