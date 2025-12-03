@@ -10,7 +10,7 @@
  * - Conformidade e auditoria
  */
 
-const HistoricoManager = (function() {
+var HistoricoManager = (function() {
 
   /**
    * Registra alteração de campo no histórico
@@ -23,8 +23,8 @@ const HistoricoManager = (function() {
    */
   function registrarAlteracao(rncNumber, fieldName, oldValue, newValue, section, userEmail) {
     try {
-      const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-      let sheet = ss.getSheetByName('Historico');
+      var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+      var sheet = ss.getSheetByName('Historico');
 
       // Criar aba Historico se não existir
       if (!sheet) {
@@ -63,8 +63,8 @@ const HistoricoManager = (function() {
         sheet.setColumnWidth(8, 120); // Tipo
       }
 
-      const timestamp = new Date();
-      const tipoAlteracao = determinarTipoAlteracao(fieldName, oldValue, newValue);
+      var timestamp = new Date();
+      var tipoAlteracao = determinarTipoAlteracao(fieldName, oldValue, newValue);
 
       // Adicionar nova linha
       sheet.appendRow([
@@ -104,11 +104,11 @@ const HistoricoManager = (function() {
    */
   function registrarAlteracoes(rncNumber, modifiedFields, userEmail) {
     try {
-      let registrados = 0;
+      var registrados = 0;
 
       Object.keys(modifiedFields).forEach(function(fieldName) {
-        const change = modifiedFields[fieldName];
-        const success = registrarAlteracao(
+        var change = modifiedFields[fieldName];
+        var success = registrarAlteracao(
           rncNumber,
           fieldName,
           change.old,
@@ -149,27 +149,27 @@ const HistoricoManager = (function() {
    */
   function getHistoricoRnc(rncNumber) {
     try {
-      const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-      const sheet = ss.getSheetByName('Historico');
+      var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+      var sheet = ss.getSheetByName('Historico');
 
       if (!sheet) {
         Logger.logWarning('getHistoricoRnc_NO_SHEET', { rncNumber: rncNumber });
         return [];
       }
 
-      const data = sheet.getDataRange().getValues();
-      const headers = data[0];
-      const historico = [];
+      var data = sheet.getDataRange().getValues();
+      var headers = data[0];
+      var historico = [];
 
       // Índices das colunas
-      const colRnc = headers.indexOf('Nº RNC');
-      const colTimestamp = headers.indexOf('Timestamp');
-      const colUsuario = headers.indexOf('Usuário');
-      const colSecao = headers.indexOf('Seção');
-      const colCampo = headers.indexOf('Campo');
-      const colAnterior = headers.indexOf('Valor Anterior');
-      const colNovo = headers.indexOf('Valor Novo');
-      const colTipo = headers.indexOf('Tipo Alteração');
+      var colRnc = headers.indexOf('Nº RNC');
+      var colTimestamp = headers.indexOf('Timestamp');
+      var colUsuario = headers.indexOf('Usuário');
+      var colSecao = headers.indexOf('Seção');
+      var colCampo = headers.indexOf('Campo');
+      var colAnterior = headers.indexOf('Valor Anterior');
+      var colNovo = headers.indexOf('Valor Novo');
+      var colTipo = headers.indexOf('Tipo Alteração');
 
       Logger.logInfo('getHistoricoRnc_DEBUG', {
         rncNumber: rncNumber,
@@ -179,9 +179,9 @@ const HistoricoManager = (function() {
       });
 
       // Filtrar por RNC e ordenar por data (mais recente primeiro)
-      for (let i = 1; i < data.length; i++) {
-        const row = data[i];
-        const rowRnc = row[colRnc];
+      for (var i = 1; i < data.length; i++) {
+        var row = data[i];
+        var rowRnc = row[colRnc];
 
         // Debug: Log comparação
         if (i <= 5) {  // Log apenas primeiras 5 linhas
@@ -209,7 +209,9 @@ const HistoricoManager = (function() {
       }
 
       // Ordenar por data (mais recente primeiro)
-      historico.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      historico.sort(function(a, b) {
+        return new Date(b.timestamp) - new Date(a.timestamp);
+      });
 
       Logger.logInfo('HISTORICO_RECUPERADO', {
         rncNumber: rncNumber,
@@ -254,15 +256,15 @@ const HistoricoManager = (function() {
    */
   function registrarCriacao(rncNumber, userEmail, dadosIniciais) {
     try {
-      const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-      let sheet = ss.getSheetByName('Historico');
+      var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+      var sheet = ss.getSheetByName('Historico');
 
       if (!sheet) {
         registrarAlteracao(rncNumber, 'Sistema', '', '', 'Sistema', userEmail);
         sheet = ss.getSheetByName('Historico');
       }
 
-      const timestamp = new Date();
+      var timestamp = new Date();
 
       sheet.appendRow([
         timestamp,
@@ -295,8 +297,8 @@ const HistoricoManager = (function() {
    */
   function registrarAnexo(rncNumber, fileName, acao, userEmail) {
     try {
-      const valorAnterior = acao === 'adicionar' ? '' : fileName;
-      const valorNovo = acao === 'adicionar' ? fileName : '';
+      var valorAnterior = acao === 'adicionar' ? '' : fileName;
+      var valorNovo = acao === 'adicionar' ? fileName : '';
 
       return registrarAlteracao(
         rncNumber,

@@ -4318,6 +4318,12 @@ async function showHistoricoModal(rncNumber) {
 
         hideLoading();
 
+        // ✅ Debug: Ver o que está sendo retornado
+        console.log('🔍 DEBUG historico:', historico);
+        console.log('🔍 DEBUG historico type:', typeof historico);
+        console.log('🔍 DEBUG historico.length:', historico?.length);
+        console.log('🔍 DEBUG Array.isArray:', Array.isArray(historico));
+
         if (!historico || historico.length === 0) {
             showErrorModal(
                 'Sem Histórico',
