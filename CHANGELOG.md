@@ -6,6 +6,15 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 
 ---
 
+
+## Deploy 38 - 2025-12-04
+
+Relatorio PDF Executivo - Fix encoding, graficos visuais, layout profissional
+
+**Arquivos Modificados:** Ver `archives/deploy-38_2025-12-04/`
+
+---
+
 ## Deploy 37 - 2025-12-04
 
 **Relatório Gerencial em PDF**

@@ -2371,7 +2371,6 @@ textarea.form-control,
                         <span id="reportText">📊 Gerar Relatório</span>
                         <div class="loading hidden" id="reportLoading"></div>
                     </button>
-                    <button class="btn btn-secondary" id="exportCsv" disabled>📥 Exportar CSV</button>
                     <button class="btn btn-success" id="exportPdf" disabled>📄 Exportar PDF Gerencial</button>
                     <button class="btn btn-secondary" id="clearFilters">🧹 Limpar Filtros</button>
                 </div>
@@ -6751,7 +6750,6 @@ function renderLineChart(containerId, data) {
         reportData = result;
         renderReport(result);
 
-        document.getElementById('exportCsv').disabled = false;
         document.getElementById('exportPdf').disabled = false;
         hideLoading();
         
@@ -7034,55 +7032,10 @@ function editRncFromReport(rncNumber) {
     debugLog('success', '✅ Relatório renderizado com 8 KPIs + gráficos + tabelas');
 }
         
-        function exportCsv() {
-            if (!reportData || !reportData.rncs || reportData.rncs.length === 0) {
-                showError('Nenhum dado para exportar');
-                return;
-            }
-            
-            try {
-                const rncs = reportData.rncs;
-                const headers = Object.keys(rncs[0]);
-                
-                let csvContent = headers.join(',') + '\n';
-                
-                rncs.forEach(rnc => {
-                    const row = headers.map(header => {
-                        let value = rnc[header] || '';
-                        value = String(value).replace(/"/g, '""');
-                        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-                            value = `"${value}"`;
-                        }
-                        return value;
-                    });
-                    csvContent += row.join(',') + '\n';
-                });
-                
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                
-                if (link.download !== undefined) {
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', `relatorio_rncs_${new Date().toISOString().split('T')[0]}.csv`);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-                
-                showSuccess('CSV exportado com sucesso!');
-                debugLog('success', '✅ CSV exportado DEPLOY 30');
-                
-            } catch (error) {
-                debugLog('error', '❌ Erro ao exportar CSV DEPLOY 30', { error: error.message });
-                showError('Erro ao exportar CSV: ' + error.message);
-            }
-        }
-        
         /**
          * ============================================
-         * DEPLOY 37: EXPORTAR RELATÓRIO GERENCIAL EM PDF
+         * DEPLOY 38: RELATÓRIO GERENCIAL PDF EXECUTIVO
+         * Versão Profissional - Sem emojis, com gráficos
          * ============================================
          */
         function exportToPdf() {
@@ -7111,13 +7064,13 @@ function editRncFromReport(rncNumber) {
                 doc.setTextColor(255, 255, 255);
                 doc.setFontSize(28);
                 doc.setFont('helvetica', 'bold');
-                doc.text('RELATÓRIO GERENCIAL', pageWidth / 2, 30, { align: 'center' });
+                doc.text('RELATORIO GERENCIAL', pageWidth / 2, 30, { align: 'center' });
 
                 doc.setFontSize(16);
                 doc.setFont('helvetica', 'normal');
-                doc.text('Sistema de Gestão de RNCs', pageWidth / 2, 45, { align: 'center' });
+                doc.text('Sistema de Gestao de RNCs - Neoformula', pageWidth / 2, 45, { align: 'center' });
 
-                // Data e período
+                // Data e periodo
                 doc.setTextColor(51, 51, 51);
                 doc.setFontSize(10);
                 yPos = 75;
@@ -7125,23 +7078,23 @@ function editRncFromReport(rncNumber) {
                 const dataInicio = document.getElementById('dataInicio').value;
                 const dataFim = document.getElementById('dataFim').value;
                 const periodo = dataInicio && dataFim ?
-                    `Período: ${dataInicio} até ${dataFim}` :
-                    'Período: Todos os registros';
+                    `Periodo: ${dataInicio} ate ${dataFim}` :
+                    'Periodo: Todos os registros';
 
                 doc.text(periodo, margin, yPos);
                 yPos += 6;
-                doc.text(`Data de Geração: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, margin, yPos);
+                doc.text(`Data de Geracao: ${new Date().toLocaleDateString('pt-BR')} as ${new Date().toLocaleTimeString('pt-BR')}`, margin, yPos);
                 yPos += 15;
 
                 // ============================================
-                // SEÇÃO 1: RESUMO EXECUTIVO
+                // SECAO 1: RESUMO EXECUTIVO
                 // ============================================
                 doc.setFillColor(245, 245, 245);
                 doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(0, 150, 136);
-                doc.text('📊 RESUMO EXECUTIVO', margin + 3, yPos + 6);
+                doc.text('RESUMO EXECUTIVO', margin + 3, yPos + 6);
                 yPos += 15;
 
                 doc.setFontSize(10);
@@ -7152,10 +7105,10 @@ function editRncFromReport(rncNumber) {
                     `Total de RNCs: ${stats.total || 0}`,
                     `RNCs Finalizadas: ${stats.finalizadas || 0} (${Math.round((stats.finalizadas / stats.total) * 100) || 0}%)`,
                     `Custo Total: R$ ${(stats.custoTotal || 0).toFixed(2)}`,
-                    `Tempo Médio de Resolução: ${stats.tempoMedioResolucao || 0} dias`,
+                    `Tempo Medio de Resolucao: ${stats.tempoMedioResolucao || 0} dias`,
                     `Taxa de Cumprimento de Prazo: ${stats.taxaCumprimentoPrazo || 0}%`,
                     `RNCs Vencidas: ${stats.rncsVencidas || 0}`,
-                    `Índice de Severidade Ponderado: ${stats.indiceSeveridadePonderado || 0} pontos`
+                    `Indice de Severidade Ponderado: ${stats.indiceSeveridadePonderado || 0} pontos`
                 ];
 
                 resumo.forEach(linha => {
@@ -7182,7 +7135,7 @@ function editRncFromReport(rncNumber) {
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(0, 150, 136);
-                doc.text('📈 KPIs ESTRATÉGICOS', margin + 3, yPos + 6);
+                doc.text('KPIs ESTRATEGICOS', margin + 3, yPos + 6);
                 yPos += 15;
 
                 // Tabela de KPIs
@@ -7190,10 +7143,10 @@ function editRncFromReport(rncNumber) {
                     startY: yPos,
                     head: [['Indicador', 'Valor', 'Status']],
                     body: [
-                        ['Impacto ao Cliente', `${stats.impactoClientePercentual || 0}%`, stats.impactoClientePercentual > 30 ? '⚠️ Alto' : '✅ OK'],
-                        ['Detecção Interna', `${stats.deteccaoInternaPercentual || 0}%`, stats.deteccaoInternaPercentual >= 70 ? '✅ Bom' : '⚠️ Baixo'],
-                        ['Taxa Não Procede', `${stats.naoProcedeTaxa || 0}%`, stats.naoProcedeTaxa <= 10 ? '✅ OK' : '⚠️ Alto'],
-                        ['Cumprimento de Prazo', `${stats.taxaCumprimentoPrazo || 0}%`, stats.taxaCumprimentoPrazo >= 80 ? '✅ Bom' : '⚠️ Atenção']
+                        ['Impacto ao Cliente', `${stats.impactoClientePercentual || 0}%`, stats.impactoClientePercentual > 30 ? 'Alto' : 'OK'],
+                        ['Deteccao Interna', `${stats.deteccaoInternaPercentual || 0}%`, stats.deteccaoInternaPercentual >= 70 ? 'Bom' : 'Baixo'],
+                        ['Taxa Nao Procede', `${stats.naoProcedeTaxa || 0}%`, stats.naoProcedeTaxa <= 10 ? 'OK' : 'Alto'],
+                        ['Cumprimento de Prazo', `${stats.taxaCumprimentoPrazo || 0}%`, stats.taxaCumprimentoPrazo >= 80 ? 'Bom' : 'Atencao']
                     ],
                     theme: 'grid',
                     headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
@@ -7216,7 +7169,7 @@ function editRncFromReport(rncNumber) {
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(0, 150, 136);
-                doc.text('📋 DISTRIBUIÇÃO DAS RNCs', margin + 3, yPos + 6);
+                doc.text('DISTRIBUICAO DAS RNCs', margin + 3, yPos + 6);
                 yPos += 15;
 
                 // Por Tipo
@@ -7253,7 +7206,7 @@ function editRncFromReport(rncNumber) {
                     doc.setFontSize(14);
                     doc.setFont('helvetica', 'bold');
                     doc.setTextColor(0, 150, 136);
-                    doc.text('💰 ANÁLISE DE CUSTOS', margin + 3, yPos + 6);
+                    doc.text('ANALISE DE CUSTOS', margin + 3, yPos + 6);
                     yPos += 15;
 
                     const custoData = Object.entries(stats.custoMedioPorTipo)
@@ -7268,14 +7221,57 @@ function editRncFromReport(rncNumber) {
 
                     doc.autoTable({
                         startY: yPos,
-                        head: [['Tipo', 'Qtd', 'Custo Total', 'Custo Médio', '% do Total']],
+                        head: [['Tipo', 'Qtd', 'Custo Total', 'Custo Medio', '% do Total']],
                         body: custoData,
                         theme: 'striped',
                         headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
                         bodyStyles: { fontSize: 8 },
                         margin: { left: margin, right: margin }
                     });
-                    yPos = doc.lastAutoTable.finalY + 10;
+                    yPos = doc.lastAutoTable.finalY + 15;
+
+                    // GRAFICO DE BARRAS - CUSTOS
+                    if (yPos > pageHeight - 80) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    doc.setFontSize(11);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(0, 0, 0);
+                    doc.text('Grafico - Custos por Tipo:', margin, yPos);
+                    yPos += 8;
+
+                    const custoArray = Object.entries(stats.custoMedioPorTipo)
+                        .sort((a, b) => b[1].soma - a[1].soma)
+                        .slice(0, 5);
+
+                    const maxCusto = Math.max(...custoArray.map(([_, dados]) => dados.soma));
+                    const barMaxWidth = 110;
+                    const barHeight = 8;
+                    const barSpacing = 12;
+
+                    custoArray.forEach(([tipo, dados], index) => {
+                        const barWidth = (dados.soma / maxCusto) * barMaxWidth;
+
+                        // Barra
+                        doc.setFillColor(0, 150, 136);
+                        doc.rect(margin + 50, yPos, barWidth, barHeight, 'F');
+
+                        // Label
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(0, 0, 0);
+                        doc.text(tipo.substring(0, 18), margin, yPos + 5.5);
+
+                        // Valor
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(`R$ ${dados.soma.toFixed(0)}`, margin + 52 + barWidth, yPos + 5.5);
+
+                        yPos += barSpacing;
+                    });
+
+                    yPos += 5;
                 }
 
                 // ============================================
@@ -7292,11 +7288,11 @@ function editRncFromReport(rncNumber) {
                     doc.setFontSize(14);
                     doc.setFont('helvetica', 'bold');
                     doc.setTextColor(0, 150, 136);
-                    doc.text('🏆 TOP 5 SETORES COM MAIS RNCs', margin + 3, yPos + 6);
+                    doc.text('TOP 5 SETORES COM MAIS RNCs', margin + 3, yPos + 6);
                     yPos += 15;
 
                     const setorData = stats.top5Setores.map((setor, index) => [
-                        `${index + 1}º`,
+                        `${index + 1}o`,
                         setor.nome,
                         setor.total,
                         `${Math.round((setor.total / stats.total) * 100)}%`
@@ -7304,14 +7300,61 @@ function editRncFromReport(rncNumber) {
 
                     doc.autoTable({
                         startY: yPos,
-                        head: [['Posição', 'Setor', 'RNCs', '%']],
+                        head: [['Posicao', 'Setor', 'RNCs', '%']],
                         body: setorData,
                         theme: 'grid',
                         headStyles: { fillColor: [244, 67, 54], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
                         bodyStyles: { fontSize: 9 },
                         margin: { left: margin, right: margin }
                     });
-                    yPos = doc.lastAutoTable.finalY + 10;
+                    yPos = doc.lastAutoTable.finalY + 15;
+
+                    // GRAFICO DE BARRAS HORIZONTAIS
+                    if (yPos > pageHeight - 80) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    doc.setFontSize(11);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(0, 0, 0);
+                    doc.text('Grafico - Top 5 Setores:', margin, yPos);
+                    yPos += 8;
+
+                    const maxValue = Math.max(...stats.top5Setores.map(s => s.total));
+                    const barMaxWidth = 120;
+                    const barHeight = 8;
+                    const barSpacing = 12;
+
+                    stats.top5Setores.forEach((setor, index) => {
+                        const barWidth = (setor.total / maxValue) * barMaxWidth;
+                        const colors = [
+                            [244, 67, 54],   // Vermelho
+                            [255, 152, 0],   // Laranja
+                            [255, 193, 7],   // Amarelo
+                            [76, 175, 80],   // Verde
+                            [33, 150, 243]   // Azul
+                        ];
+                        const color = colors[index % 5];
+
+                        // Barra
+                        doc.setFillColor(color[0], color[1], color[2]);
+                        doc.rect(margin + 40, yPos, barWidth, barHeight, 'F');
+
+                        // Label (setor)
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(0, 0, 0);
+                        doc.text(setor.nome.substring(0, 15), margin, yPos + 5.5);
+
+                        // Valor
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(`${setor.total}`, margin + 42 + barWidth, yPos + 5.5);
+
+                        yPos += barSpacing;
+                    });
+
+                    yPos += 5;
                 }
 
                 // ============================================
@@ -7328,7 +7371,7 @@ function editRncFromReport(rncNumber) {
                     doc.setFontSize(14);
                     doc.setFont('helvetica', 'bold');
                     doc.setTextColor(0, 150, 136);
-                    doc.text('💡 AÇÕES RECOMENDADAS', margin + 3, yPos + 6);
+                    doc.text('ACOES RECOMENDADAS', margin + 3, yPos + 6);
                     yPos += 15;
 
                     const acoesData = stats.acoesRecomendadas.map(acao => [
@@ -7339,7 +7382,7 @@ function editRncFromReport(rncNumber) {
 
                     doc.autoTable({
                         startY: yPos,
-                        head: [['Prioridade', 'Problema', 'Ação Recomendada']],
+                        head: [['Prioridade', 'Problema', 'Acao Recomendada']],
                         body: acoesData,
                         theme: 'striped',
                         headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
@@ -7362,7 +7405,7 @@ function editRncFromReport(rncNumber) {
                     doc.setFontSize(8);
                     doc.setTextColor(150, 150, 150);
                     doc.text(
-                        `Relatório Gerencial - Sistema RNC Neoformula | Página ${i} de ${totalPages}`,
+                        `Relatorio Gerencial - Sistema RNC Neoformula | Pagina ${i} de ${totalPages}`,
                         pageWidth / 2,
                         pageHeight - 10,
                         { align: 'center' }
@@ -7376,7 +7419,7 @@ function editRncFromReport(rncNumber) {
                 doc.save(filename);
 
                 showSuccess('PDF gerencial exportado com sucesso!');
-                debugLog('success', '✅ PDF gerencial exportado DEPLOY 37');
+                debugLog('success', 'PDF gerencial exportado DEPLOY 38');
 
             } catch (error) {
                 debugLog('error', '❌ Erro ao exportar PDF DEPLOY 37', { error: error.message });
@@ -7392,7 +7435,6 @@ function editRncFromReport(rncNumber) {
             document.getElementById('statusFiltro').value = 'Todos';
 
             document.getElementById('report-content').innerHTML = '';
-            document.getElementById('exportCsv').disabled = true;
             document.getElementById('exportPdf').disabled = true;
             reportData = null;
 
@@ -8872,11 +8914,8 @@ var loadedTabs = {
                     reportLoading.classList.add('hidden');
                 });
             });
-            
-            // Exportação CSV
-            document.getElementById('exportCsv').addEventListener('click', exportCsv);
 
-            // Exportação PDF (DEPLOY 37)
+            // Exportação PDF (DEPLOY 38)
             document.getElementById('exportPdf').addEventListener('click', exportToPdf);
 
             // Limpar filtros

@@ -11,7 +11,8 @@
       "Bash(clasp deploy:*)",
       "Bash(clasp deployments:*)",
       "Bash(clasp open:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(node backup-deploy.js:*)"
     ],
     "deny": [],
     "ask": []
