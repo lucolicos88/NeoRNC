@@ -6221,8 +6221,181 @@ function renderDashboard(stats) {
                 ` : '<p>📭 Nenhuma RNC encontrada.</p>'}
             </div>
         </div>
+
+        <!-- ========================================== -->
+        <!-- ✨ DEPLOY 36: COMPARATIVO MENSAL -->
+        <!-- ========================================== -->
+        ${stats.total > 0 ? `
+        <div class="chart-container" style="margin-top: 30px;">
+            <h3 class="chart-title">📊 Comparativo Mensal</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px;">
+                <div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 8px;">
+                    <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Mês Atual</div>
+                    <div style="font-size: 32px; font-weight: bold; color: #009688;">${stats.esteMes || 0}</div>
+                    <div style="font-size: 12px; color: #999; margin-top: 5px;">RNCs criadas</div>
+                </div>
+                <div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 8px;">
+                    <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Mês Anterior</div>
+                    <div style="font-size: 32px; font-weight: bold; color: #666;">${stats.mesAnterior || 0}</div>
+                    <div style="font-size: 12px; color: #999; margin-top: 5px;">RNCs criadas</div>
+                </div>
+                <div style="text-align: center; padding: 20px; background: ${(stats.esteMes || 0) > (stats.mesAnterior || 0) ? '#ffebee' : '#e8f5e9'}; border-radius: 8px;">
+                    <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Tendência</div>
+                    <div style="font-size: 32px; font-weight: bold; color: ${(stats.esteMes || 0) > (stats.mesAnterior || 0) ? '#F44336' : '#4CAF50'};">
+                        ${(stats.esteMes || 0) > (stats.mesAnterior || 0) ? '↑' : '↓'}
+                        ${stats.mesAnterior > 0 ? Math.abs(Math.round((((stats.esteMes || 0) - (stats.mesAnterior || 0)) / (stats.mesAnterior || 1)) * 100)) + '%' : '0%'}
+                    </div>
+                    <div style="font-size: 12px; color: #999; margin-top: 5px;">
+                        ${(stats.esteMes || 0) > (stats.mesAnterior || 0) ? 'Aumento' : 'Redução'}
+                    </div>
+                </div>
+            </div>
+        </div>
+        ` : ''}
+
+        <!-- ========================================== -->
+        <!-- ✨ DEPLOY 36: EVOLUÇÃO SEMANAL -->
+        <!-- ========================================== -->
+        ${stats.porSemana && Object.keys(stats.porSemana).length > 0 ? `
+        <div class="chart-container" style="margin-top: 30px;">
+            <h3 class="chart-title">📈 Evolução nas Últimas 4 Semanas</h3>
+            <div style="display: flex; gap: 15px; padding: 20px; justify-content: center; align-items: flex-end; height: 200px;">
+                ${['Semana -3', 'Semana -2', 'Semana -1', 'Semana -0'].map(semana => {
+                    const valor = stats.porSemana[semana] || 0;
+                    const maxValue = Math.max(...Object.values(stats.porSemana));
+                    const altura = maxValue > 0 ? (valor / maxValue) * 150 : 10;
+                    return `
+                        <div style="flex: 1; text-align: center;">
+                            <div style="background: linear-gradient(to top, #009688, #4CAF50);
+                                        height: ${altura}px;
+                                        border-radius: 8px 8px 0 0;
+                                        margin-bottom: 10px;
+                                        display: flex;
+                                        align-items: flex-start;
+                                        justify-content: center;
+                                        padding-top: 10px;
+                                        color: white;
+                                        font-weight: bold;
+                                        font-size: 16px;">
+                                ${valor}
+                            </div>
+                            <div style="font-size: 12px; color: #666;">${semana.replace('-', ' ')}</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+        ` : ''}
+
+        <!-- ========================================== -->
+        <!-- ✨ DEPLOY 36: TOP 5 RANKINGS -->
+        <!-- ========================================== -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+
+            ${stats.top5Setores && stats.top5Setores.length > 0 ? `
+            <div class="chart-container">
+                <h3 class="chart-title">🏆 Top 5 Setores com Mais RNCs</h3>
+                <div style="padding: 20px;">
+                    ${stats.top5Setores.map((setor, index) => {
+                        const maxValue = stats.top5Setores[0].total;
+                        const largura = (setor.total / maxValue) * 100;
+                        const cores = ['#F44336', '#FF9800', '#FFC107', '#4CAF50', '#2196F3'];
+                        return `
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span style="font-size: 13px; font-weight: 500;">${index + 1}. ${setor.nome}</span>
+                                    <span style="font-weight: bold; color: ${cores[index]};">${setor.total}</span>
+                                </div>
+                                <div style="background: #f5f5f5; height: 24px; border-radius: 12px; overflow: hidden;">
+                                    <div style="background: ${cores[index]};
+                                                width: ${largura}%;
+                                                height: 100%;
+                                                border-radius: 12px;
+                                                transition: width 0.3s ease;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            ${stats.top5TiposFalha && stats.top5TiposFalha.length > 0 ? `
+            <div class="chart-container">
+                <h3 class="chart-title">🔧 Top 5 Tipos de Falha</h3>
+                <div style="padding: 20px;">
+                    ${stats.top5TiposFalha.map((tipo, index) => {
+                        const maxValue = stats.top5TiposFalha[0].total;
+                        const largura = (tipo.total / maxValue) * 100;
+                        const cores = ['#F44336', '#FF9800', '#FFC107', '#4CAF50', '#2196F3'];
+                        return `
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span style="font-size: 13px; font-weight: 500;">${index + 1}. ${tipo.nome}</span>
+                                    <span style="font-weight: bold; color: ${cores[index]};">${tipo.total}</span>
+                                </div>
+                                <div style="background: #f5f5f5; height: 24px; border-radius: 12px; overflow: hidden;">
+                                    <div style="background: ${cores[index]};
+                                                width: ${largura}%;
+                                                height: 100%;
+                                                border-radius: 12px;
+                                                transition: width 0.3s ease;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ✨ DEPLOY 36: AÇÕES RECOMENDADAS -->
+        <!-- ========================================== -->
+        ${stats.acoesRecomendadas && stats.acoesRecomendadas.length > 0 ? `
+        <div class="chart-container" style="margin-top: 30px;">
+            <h3 class="chart-title">💡 Ações Recomendadas</h3>
+            <div style="padding: 20px;">
+                ${stats.acoesRecomendadas.map(acao => {
+                    const corBorda = acao.prioridade === 'Alta' ? '#F44336' :
+                                     acao.prioridade === 'Média' ? '#FFC107' : '#4CAF50';
+                    const corFundo = acao.prioridade === 'Alta' ? '#ffebee' :
+                                     acao.prioridade === 'Média' ? '#fff8e1' : '#e8f5e9';
+                    return `
+                        <div style="border-left: 4px solid ${corBorda};
+                                    background: ${corFundo};
+                                    padding: 15px;
+                                    margin-bottom: 15px;
+                                    border-radius: 4px;">
+                            <div style="display: flex; align-items: start; gap: 12px;">
+                                <div style="font-size: 28px;">${acao.icone}</div>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-weight: bold; font-size: 15px; color: #333;">${acao.titulo}</span>
+                                        <span style="background: ${corBorda};
+                                                     color: white;
+                                                     padding: 4px 12px;
+                                                     border-radius: 12px;
+                                                     font-size: 11px;
+                                                     font-weight: bold;">
+                                            ${acao.prioridade.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 13px; color: #666; margin-bottom: 8px;">${acao.descricao}</div>
+                                    <div style="font-size: 12px; color: ${corBorda}; font-weight: 500;">
+                                        → ${acao.acao}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+        ` : ''}
     `;
-    
+
     container.innerHTML = dashboardHtml;
     
     // Renderizar gráficos

@@ -87,7 +87,14 @@ var Reports = (function() {
       porTipoFalha: {},
       porSetorAbertura: {},
       porSetorNaoConformidade: {},
-      porStatusAcaoCorretiva: {}
+      porStatusAcaoCorretiva: {},
+
+      // === DEPLOY 36: NOVOS DADOS PARA MELHORIAS ===
+      mesAnterior: 0,              // RNCs do mês anterior
+      porSemana: {},               // RNCs por semana (últimas 4)
+      top5Setores: [],             // Top 5 setores com mais RNCs
+      top5TiposFalha: [],          // Top 5 tipos de falha
+      acoesRecomendadas: []        // Array de ações recomendadas
     };
     
     // ============================================
@@ -99,7 +106,7 @@ var Reports = (function() {
     var today = new Date();
     var thisMonth = today.getMonth();
     var thisYear = today.getFullYear();
-    
+
     // Pesos para Índice de Severidade
     var pesosSeveridade = {
       'Crítico': 10,
@@ -107,6 +114,12 @@ var Reports = (function() {
       'Médio': 4,
       'Baixo': 1
     };
+
+    // === DEPLOY 36: VARIÁVEIS AUXILIARES PARA NOVOS KPIs ===
+    var lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+    var lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+    var contadoresSetores = {};      // Conta RNCs por setor
+    var contadoresTiposFalha = {};   // Conta RNCs por tipo de falha
     
     // ============================================
     // LOOP PRINCIPAL: PROCESSAR CADA RNC
@@ -260,20 +273,47 @@ var Reports = (function() {
       // Por Mês (para timeline)
       if (dataCriacao) {
         var dataObj = new Date(dataCriacao);
-        
+
         if (!isNaN(dataObj.getTime())) {
           if (dataObj.getMonth() === thisMonth && dataObj.getFullYear() === thisYear) {
             stats.esteMes++;
           }
-          
+
           if (dataObj.getFullYear() === thisYear) {
             stats.esteAno++;
           }
-          
+
           var mesAno = (dataObj.getMonth() + 1) + '/' + dataObj.getFullYear();
           if (!stats.porMes[mesAno]) stats.porMes[mesAno] = 0;
           stats.porMes[mesAno]++;
+
+          // === DEPLOY 36: CONTAR MÊS ANTERIOR ===
+          if (dataObj.getMonth() === lastMonth && dataObj.getFullYear() === lastMonthYear) {
+            stats.mesAnterior++;
+          }
+
+          // === DEPLOY 36: CONTAR POR SEMANA (últimas 4 semanas) ===
+          var diffDays = Math.floor((today - dataObj) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 0 && diffDays < 28) {
+            var semana = Math.floor(diffDays / 7);
+            var semanaLabel = 'Semana -' + semana;
+            if (!stats.porSemana[semanaLabel]) stats.porSemana[semanaLabel] = 0;
+            stats.porSemana[semanaLabel]++;
+          }
         }
+      }
+
+      // === DEPLOY 36: CONTADORES PARA TOP 5 ===
+      // Contar por setor de abertura
+      if (setorAbertura && setorAbertura !== 'Não informado') {
+        if (!contadoresSetores[setorAbertura]) contadoresSetores[setorAbertura] = 0;
+        contadoresSetores[setorAbertura]++;
+      }
+
+      // Contar por tipo de falha
+      if (tipoFalha && tipoFalha !== 'Não informado') {
+        if (!contadoresTiposFalha[tipoFalha]) contadoresTiposFalha[tipoFalha] = 0;
+        contadoresTiposFalha[tipoFalha]++;
       }
     }
     
@@ -313,7 +353,87 @@ var Reports = (function() {
     if (finalizadasTotal > 0) {
       stats.taxaCumprimentoPrazo = Math.round((finalizadasNoPrazo / finalizadasTotal) * 100);
     }
-    
+
+    // ============================================
+    // DEPLOY 36: PROCESSAR NOVOS KPIs
+    // ============================================
+
+    // === TOP 5 SETORES ===
+    var setoresArray = Object.keys(contadoresSetores).map(function(setor) {
+      return { nome: setor, total: contadoresSetores[setor] };
+    });
+    setoresArray.sort(function(a, b) { return b.total - a.total; });
+    stats.top5Setores = setoresArray.slice(0, 5);
+
+    // === TOP 5 TIPOS DE FALHA ===
+    var falhasArray = Object.keys(contadoresTiposFalha).map(function(tipo) {
+      return { nome: tipo, total: contadoresTiposFalha[tipo] };
+    });
+    falhasArray.sort(function(a, b) { return b.total - a.total; });
+    stats.top5TiposFalha = falhasArray.slice(0, 5);
+
+    // === AÇÕES RECOMENDADAS (baseadas em limites) ===
+    if (stats.rncsVencidas > 5) {
+      stats.acoesRecomendadas.push({
+        prioridade: 'Alta',
+        icone: '🚨',
+        titulo: 'RNCs Vencidas Críticas',
+        descricao: stats.rncsVencidas + ' RNCs estão vencidas. Priorize a conclusão imediata.',
+        acao: 'Revisar RNCs vencidas'
+      });
+    }
+
+    if (stats.rncsProximasVencer > 10) {
+      stats.acoesRecomendadas.push({
+        prioridade: 'Média',
+        icone: '⚠️',
+        titulo: 'Muitas RNCs Próximas do Prazo',
+        descricao: stats.rncsProximasVencer + ' RNCs vencem em até 7 dias.',
+        acao: 'Planejar conclusão das próximas entregas'
+      });
+    }
+
+    if (stats.impactoClientePercentual > 30) {
+      stats.acoesRecomendadas.push({
+        prioridade: 'Alta',
+        icone: '👥',
+        titulo: 'Alto Impacto ao Cliente',
+        descricao: stats.impactoClientePercentual + '% das RNCs afetam clientes.',
+        acao: 'Reforçar controle de qualidade pré-entrega'
+      });
+    }
+
+    if (stats.deteccaoInternaPercentual < 50) {
+      stats.acoesRecomendadas.push({
+        prioridade: 'Média',
+        icone: '🔍',
+        titulo: 'Baixa Detecção Interna',
+        descricao: 'Apenas ' + stats.deteccaoInternaPercentual + '% das falhas são detectadas internamente.',
+        acao: 'Fortalecer processos de inspeção interna'
+      });
+    }
+
+    if (stats.taxaCumprimentoPrazo < 70) {
+      stats.acoesRecomendadas.push({
+        prioridade: 'Alta',
+        icone: '⏱️',
+        titulo: 'Baixo Cumprimento de Prazos',
+        descricao: 'Apenas ' + stats.taxaCumprimentoPrazo + '% das RNCs são concluídas no prazo.',
+        acao: 'Revisar capacidade e alocação de recursos'
+      });
+    }
+
+    // Se não houver ações críticas, adicionar mensagem positiva
+    if (stats.acoesRecomendadas.length === 0) {
+      stats.acoesRecomendadas.push({
+        prioridade: 'Baixa',
+        icone: '✅',
+        titulo: 'Sistema Saudável',
+        descricao: 'Todos os indicadores estão dentro dos padrões esperados.',
+        acao: 'Manter monitoramento contínuo'
+      });
+    }
+
     // ============================================
     // LOG E RETORNO
     // ============================================
