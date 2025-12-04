@@ -7,7 +7,11 @@
     
     <!-- ✨ CHART.JS - Biblioteca de Gráficos Animados -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
+
+    <!-- ✨ DEPLOY 37: jsPDF - Geração de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
 
@@ -2368,6 +2372,7 @@ textarea.form-control,
                         <div class="loading hidden" id="reportLoading"></div>
                     </button>
                     <button class="btn btn-secondary" id="exportCsv" disabled>📥 Exportar CSV</button>
+                    <button class="btn btn-success" id="exportPdf" disabled>📄 Exportar PDF Gerencial</button>
                     <button class="btn btn-secondary" id="clearFilters">🧹 Limpar Filtros</button>
                 </div>
             </div>
@@ -6745,8 +6750,9 @@ function renderLineChart(containerId, data) {
         
         reportData = result;
         renderReport(result);
-        
+
         document.getElementById('exportCsv').disabled = false;
+        document.getElementById('exportPdf').disabled = false;
         hideLoading();
         
         showSuccess(`Relatório gerado: ${result.rncs ? result.rncs.length : 0} RNC(s) encontrada(s)`);
@@ -7074,17 +7080,322 @@ function editRncFromReport(rncNumber) {
             }
         }
         
+        /**
+         * ============================================
+         * DEPLOY 37: EXPORTAR RELATÓRIO GERENCIAL EM PDF
+         * ============================================
+         */
+        function exportToPdf() {
+            if (!reportData || !reportData.rncs || reportData.rncs.length === 0) {
+                showError('Nenhum dado para exportar');
+                return;
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const stats = reportData.stats;
+                const rncs = reportData.rncs;
+
+                let yPos = 20;
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 15;
+
+                // ============================================
+                // CAPA DO RELATÓRIO
+                // ============================================
+                doc.setFillColor(0, 150, 136); // Cor primary
+                doc.rect(0, 0, pageWidth, 60, 'F');
+
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(28);
+                doc.setFont('helvetica', 'bold');
+                doc.text('RELATÓRIO GERENCIAL', pageWidth / 2, 30, { align: 'center' });
+
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Sistema de Gestão de RNCs', pageWidth / 2, 45, { align: 'center' });
+
+                // Data e período
+                doc.setTextColor(51, 51, 51);
+                doc.setFontSize(10);
+                yPos = 75;
+
+                const dataInicio = document.getElementById('dataInicio').value;
+                const dataFim = document.getElementById('dataFim').value;
+                const periodo = dataInicio && dataFim ?
+                    `Período: ${dataInicio} até ${dataFim}` :
+                    'Período: Todos os registros';
+
+                doc.text(periodo, margin, yPos);
+                yPos += 6;
+                doc.text(`Data de Geração: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, margin, yPos);
+                yPos += 15;
+
+                // ============================================
+                // SEÇÃO 1: RESUMO EXECUTIVO
+                // ============================================
+                doc.setFillColor(245, 245, 245);
+                doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0, 150, 136);
+                doc.text('📊 RESUMO EXECUTIVO', margin + 3, yPos + 6);
+                yPos += 15;
+
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(51, 51, 51);
+
+                const resumo = [
+                    `Total de RNCs: ${stats.total || 0}`,
+                    `RNCs Finalizadas: ${stats.finalizadas || 0} (${Math.round((stats.finalizadas / stats.total) * 100) || 0}%)`,
+                    `Custo Total: R$ ${(stats.custoTotal || 0).toFixed(2)}`,
+                    `Tempo Médio de Resolução: ${stats.tempoMedioResolucao || 0} dias`,
+                    `Taxa de Cumprimento de Prazo: ${stats.taxaCumprimentoPrazo || 0}%`,
+                    `RNCs Vencidas: ${stats.rncsVencidas || 0}`,
+                    `Índice de Severidade Ponderado: ${stats.indiceSeveridadePonderado || 0} pontos`
+                ];
+
+                resumo.forEach(linha => {
+                    if (yPos > pageHeight - 30) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                    doc.text(linha, margin + 5, yPos);
+                    yPos += 6;
+                });
+
+                yPos += 5;
+
+                // ============================================
+                // SEÇÃO 2: KPIs ESTRATÉGICOS
+                // ============================================
+                if (yPos > pageHeight - 50) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.setFillColor(245, 245, 245);
+                doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0, 150, 136);
+                doc.text('📈 KPIs ESTRATÉGICOS', margin + 3, yPos + 6);
+                yPos += 15;
+
+                // Tabela de KPIs
+                doc.autoTable({
+                    startY: yPos,
+                    head: [['Indicador', 'Valor', 'Status']],
+                    body: [
+                        ['Impacto ao Cliente', `${stats.impactoClientePercentual || 0}%`, stats.impactoClientePercentual > 30 ? '⚠️ Alto' : '✅ OK'],
+                        ['Detecção Interna', `${stats.deteccaoInternaPercentual || 0}%`, stats.deteccaoInternaPercentual >= 70 ? '✅ Bom' : '⚠️ Baixo'],
+                        ['Taxa Não Procede', `${stats.naoProcedeTaxa || 0}%`, stats.naoProcedeTaxa <= 10 ? '✅ OK' : '⚠️ Alto'],
+                        ['Cumprimento de Prazo', `${stats.taxaCumprimentoPrazo || 0}%`, stats.taxaCumprimentoPrazo >= 80 ? '✅ Bom' : '⚠️ Atenção']
+                    ],
+                    theme: 'grid',
+                    headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                    bodyStyles: { fontSize: 9 },
+                    margin: { left: margin, right: margin }
+                });
+
+                yPos = doc.lastAutoTable.finalY + 10;
+
+                // ============================================
+                // SEÇÃO 3: DISTRIBUIÇÃO POR TIPO
+                // ============================================
+                if (yPos > pageHeight - 50) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.setFillColor(245, 245, 245);
+                doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0, 150, 136);
+                doc.text('📋 DISTRIBUIÇÃO DAS RNCs', margin + 3, yPos + 6);
+                yPos += 15;
+
+                // Por Tipo
+                const tipoData = Object.entries(stats.porTipo || {}).map(([tipo, count]) => [
+                    tipo,
+                    count,
+                    `${Math.round((count / stats.total) * 100)}%`
+                ]);
+
+                if (tipoData.length > 0) {
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Tipo de RNC', 'Quantidade', 'Percentual']],
+                        body: tipoData,
+                        theme: 'striped',
+                        headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                        bodyStyles: { fontSize: 9 },
+                        margin: { left: margin, right: margin }
+                    });
+                    yPos = doc.lastAutoTable.finalY + 10;
+                }
+
+                // ============================================
+                // SEÇÃO 4: ANÁLISE DE CUSTOS
+                // ============================================
+                if (Object.keys(stats.custoMedioPorTipo || {}).length > 0) {
+                    if (yPos > pageHeight - 50) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+                    doc.setFontSize(14);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(0, 150, 136);
+                    doc.text('💰 ANÁLISE DE CUSTOS', margin + 3, yPos + 6);
+                    yPos += 15;
+
+                    const custoData = Object.entries(stats.custoMedioPorTipo)
+                        .sort((a, b) => b[1].soma - a[1].soma)
+                        .map(([tipo, dados]) => [
+                            tipo,
+                            dados.count,
+                            `R$ ${dados.soma.toFixed(2)}`,
+                            `R$ ${dados.media.toFixed(2)}`,
+                            `${((dados.soma / stats.custoTotal) * 100).toFixed(1)}%`
+                        ]);
+
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Tipo', 'Qtd', 'Custo Total', 'Custo Médio', '% do Total']],
+                        body: custoData,
+                        theme: 'striped',
+                        headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
+                        bodyStyles: { fontSize: 8 },
+                        margin: { left: margin, right: margin }
+                    });
+                    yPos = doc.lastAutoTable.finalY + 10;
+                }
+
+                // ============================================
+                // SEÇÃO 5: TOP 5 RANKINGS (Deploy 36)
+                // ============================================
+                if (stats.top5Setores && stats.top5Setores.length > 0) {
+                    if (yPos > pageHeight - 50) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+                    doc.setFontSize(14);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(0, 150, 136);
+                    doc.text('🏆 TOP 5 SETORES COM MAIS RNCs', margin + 3, yPos + 6);
+                    yPos += 15;
+
+                    const setorData = stats.top5Setores.map((setor, index) => [
+                        `${index + 1}º`,
+                        setor.nome,
+                        setor.total,
+                        `${Math.round((setor.total / stats.total) * 100)}%`
+                    ]);
+
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Posição', 'Setor', 'RNCs', '%']],
+                        body: setorData,
+                        theme: 'grid',
+                        headStyles: { fillColor: [244, 67, 54], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                        bodyStyles: { fontSize: 9 },
+                        margin: { left: margin, right: margin }
+                    });
+                    yPos = doc.lastAutoTable.finalY + 10;
+                }
+
+                // ============================================
+                // SEÇÃO 6: AÇÕES RECOMENDADAS (Deploy 36)
+                // ============================================
+                if (stats.acoesRecomendadas && stats.acoesRecomendadas.length > 0) {
+                    if (yPos > pageHeight - 50) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+                    doc.setFontSize(14);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(0, 150, 136);
+                    doc.text('💡 AÇÕES RECOMENDADAS', margin + 3, yPos + 6);
+                    yPos += 15;
+
+                    const acoesData = stats.acoesRecomendadas.map(acao => [
+                        acao.prioridade,
+                        acao.titulo,
+                        acao.acao
+                    ]);
+
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Prioridade', 'Problema', 'Ação Recomendada']],
+                        body: acoesData,
+                        theme: 'striped',
+                        headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                        bodyStyles: { fontSize: 9 },
+                        columnStyles: {
+                            0: { cellWidth: 25 },
+                            1: { cellWidth: 65 },
+                            2: { cellWidth: 90 }
+                        },
+                        margin: { left: margin, right: margin }
+                    });
+                }
+
+                // ============================================
+                // RODAPÉ EM TODAS AS PÁGINAS
+                // ============================================
+                const totalPages = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text(
+                        `Relatório Gerencial - Sistema RNC Neoformula | Página ${i} de ${totalPages}`,
+                        pageWidth / 2,
+                        pageHeight - 10,
+                        { align: 'center' }
+                    );
+                }
+
+                // ============================================
+                // SALVAR PDF
+                // ============================================
+                const filename = `relatorio_gerencial_rnc_${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(filename);
+
+                showSuccess('PDF gerencial exportado com sucesso!');
+                debugLog('success', '✅ PDF gerencial exportado DEPLOY 37');
+
+            } catch (error) {
+                debugLog('error', '❌ Erro ao exportar PDF DEPLOY 37', { error: error.message });
+                showError('Erro ao exportar PDF: ' + error.message);
+            }
+        }
+
         function clearFilters() {
             document.getElementById('dataInicio').value = '';
             document.getElementById('dataFim').value = '';
             document.getElementById('setorFiltro').value = 'Todos';
             document.getElementById('tipoFiltro').value = 'Todos';
             document.getElementById('statusFiltro').value = 'Todos';
-            
+
             document.getElementById('report-content').innerHTML = '';
             document.getElementById('exportCsv').disabled = true;
+            document.getElementById('exportPdf').disabled = true;
             reportData = null;
-            
+
             debugLog('info', '🧹 Filtros limpos DEPLOY 30');
         }
         
@@ -8564,7 +8875,10 @@ var loadedTabs = {
             
             // Exportação CSV
             document.getElementById('exportCsv').addEventListener('click', exportCsv);
-            
+
+            // Exportação PDF (DEPLOY 37)
+            document.getElementById('exportPdf').addEventListener('click', exportToPdf);
+
             // Limpar filtros
             document.getElementById('clearFilters').addEventListener('click', clearFilters);
             
