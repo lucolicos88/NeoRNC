@@ -15,7 +15,9 @@
       "Bash(node backup-deploy.js:*)",
       "Bash(python replace-pdf-function.py:*)",
       "Bash(clasp status:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(clasp pull:*)",
+      "Bash(node force-upload-html.js:*)"
     ],
     "deny": [],
     "ask": []
