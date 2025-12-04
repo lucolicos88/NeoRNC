@@ -17,7 +17,11 @@
       "Bash(clasp status:*)",
       "Bash(cat:*)",
       "Bash(clasp pull:*)",
-      "Bash(node force-upload-html.js:*)"
+      "Bash(node force-upload-html.js:*)",
+      "Bash(clasp logout:*)",
+      "Bash(clasp login:*)",
+      "Bash(echo:*)",
+      "Bash(timeout 5 clasp push:*)"
     ],
     "deny": [],
     "ask": []
