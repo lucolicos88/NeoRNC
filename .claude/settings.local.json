@@ -13,7 +13,9 @@
       "Bash(clasp open:*)",
       "Bash(git checkout:*)",
       "Bash(node backup-deploy.js:*)",
-      "Bash(python replace-pdf-function.py:*)"
+      "Bash(python replace-pdf-function.py:*)",
+      "Bash(clasp status:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
