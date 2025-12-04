@@ -6725,17 +6725,71 @@ function renderLineChart(containerId, data) {
             return;
         }
         
-        // Confirmação
-        var confirmMessage = `Gerar relatório com os seguintes filtros?\n\n`;
-        confirmMessage += `📅 Período: ${formatDate(filters.dataInicio)} até ${formatDate(filters.dataFim)}\n`;
-        confirmMessage += `📊 Status: ${filters.status}\n`;
-        confirmMessage += `📊 Tipo de Setor: ${filters.tipoSetor === 'qualidade' ? 'Não Conformidade' : 'Abertura'}\n`;
-        confirmMessage += `🏢 Setor: ${filters.setor}\n`;
-        confirmMessage += `📋 Tipo RNC: ${filters.tipo}\n\n`;
-        confirmMessage += `Esta operação pode levar alguns segundos.`;
-        
-        if (!confirm(confirmMessage)) {
-            debugLog('info', '❌ Usuário cancelou geração de relatório');
+        // Modal de confirmação HTML
+        const confirmModal = document.createElement('div');
+        confirmModal.className = 'modal-overlay';
+        confirmModal.innerHTML = `
+            <div class="modal-content" style="max-width: 550px;">
+                <div class="modal-header">
+                    <h3>📊 Gerar Relatório</h3>
+                    <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 15px; color: #555;">Confirme os filtros selecionados:</p>
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="margin-bottom: 10px;">
+                            <strong>📅 Período:</strong> ${formatDate(filters.dataInicio)} até ${formatDate(filters.dataFim)}
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>📊 Status:</strong> ${filters.status}
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>📊 Tipo de Setor:</strong> ${filters.tipoSetor === 'qualidade' ? 'Não Conformidade' : 'Abertura'}
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>🏢 Setor:</strong> ${filters.setor}
+                        </div>
+                        <div>
+                            <strong>📋 Tipo RNC:</strong> ${filters.tipo}
+                        </div>
+                    </div>
+                    <p style="color: #666; font-size: 13px;">
+                        ⚠️ Esta operação pode levar alguns segundos.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">
+                        Cancelar
+                    </button>
+                    <button class="btn btn-primary" id="confirmGenerateReport">
+                        📊 Gerar Relatório
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(confirmModal);
+
+        // Retornar Promise para aguardar confirmação
+        const userConfirmed = await new Promise((resolve) => {
+            const confirmBtn = document.getElementById('confirmGenerateReport');
+            confirmBtn.onclick = () => {
+                confirmModal.remove();
+                resolve(true);
+            };
+            // Se fechar o modal, resolve como false
+            confirmModal.querySelector('.close-modal').onclick = () => {
+                confirmModal.remove();
+                resolve(false);
+            };
+            confirmModal.querySelector('.btn-secondary').onclick = () => {
+                confirmModal.remove();
+                resolve(false);
+            };
+        });
+
+        if (!userConfirmed) {
+            debugLog('info', 'Usuario cancelou geracao de relatorio');
             return;
         }
         
@@ -7032,402 +7086,1138 @@ function editRncFromReport(rncNumber) {
     debugLog('success', '✅ Relatório renderizado com 8 KPIs + gráficos + tabelas');
 }
         
-        /**
-         * ============================================
-         * DEPLOY 38: RELATÓRIO GERENCIAL PDF EXECUTIVO
-         * Versão Profissional - Sem emojis, com gráficos
-         * ============================================
-         */
-        function exportToPdf() {
-            if (!reportData || !reportData.rncs || reportData.rncs.length === 0) {
-                showError('Nenhum dado para exportar');
-                return;
+/**
+ * ============================================
+ * DEPLOY 39: RELATORIO PDF MEGA COMPLETO
+ * Ultra-Professional Report - Board Ready
+ * ============================================
+ */
+function exportToPdf() {
+    if (!reportData || !reportData.rncs || reportData.rncs.length === 0) {
+        showError('Nenhum dado para exportar');
+        return;
+    }
+
+    try {
+        showLoading('Gerando PDF mega-completo...');
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const stats = reportData.stats;
+        const rncs = reportData.rncs;
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 15;
+        let yPos = 20;
+
+        // Helper: Add Section Header
+        function addSectionHeader(title, yPosition) {
+            if (yPosition > pageHeight - 40) {
+                doc.addPage();
+                yPosition = 20;
             }
-
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'a4');
-                const stats = reportData.stats;
-                const rncs = reportData.rncs;
-
-                let yPos = 20;
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                const margin = 15;
-
-                // ============================================
-                // CAPA DO RELATÓRIO
-                // ============================================
-                doc.setFillColor(0, 150, 136); // Cor primary
-                doc.rect(0, 0, pageWidth, 60, 'F');
-
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(28);
-                doc.setFont('helvetica', 'bold');
-                doc.text('RELATORIO GERENCIAL', pageWidth / 2, 30, { align: 'center' });
-
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'normal');
-                doc.text('Sistema de Gestao de RNCs - Neoformula', pageWidth / 2, 45, { align: 'center' });
-
-                // Data e periodo
-                doc.setTextColor(51, 51, 51);
-                doc.setFontSize(10);
-                yPos = 75;
-
-                const dataInicio = document.getElementById('dataInicio').value;
-                const dataFim = document.getElementById('dataFim').value;
-                const periodo = dataInicio && dataFim ?
-                    `Periodo: ${dataInicio} ate ${dataFim}` :
-                    'Periodo: Todos os registros';
-
-                doc.text(periodo, margin, yPos);
-                yPos += 6;
-                doc.text(`Data de Geracao: ${new Date().toLocaleDateString('pt-BR')} as ${new Date().toLocaleTimeString('pt-BR')}`, margin, yPos);
-                yPos += 15;
-
-                // ============================================
-                // SECAO 1: RESUMO EXECUTIVO
-                // ============================================
-                doc.setFillColor(245, 245, 245);
-                doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
-                doc.setFontSize(14);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(0, 150, 136);
-                doc.text('RESUMO EXECUTIVO', margin + 3, yPos + 6);
-                yPos += 15;
-
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(51, 51, 51);
-
-                const resumo = [
-                    `Total de RNCs: ${stats.total || 0}`,
-                    `RNCs Finalizadas: ${stats.finalizadas || 0} (${Math.round((stats.finalizadas / stats.total) * 100) || 0}%)`,
-                    `Custo Total: R$ ${(stats.custoTotal || 0).toFixed(2)}`,
-                    `Tempo Medio de Resolucao: ${stats.tempoMedioResolucao || 0} dias`,
-                    `Taxa de Cumprimento de Prazo: ${stats.taxaCumprimentoPrazo || 0}%`,
-                    `RNCs Vencidas: ${stats.rncsVencidas || 0}`,
-                    `Indice de Severidade Ponderado: ${stats.indiceSeveridadePonderado || 0} pontos`
-                ];
-
-                resumo.forEach(linha => {
-                    if (yPos > pageHeight - 30) {
-                        doc.addPage();
-                        yPos = 20;
-                    }
-                    doc.text(linha, margin + 5, yPos);
-                    yPos += 6;
-                });
-
-                yPos += 5;
-
-                // ============================================
-                // SEÇÃO 2: KPIs ESTRATÉGICOS
-                // ============================================
-                if (yPos > pageHeight - 50) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-
-                doc.setFillColor(245, 245, 245);
-                doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
-                doc.setFontSize(14);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(0, 150, 136);
-                doc.text('KPIs ESTRATEGICOS', margin + 3, yPos + 6);
-                yPos += 15;
-
-                // Tabela de KPIs
-                doc.autoTable({
-                    startY: yPos,
-                    head: [['Indicador', 'Valor', 'Status']],
-                    body: [
-                        ['Impacto ao Cliente', `${stats.impactoClientePercentual || 0}%`, stats.impactoClientePercentual > 30 ? 'Alto' : 'OK'],
-                        ['Deteccao Interna', `${stats.deteccaoInternaPercentual || 0}%`, stats.deteccaoInternaPercentual >= 70 ? 'Bom' : 'Baixo'],
-                        ['Taxa Nao Procede', `${stats.naoProcedeTaxa || 0}%`, stats.naoProcedeTaxa <= 10 ? 'OK' : 'Alto'],
-                        ['Cumprimento de Prazo', `${stats.taxaCumprimentoPrazo || 0}%`, stats.taxaCumprimentoPrazo >= 80 ? 'Bom' : 'Atencao']
-                    ],
-                    theme: 'grid',
-                    headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                    bodyStyles: { fontSize: 9 },
-                    margin: { left: margin, right: margin }
-                });
-
-                yPos = doc.lastAutoTable.finalY + 10;
-
-                // ============================================
-                // SEÇÃO 3: DISTRIBUIÇÃO POR TIPO
-                // ============================================
-                if (yPos > pageHeight - 50) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-
-                doc.setFillColor(245, 245, 245);
-                doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
-                doc.setFontSize(14);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(0, 150, 136);
-                doc.text('DISTRIBUICAO DAS RNCs', margin + 3, yPos + 6);
-                yPos += 15;
-
-                // Por Tipo
-                const tipoData = Object.entries(stats.porTipo || {}).map(([tipo, count]) => [
-                    tipo,
-                    count,
-                    `${Math.round((count / stats.total) * 100)}%`
-                ]);
-
-                if (tipoData.length > 0) {
-                    doc.autoTable({
-                        startY: yPos,
-                        head: [['Tipo de RNC', 'Quantidade', 'Percentual']],
-                        body: tipoData,
-                        theme: 'striped',
-                        headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                        bodyStyles: { fontSize: 9 },
-                        margin: { left: margin, right: margin }
-                    });
-                    yPos = doc.lastAutoTable.finalY + 10;
-                }
-
-                // ============================================
-                // SEÇÃO 4: ANÁLISE DE CUSTOS
-                // ============================================
-                if (Object.keys(stats.custoMedioPorTipo || {}).length > 0) {
-                    if (yPos > pageHeight - 50) {
-                        doc.addPage();
-                        yPos = 20;
-                    }
-
-                    doc.setFillColor(245, 245, 245);
-                    doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
-                    doc.setFontSize(14);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(0, 150, 136);
-                    doc.text('ANALISE DE CUSTOS', margin + 3, yPos + 6);
-                    yPos += 15;
-
-                    const custoData = Object.entries(stats.custoMedioPorTipo)
-                        .sort((a, b) => b[1].soma - a[1].soma)
-                        .map(([tipo, dados]) => [
-                            tipo,
-                            dados.count,
-                            `R$ ${dados.soma.toFixed(2)}`,
-                            `R$ ${dados.media.toFixed(2)}`,
-                            `${((dados.soma / stats.custoTotal) * 100).toFixed(1)}%`
-                        ]);
-
-                    doc.autoTable({
-                        startY: yPos,
-                        head: [['Tipo', 'Qtd', 'Custo Total', 'Custo Medio', '% do Total']],
-                        body: custoData,
-                        theme: 'striped',
-                        headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
-                        bodyStyles: { fontSize: 8 },
-                        margin: { left: margin, right: margin }
-                    });
-                    yPos = doc.lastAutoTable.finalY + 15;
-
-                    // GRAFICO DE BARRAS - CUSTOS
-                    if (yPos > pageHeight - 80) {
-                        doc.addPage();
-                        yPos = 20;
-                    }
-
-                    doc.setFontSize(11);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(0, 0, 0);
-                    doc.text('Grafico - Custos por Tipo:', margin, yPos);
-                    yPos += 8;
-
-                    const custoArray = Object.entries(stats.custoMedioPorTipo)
-                        .sort((a, b) => b[1].soma - a[1].soma)
-                        .slice(0, 5);
-
-                    const maxCusto = Math.max(...custoArray.map(([_, dados]) => dados.soma));
-                    const barMaxWidth = 110;
-                    const barHeight = 8;
-                    const barSpacing = 12;
-
-                    custoArray.forEach(([tipo, dados], index) => {
-                        const barWidth = (dados.soma / maxCusto) * barMaxWidth;
-
-                        // Barra
-                        doc.setFillColor(0, 150, 136);
-                        doc.rect(margin + 50, yPos, barWidth, barHeight, 'F');
-
-                        // Label
-                        doc.setFontSize(8);
-                        doc.setFont('helvetica', 'normal');
-                        doc.setTextColor(0, 0, 0);
-                        doc.text(tipo.substring(0, 18), margin, yPos + 5.5);
-
-                        // Valor
-                        doc.setFont('helvetica', 'bold');
-                        doc.text(`R$ ${dados.soma.toFixed(0)}`, margin + 52 + barWidth, yPos + 5.5);
-
-                        yPos += barSpacing;
-                    });
-
-                    yPos += 5;
-                }
-
-                // ============================================
-                // SEÇÃO 5: TOP 5 RANKINGS (Deploy 36)
-                // ============================================
-                if (stats.top5Setores && stats.top5Setores.length > 0) {
-                    if (yPos > pageHeight - 50) {
-                        doc.addPage();
-                        yPos = 20;
-                    }
-
-                    doc.setFillColor(245, 245, 245);
-                    doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
-                    doc.setFontSize(14);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(0, 150, 136);
-                    doc.text('TOP 5 SETORES COM MAIS RNCs', margin + 3, yPos + 6);
-                    yPos += 15;
-
-                    const setorData = stats.top5Setores.map((setor, index) => [
-                        `${index + 1}o`,
-                        setor.nome,
-                        setor.total,
-                        `${Math.round((setor.total / stats.total) * 100)}%`
-                    ]);
-
-                    doc.autoTable({
-                        startY: yPos,
-                        head: [['Posicao', 'Setor', 'RNCs', '%']],
-                        body: setorData,
-                        theme: 'grid',
-                        headStyles: { fillColor: [244, 67, 54], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                        bodyStyles: { fontSize: 9 },
-                        margin: { left: margin, right: margin }
-                    });
-                    yPos = doc.lastAutoTable.finalY + 15;
-
-                    // GRAFICO DE BARRAS HORIZONTAIS
-                    if (yPos > pageHeight - 80) {
-                        doc.addPage();
-                        yPos = 20;
-                    }
-
-                    doc.setFontSize(11);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(0, 0, 0);
-                    doc.text('Grafico - Top 5 Setores:', margin, yPos);
-                    yPos += 8;
-
-                    const maxValue = Math.max(...stats.top5Setores.map(s => s.total));
-                    const barMaxWidth = 120;
-                    const barHeight = 8;
-                    const barSpacing = 12;
-
-                    stats.top5Setores.forEach((setor, index) => {
-                        const barWidth = (setor.total / maxValue) * barMaxWidth;
-                        const colors = [
-                            [244, 67, 54],   // Vermelho
-                            [255, 152, 0],   // Laranja
-                            [255, 193, 7],   // Amarelo
-                            [76, 175, 80],   // Verde
-                            [33, 150, 243]   // Azul
-                        ];
-                        const color = colors[index % 5];
-
-                        // Barra
-                        doc.setFillColor(color[0], color[1], color[2]);
-                        doc.rect(margin + 40, yPos, barWidth, barHeight, 'F');
-
-                        // Label (setor)
-                        doc.setFontSize(8);
-                        doc.setFont('helvetica', 'normal');
-                        doc.setTextColor(0, 0, 0);
-                        doc.text(setor.nome.substring(0, 15), margin, yPos + 5.5);
-
-                        // Valor
-                        doc.setFont('helvetica', 'bold');
-                        doc.text(`${setor.total}`, margin + 42 + barWidth, yPos + 5.5);
-
-                        yPos += barSpacing;
-                    });
-
-                    yPos += 5;
-                }
-
-                // ============================================
-                // SEÇÃO 6: AÇÕES RECOMENDADAS (Deploy 36)
-                // ============================================
-                if (stats.acoesRecomendadas && stats.acoesRecomendadas.length > 0) {
-                    if (yPos > pageHeight - 50) {
-                        doc.addPage();
-                        yPos = 20;
-                    }
-
-                    doc.setFillColor(245, 245, 245);
-                    doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
-                    doc.setFontSize(14);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(0, 150, 136);
-                    doc.text('ACOES RECOMENDADAS', margin + 3, yPos + 6);
-                    yPos += 15;
-
-                    const acoesData = stats.acoesRecomendadas.map(acao => [
-                        acao.prioridade,
-                        acao.titulo,
-                        acao.acao
-                    ]);
-
-                    doc.autoTable({
-                        startY: yPos,
-                        head: [['Prioridade', 'Problema', 'Acao Recomendada']],
-                        body: acoesData,
-                        theme: 'striped',
-                        headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                        bodyStyles: { fontSize: 9 },
-                        columnStyles: {
-                            0: { cellWidth: 25 },
-                            1: { cellWidth: 65 },
-                            2: { cellWidth: 90 }
-                        },
-                        margin: { left: margin, right: margin }
-                    });
-                }
-
-                // ============================================
-                // RODAPÉ EM TODAS AS PÁGINAS
-                // ============================================
-                const totalPages = doc.internal.getNumberOfPages();
-                for (let i = 1; i <= totalPages; i++) {
-                    doc.setPage(i);
-                    doc.setFontSize(8);
-                    doc.setTextColor(150, 150, 150);
-                    doc.text(
-                        `Relatorio Gerencial - Sistema RNC Neoformula | Pagina ${i} de ${totalPages}`,
-                        pageWidth / 2,
-                        pageHeight - 10,
-                        { align: 'center' }
-                    );
-                }
-
-                // ============================================
-                // SALVAR PDF
-                // ============================================
-                const filename = `relatorio_gerencial_rnc_${new Date().toISOString().split('T')[0]}.pdf`;
-                doc.save(filename);
-
-                showSuccess('PDF gerencial exportado com sucesso!');
-                debugLog('success', 'PDF gerencial exportado DEPLOY 38');
-
-            } catch (error) {
-                debugLog('error', '❌ Erro ao exportar PDF DEPLOY 37', { error: error.message });
-                showError('Erro ao exportar PDF: ' + error.message);
-            }
+            doc.setFillColor(0, 150, 136);
+            doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(title, margin + 3, yPosition + 7);
+            return yPosition + 15;
         }
 
-        function clearFilters() {
+        // Helper: Draw Horizontal Bar Chart
+        function drawBarChart(data, startY, maxWidth = 120) {
+            const barHeight = 8;
+            const barSpacing = 12;
+            let y = startY;
+
+            const maxValue = Math.max(...data.map(d => d.value));
+            const colors = [
+                [244, 67, 54],   // Red
+                [255, 152, 0],   // Orange
+                [255, 193, 7],   // Yellow
+                [76, 175, 80],   // Green
+                [33, 150, 243]   // Blue
+            ];
+
+            data.forEach((item, index) => {
+                if (y > pageHeight - 20) {
+                    doc.addPage();
+                    y = 20;
+                }
+
+                const barWidth = (item.value / maxValue) * maxWidth;
+                const color = colors[index % 5];
+
+                // Draw bar
+                doc.setFillColor(color[0], color[1], color[2]);
+                doc.rect(margin + 50, y, barWidth, barHeight, 'F');
+
+                // Label
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(0, 0, 0);
+                const label = item.label.substring(0, 18);
+                doc.text(label, margin, y + 5.5);
+
+                // Value
+                doc.setFont('helvetica', 'bold');
+                doc.text(String(item.value), margin + 52 + barWidth, y + 5.5);
+
+                y += barSpacing;
+            });
+
+            return y + 5;
+        }
+
+        // Helper: Draw Pie Chart
+        function drawPieChart(data, centerX, centerY, radius) {
+            const total = data.reduce((sum, d) => sum + d.value, 0);
+            let startAngle = 0;
+
+            const colors = [
+                [76, 175, 80],   // Green
+                [255, 152, 0],   // Orange
+                [244, 67, 54],   // Red
+                [33, 150, 243],  // Blue
+                [156, 39, 176],  // Purple
+                [255, 193, 7],   // Yellow
+                [0, 150, 136],   // Teal
+                [121, 85, 72]    // Brown
+            ];
+
+            data.forEach((item, index) => {
+                const sliceAngle = (item.value / total) * 2 * Math.PI;
+                const color = colors[index % colors.length];
+
+                // Draw slice
+                doc.setFillColor(color[0], color[1], color[2]);
+                doc.setDrawColor(255, 255, 255);
+                doc.setLineWidth(0.5);
+
+                // Calculate points
+                const x1 = centerX + radius * Math.cos(startAngle);
+                const y1 = centerY + radius * Math.sin(startAngle);
+                const x2 = centerX + radius * Math.cos(startAngle + sliceAngle);
+                const y2 = centerY + radius * Math.sin(startAngle + sliceAngle);
+
+                // Draw filled triangle (approximation of pie slice)
+                doc.triangle(centerX, centerY, x1, y1, x2, y2, 'FD');
+
+                startAngle += sliceAngle;
+            });
+
+            // Draw legend
+            let legendY = centerY - radius;
+            data.forEach((item, index) => {
+                const color = colors[index % colors.length];
+                const pct = ((item.value / total) * 100).toFixed(1);
+
+                // Color box
+                doc.setFillColor(color[0], color[1], color[2]);
+                doc.rect(centerX + radius + 10, legendY - 2, 4, 4, 'F');
+
+                // Text
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`${item.label}: ${item.value} (${pct}%)`, centerX + radius + 16, legendY + 1);
+
+                legendY += 6;
+            });
+        }
+
+        // ============================================
+        // PAGE 1: CAPA PROFISSIONAL
+        // ============================================
+        doc.setFillColor(0, 150, 136);
+        doc.rect(0, 0, pageWidth, 90, 'F');
+
+        // LOGO NEOFORMULA (estilizado)
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(pageWidth / 2 - 30, 20, 60, 18, 3, 3, 'F');
+        doc.setTextColor(0, 150, 136);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('NEOFORMULA', pageWidth / 2, 32, { align: 'center' });
+
+        // Titulo principal
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(36);
+        doc.text('RELATORIO', pageWidth / 2, 55, { align: 'center' });
+        doc.setFontSize(32);
+        doc.text('GERENCIAL', pageWidth / 2, 70, { align: 'center' });
+
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Sistema de Gestao de Nao Conformidades', pageWidth / 2, 82, { align: 'center' });
+
+        // Informacoes do periodo
+        yPos = 105;
+        doc.setTextColor(51, 51, 51);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+
+        const dataInicio = document.getElementById('dataInicio').value;
+        const dataFim = document.getElementById('dataFim').value;
+        const periodo = dataInicio && dataFim ?
+            `Periodo: ${dataInicio} ate ${dataFim}` :
+            'Periodo: Todos os registros';
+
+        doc.text(periodo, pageWidth / 2, yPos, { align: 'center' });
+        yPos += 8;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const hoje = new Date();
+        const dataGeracao = `${hoje.getDate().toString().padStart(2, '0')}/${(hoje.getMonth() + 1).toString().padStart(2, '0')}/${hoje.getFullYear()}`;
+        const horaGeracao = `${hoje.getHours().toString().padStart(2, '0')}:${hoje.getMinutes().toString().padStart(2, '0')}`;
+        doc.text(`Data de Geracao: ${dataGeracao} as ${horaGeracao}`, pageWidth / 2, yPos, { align: 'center' });
+
+        // Box de destaque
+        yPos += 20;
+        doc.setFillColor(245, 245, 245);
+        doc.roundedRect(margin + 10, yPos, pageWidth - 2 * margin - 20, 60, 5, 5, 'F');
+
+        yPos += 12;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 150, 136);
+        doc.text('INDICADORES PRINCIPAIS', pageWidth / 2, yPos, { align: 'center' });
+
+        yPos += 10;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+
+        const indicadores = [
+            `Total de RNCs: ${stats.total || 0}`,
+            `Custo Total: R$ ${(stats.custoTotal || 0).toFixed(2)}`,
+            `Taxa de Finalizacao: ${Math.round((stats.finalizadas / stats.total) * 100) || 0}%`,
+            `Tempo Medio de Resolucao: ${stats.tempoMedioResolucao || 0} dias`
+        ];
+
+        indicadores.forEach(ind => {
+            doc.text(ind, pageWidth / 2, yPos, { align: 'center' });
+            yPos += 7;
+        });
+
+        // ============================================
+        // PAGE 2: DASHBOARD EXECUTIVO
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('DASHBOARD EXECUTIVO', 20);
+
+        // KPIs em grid 3x3
+        const kpis = [
+            { label: 'Total de RNCs', value: stats.total || 0, unit: '' },
+            { label: 'RNCs Finalizadas', value: stats.finalizadas || 0, unit: '' },
+            { label: 'RNCs Abertas', value: stats.abertas || 0, unit: '' },
+            { label: 'Custo Total', value: (stats.custoTotal || 0).toFixed(2), unit: 'R$' },
+            { label: 'Custo Medio', value: (stats.custoTotal / stats.total || 0).toFixed(2), unit: 'R$' },
+            { label: 'Tempo Medio', value: stats.tempoMedioResolucao || 0, unit: 'dias' },
+            { label: 'Taxa Cumprimento', value: stats.taxaCumprimentoPrazo || 0, unit: '%' },
+            { label: 'RNCs Vencidas', value: stats.rncsVencidas || 0, unit: '' },
+            { label: 'Indice Severidade', value: stats.indiceSeveridadePonderado || 0, unit: 'pts' }
+        ];
+
+        const kpiWidth = 55;
+        const kpiHeight = 25;
+        const kpiSpacing = 5;
+        let kpiX = margin;
+        let kpiY = yPos;
+        let kpiCount = 0;
+
+        kpis.forEach((kpi, index) => {
+            // New row every 3 KPIs
+            if (kpiCount === 3) {
+                kpiX = margin;
+                kpiY += kpiHeight + kpiSpacing;
+                kpiCount = 0;
+            }
+
+            // Box
+            doc.setFillColor(245, 245, 245);
+            doc.roundedRect(kpiX, kpiY, kpiWidth, kpiHeight, 2, 2, 'F');
+
+            // Label
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text(kpi.label, kpiX + kpiWidth / 2, kpiY + 8, { align: 'center' });
+
+            // Value
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 150, 136);
+            const valueText = kpi.unit === 'R$' ? `${kpi.unit} ${kpi.value}` : `${kpi.value}${kpi.unit}`;
+            doc.text(valueText, kpiX + kpiWidth / 2, kpiY + 19, { align: 'center' });
+
+            kpiX += kpiWidth + kpiSpacing;
+            kpiCount++;
+        });
+
+        yPos = kpiY + kpiHeight + 15;
+
+        // ============================================
+        // PAGE 3: DISTRIBUICAO POR STATUS
+        // ============================================
+        yPos = addSectionHeader('DISTRIBUICAO POR STATUS', yPos);
+
+        const statusData = Object.entries(stats.porStatus || {}).map(([status, count]) => ({
+            label: status,
+            value: count
+        }));
+
+        if (statusData.length > 0) {
+            // Tabela
+            doc.autoTable({
+                startY: yPos,
+                head: [['Status', 'Quantidade', 'Percentual']],
+                body: statusData.map(item => [
+                    item.label,
+                    item.value,
+                    `${((item.value / stats.total) * 100).toFixed(1)}%`
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Grafico de pizza
+            if (yPos > pageHeight - 70) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Grafico - Distribuicao por Status:', margin, yPos);
+            yPos += 10;
+
+            drawPieChart(statusData.slice(0, 6), pageWidth / 3, yPos + 25, 25);
+            yPos += 60;
+        }
+
+        // ============================================
+        // PAGE 4: DISTRIBUICAO POR RISCO
+        // ============================================
+        if (yPos > pageHeight - 80) {
+            doc.addPage();
+            yPos = 20;
+        }
+
+        yPos = addSectionHeader('DISTRIBUICAO POR RISCO', yPos);
+
+        const riscoData = Object.entries(stats.porRisco || {}).map(([risco, count]) => ({
+            label: risco,
+            value: count
+        }));
+
+        if (riscoData.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Nivel de Risco', 'Quantidade', 'Percentual']],
+                body: riscoData.map(item => [
+                    item.label,
+                    item.value,
+                    `${((item.value / stats.total) * 100).toFixed(1)}%`
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [244, 67, 54], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Grafico de pizza
+            if (yPos > pageHeight - 70) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Grafico - Distribuicao por Risco:', margin, yPos);
+            yPos += 10;
+
+            drawPieChart(riscoData.slice(0, 5), pageWidth / 3, yPos + 25, 25);
+            yPos += 60;
+        }
+
+        // ============================================
+        // PAGE 5: DISTRIBUICAO POR TIPO
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('DISTRIBUICAO POR TIPO DE RNC', 20);
+
+        const tipoData = Object.entries(stats.porTipo || {})
+            .sort((a, b) => b[1] - a[1])
+            .map(([tipo, count]) => ({
+                label: tipo,
+                value: count
+            }));
+
+        if (tipoData.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Tipo de RNC', 'Quantidade', 'Percentual']],
+                body: tipoData.map(item => [
+                    item.label,
+                    item.value,
+                    `${((item.value / stats.total) * 100).toFixed(1)}%`
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Grafico de barras
+            if (yPos > pageHeight - 80) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Grafico - Top 10 Tipos:', margin, yPos);
+            yPos += 8;
+
+            yPos = drawBarChart(tipoData.slice(0, 10), yPos, 110);
+        }
+
+        // ============================================
+        // PAGE 6: DISTRIBUICAO POR SETOR
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('DISTRIBUICAO POR SETOR', 20);
+
+        const setorData = Object.entries(stats.porSetor || {})
+            .sort((a, b) => b[1] - a[1])
+            .map(([setor, count]) => ({
+                label: setor,
+                value: count
+            }));
+
+        if (setorData.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Setor', 'Quantidade', 'Percentual']],
+                body: setorData.slice(0, 15).map(item => [
+                    item.label,
+                    item.value,
+                    `${((item.value / stats.total) * 100).toFixed(1)}%`
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Grafico de barras
+            if (yPos > pageHeight - 80) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Grafico - Top 10 Setores:', margin, yPos);
+            yPos += 8;
+
+            yPos = drawBarChart(setorData.slice(0, 10), yPos, 110);
+        }
+
+        // ============================================
+        // PAGE 7: ANALISE DE CUSTOS
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('ANALISE DETALHADA DE CUSTOS', 20);
+
+        if (Object.keys(stats.custoMedioPorTipo || {}).length > 0) {
+            const custoData = Object.entries(stats.custoMedioPorTipo)
+                .sort((a, b) => b[1].soma - a[1].soma);
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Tipo', 'Qtd', 'Custo Total', 'Custo Medio', '% Total']],
+                body: custoData.map(([tipo, dados]) => [
+                    tipo,
+                    dados.count,
+                    `R$ ${dados.soma.toFixed(2)}`,
+                    `R$ ${dados.media.toFixed(2)}`,
+                    `${((dados.soma / stats.custoTotal) * 100).toFixed(1)}%`
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 8 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Grafico de custos
+            if (yPos > pageHeight - 80) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Grafico - Top 8 Maiores Custos:', margin, yPos);
+            yPos += 8;
+
+            const custoChartData = custoData.slice(0, 8).map(([tipo, dados]) => ({
+                label: tipo,
+                value: dados.soma
+            }));
+
+            yPos = drawBarChart(custoChartData, yPos, 110);
+        }
+
+        // ============================================
+        // PAGE 8: TOP 5 SETORES COM MAIS RNCs
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('TOP 5 SETORES COM MAIS RNCs', 20);
+
+        if (stats.top5Setores && stats.top5Setores.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Posicao', 'Setor', 'Quantidade', 'Percentual']],
+                body: stats.top5Setores.map((setor, index) => [
+                    `${index + 1}o`,
+                    setor.nome,
+                    setor.total,
+                    `${Math.round((setor.total / stats.total) * 100)}%`
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [244, 67, 54], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Grafico
+            if (yPos > pageHeight - 80) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Grafico - Top 5 Setores:', margin, yPos);
+            yPos += 8;
+
+            const top5Data = stats.top5Setores.map(setor => ({
+                label: setor.nome,
+                value: setor.total
+            }));
+
+            yPos = drawBarChart(top5Data, yPos, 120);
+        }
+
+        // ============================================
+        // PAGE 9: TOP 5 TIPOS DE FALHA
+        // ============================================
+        if (yPos > pageHeight - 80) {
+            doc.addPage();
+            yPos = 20;
+        }
+
+        yPos = addSectionHeader('TOP 5 TIPOS DE FALHA', yPos);
+
+        if (stats.top5TiposFalha && stats.top5TiposFalha.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Posicao', 'Tipo de Falha', 'Quantidade', 'Percentual']],
+                body: stats.top5TiposFalha.map((tipo, index) => [
+                    `${index + 1}o`,
+                    tipo.nome,
+                    tipo.total,
+                    `${Math.round((tipo.total / stats.total) * 100)}%`
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [255, 152, 0], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+        }
+
+        // ============================================
+        // PAGE 10: ANALISE DE PRAZOS
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('ANALISE DE PRAZOS E VENCIMENTOS', 20);
+
+        doc.autoTable({
+            startY: yPos,
+            head: [['Metrica', 'Valor']],
+            body: [
+                ['RNCs no Prazo', stats.rncsPrazo || 0],
+                ['RNCs Atrasadas', stats.rncsAtrasadas || 0],
+                ['RNCs Vencidas', stats.rncsVencidas || 0],
+                ['Taxa de Cumprimento', `${stats.taxaCumprimentoPrazo || 0}%`],
+                ['Tempo Medio de Resolucao', `${stats.tempoMedioResolucao || 0} dias`],
+                ['Maior Tempo de Resolucao', `${stats.maiorTempoResolucao || 0} dias`],
+                ['Menor Tempo de Resolucao', `${stats.menorTempoResolucao || 0} dias`]
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+            bodyStyles: { fontSize: 9 },
+            margin: { left: margin, right: margin }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 10;
+
+        // ============================================
+        // PAGE 11: ACOES RECOMENDADAS
+        // ============================================
+        if (yPos > pageHeight - 80) {
+            doc.addPage();
+            yPos = 20;
+        }
+
+        yPos = addSectionHeader('ACOES RECOMENDADAS PARA GESTAO', yPos);
+
+        if (stats.acoesRecomendadas && stats.acoesRecomendadas.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Prioridade', 'Problema Identificado', 'Acao Recomendada']],
+                body: stats.acoesRecomendadas.map(acao => [
+                    acao.prioridade,
+                    acao.titulo,
+                    acao.acao
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                columnStyles: {
+                    0: { cellWidth: 25 },
+                    1: { cellWidth: 65 },
+                    2: { cellWidth: 90 }
+                },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+        }
+
+        // ============================================
+        // PAGE 12: RESUMO DE IMPACTO
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('RESUMO DE IMPACTO E TENDENCIAS', 20);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 150, 136);
+        doc.text('IMPACTO FINANCEIRO', margin, yPos);
+        yPos += 7;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+        doc.setFontSize(9);
+        doc.text(`Custo Total de Nao Conformidades: R$ ${(stats.custoTotal || 0).toFixed(2)}`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`Custo Medio por RNC: R$ ${((stats.custoTotal / stats.total) || 0).toFixed(2)}`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`Maior Custo Individual: R$ ${(stats.maiorCusto || 0).toFixed(2)}`, margin + 5, yPos);
+        yPos += 10;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 150, 136);
+        doc.text('IMPACTO NO CLIENTE', margin, yPos);
+        yPos += 7;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+        doc.setFontSize(9);
+        doc.text(`RNCs com Impacto ao Cliente: ${stats.impactoClientePercentual || 0}%`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`Deteccao Interna: ${stats.deteccaoInternaPercentual || 0}%`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`Taxa de Nao Procede: ${stats.naoProcedeTaxa || 0}%`, margin + 5, yPos);
+        yPos += 10;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 150, 136);
+        doc.text('IMPACTO NA QUALIDADE', margin, yPos);
+        yPos += 7;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+        doc.setFontSize(9);
+        doc.text(`Indice de Severidade Ponderado: ${stats.indiceSeveridadePonderado || 0} pontos`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`RNCs Criticas: ${stats.criticas || 0}`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`Taxa de Reincidencia: ${stats.taxaReincidencia || 0}%`, margin + 5, yPos);
+        yPos += 10;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 150, 136);
+        doc.text('TENDENCIAS IDENTIFICADAS', margin, yPos);
+        yPos += 7;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+        doc.setFontSize(9);
+
+        const tendencias = [
+            `Setores com maior incidencia precisam de atencao especial`,
+            `Tipos de falha recorrentes devem ser investigados`,
+            `${stats.rncsVencidas > 0 ? 'Atencao: Existem RNCs vencidas!' : 'Todas as RNCs estao dentro do prazo'}`,
+            `Taxa de cumprimento de prazo: ${stats.taxaCumprimentoPrazo >= 80 ? 'Satisfatoria' : 'Requer melhoria'}`,
+            `Custo medio por RNC: ${(stats.custoTotal / stats.total) > 100 ? 'Alto' : 'Controlado'}`
+        ];
+
+        tendencias.forEach(tendencia => {
+            doc.text(`- ${tendencia}`, margin + 5, yPos);
+            yPos += 5;
+        });
+
+        // ============================================
+        // RODAPE EM TODAS AS PAGINAS
+        // ============================================
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+
+            // Linha superior
+            doc.setDrawColor(0, 150, 136);
+            doc.setLineWidth(0.5);
+            doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+            // Texto do rodape
+            doc.setFontSize(8);
+            doc.setTextColor(120, 120, 120);
+            doc.setFont('helvetica', 'normal');
+            doc.text(
+                'Neoformula - Sistema de Gestao de Nao Conformidades',
+                pageWidth / 2,
+                pageHeight - 10,
+                { align: 'center' }
+            );
+
+            // Numero da pagina
+            doc.setFont('helvetica', 'bold');
+            doc.text(
+                `Pagina ${i} de ${totalPages}`,
+                pageWidth - margin,
+                pageHeight - 10,
+                { align: 'right' }
+            );
+        }
+
+        // ============================================
+        // SALVAR PDF
+        // ============================================
+        const filename = `relatorio_mega_completo_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+
+        hideLoading();
+        showSuccess(`PDF mega-completo exportado! (${totalPages} paginas)`);
+        debugLog('success', `PDF mega-completo exportado - ${totalPages} paginas - DEPLOY 39`);
+
+    } catch (error) {
+        hideLoading();
+        debugLog('error', 'Erro ao exportar PDF DEPLOY 39', { error: error.message });
+        showError('Erro ao exportar PDF: ' + error.message);
+    }
+}
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Grafico de barras
+            if (yPos > pageHeight - 80) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Grafico - Top 10 Tipos:', margin, yPos);
+            yPos += 8;
+
+            yPos = drawBarChart(tipoData.slice(0, 10), yPos, 110);
+        }
+
+        // ============================================
+        // PAGE 6: DISTRIBUICAO POR SETOR
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('DISTRIBUICAO POR SETOR', 20);
+
+        const setorData = Object.entries(stats.porSetor || {})
+            .sort((a, b) => b[1] - a[1])
+            .map(([setor, count]) => ({
+                label: setor,
+                value: count
+            }));
+
+        if (setorData.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Setor', 'Quantidade', 'Percentual']],
+                body: setorData.slice(0, 15).map(item => [
+                    item.label,
+                    item.value,
+                    `${((item.value / stats.total) * 100).toFixed(1)}%`
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Grafico de barras
+            if (yPos > pageHeight - 80) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Grafico - Top 10 Setores:', margin, yPos);
+            yPos += 8;
+
+            yPos = drawBarChart(setorData.slice(0, 10), yPos, 110);
+        }
+
+        // ============================================
+        // PAGE 7: ANALISE DE CUSTOS
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('ANALISE DETALHADA DE CUSTOS', 20);
+
+        if (Object.keys(stats.custoMedioPorTipo || {}).length > 0) {
+            const custoData = Object.entries(stats.custoMedioPorTipo)
+                .sort((a, b) => b[1].soma - a[1].soma);
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Tipo', 'Qtd', 'Custo Total', 'Custo Medio', '% Total']],
+                body: custoData.map(([tipo, dados]) => [
+                    tipo,
+                    dados.count,
+                    `R$ ${dados.soma.toFixed(2)}`,
+                    `R$ ${dados.media.toFixed(2)}`,
+                    `${((dados.soma / stats.custoTotal) * 100).toFixed(1)}%`
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 8 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Grafico de custos
+            if (yPos > pageHeight - 80) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Grafico - Top 8 Maiores Custos:', margin, yPos);
+            yPos += 8;
+
+            const custoChartData = custoData.slice(0, 8).map(([tipo, dados]) => ({
+                label: tipo,
+                value: dados.soma
+            }));
+
+            yPos = drawBarChart(custoChartData, yPos, 110);
+        }
+
+        // ============================================
+        // PAGE 8: TOP 5 SETORES COM MAIS RNCs
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('TOP 5 SETORES COM MAIS RNCs', 20);
+
+        if (stats.top5Setores && stats.top5Setores.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Posicao', 'Setor', 'Quantidade', 'Percentual']],
+                body: stats.top5Setores.map((setor, index) => [
+                    `${index + 1}o`,
+                    setor.nome,
+                    setor.total,
+                    `${Math.round((setor.total / stats.total) * 100)}%`
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [244, 67, 54], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Grafico
+            if (yPos > pageHeight - 80) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Grafico - Top 5 Setores:', margin, yPos);
+            yPos += 8;
+
+            const top5Data = stats.top5Setores.map(setor => ({
+                label: setor.nome,
+                value: setor.total
+            }));
+
+            yPos = drawBarChart(top5Data, yPos, 120);
+        }
+
+        // ============================================
+        // PAGE 9: TOP 5 TIPOS DE FALHA
+        // ============================================
+        if (yPos > pageHeight - 80) {
+            doc.addPage();
+            yPos = 20;
+        }
+
+        yPos = addSectionHeader('TOP 5 TIPOS DE FALHA', yPos);
+
+        if (stats.top5TiposFalha && stats.top5TiposFalha.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Posicao', 'Tipo de Falha', 'Quantidade', 'Percentual']],
+                body: stats.top5TiposFalha.map((tipo, index) => [
+                    `${index + 1}o`,
+                    tipo.nome,
+                    tipo.total,
+                    `${Math.round((tipo.total / stats.total) * 100)}%`
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [255, 152, 0], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+        }
+
+        // ============================================
+        // PAGE 10: ANALISE DE PRAZOS
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('ANALISE DE PRAZOS E VENCIMENTOS', 20);
+
+        doc.autoTable({
+            startY: yPos,
+            head: [['Metrica', 'Valor']],
+            body: [
+                ['RNCs no Prazo', stats.rncsPrazo || 0],
+                ['RNCs Atrasadas', stats.rncsAtrasadas || 0],
+                ['RNCs Vencidas', stats.rncsVencidas || 0],
+                ['Taxa de Cumprimento', `${stats.taxaCumprimentoPrazo || 0}%`],
+                ['Tempo Medio de Resolucao', `${stats.tempoMedioResolucao || 0} dias`],
+                ['Maior Tempo de Resolucao', `${stats.maiorTempoResolucao || 0} dias`],
+                ['Menor Tempo de Resolucao', `${stats.menorTempoResolucao || 0} dias`]
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+            bodyStyles: { fontSize: 9 },
+            margin: { left: margin, right: margin }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 10;
+
+        // ============================================
+        // PAGE 11: ACOES RECOMENDADAS
+        // ============================================
+        if (yPos > pageHeight - 80) {
+            doc.addPage();
+            yPos = 20;
+        }
+
+        yPos = addSectionHeader('ACOES RECOMENDADAS PARA GESTAO', yPos);
+
+        if (stats.acoesRecomendadas && stats.acoesRecomendadas.length > 0) {
+            doc.autoTable({
+                startY: yPos,
+                head: [['Prioridade', 'Problema Identificado', 'Acao Recomendada']],
+                body: stats.acoesRecomendadas.map(acao => [
+                    acao.prioridade,
+                    acao.titulo,
+                    acao.acao
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                columnStyles: {
+                    0: { cellWidth: 25 },
+                    1: { cellWidth: 65 },
+                    2: { cellWidth: 90 }
+                },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+        }
+
+        // ============================================
+        // PAGE 12: RESUMO DE IMPACTO
+        // ============================================
+        doc.addPage();
+        yPos = addSectionHeader('RESUMO DE IMPACTO E TENDENCIAS', 20);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 150, 136);
+        doc.text('IMPACTO FINANCEIRO', margin, yPos);
+        yPos += 7;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+        doc.setFontSize(9);
+        doc.text(`Custo Total de Nao Conformidades: R$ ${(stats.custoTotal || 0).toFixed(2)}`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`Custo Medio por RNC: R$ ${((stats.custoTotal / stats.total) || 0).toFixed(2)}`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`Maior Custo Individual: R$ ${(stats.maiorCusto || 0).toFixed(2)}`, margin + 5, yPos);
+        yPos += 10;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 150, 136);
+        doc.text('IMPACTO NO CLIENTE', margin, yPos);
+        yPos += 7;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+        doc.setFontSize(9);
+        doc.text(`RNCs com Impacto ao Cliente: ${stats.impactoClientePercentual || 0}%`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`Deteccao Interna: ${stats.deteccaoInternaPercentual || 0}%`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`Taxa de Nao Procede: ${stats.naoProcedeTaxa || 0}%`, margin + 5, yPos);
+        yPos += 10;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 150, 136);
+        doc.text('IMPACTO NA QUALIDADE', margin, yPos);
+        yPos += 7;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+        doc.setFontSize(9);
+        doc.text(`Indice de Severidade Ponderado: ${stats.indiceSeveridadePonderado || 0} pontos`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`RNCs Criticas: ${stats.criticas || 0}`, margin + 5, yPos);
+        yPos += 5;
+        doc.text(`Taxa de Reincidencia: ${stats.taxaReincidencia || 0}%`, margin + 5, yPos);
+        yPos += 10;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 150, 136);
+        doc.text('TENDENCIAS IDENTIFICADAS', margin, yPos);
+        yPos += 7;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+        doc.setFontSize(9);
+
+        const tendencias = [
+            `Setores com maior incidencia precisam de atencao especial`,
+            `Tipos de falha recorrentes devem ser investigados`,
+            `${stats.rncsVencidas > 0 ? 'Atencao: Existem RNCs vencidas!' : 'Todas as RNCs estao dentro do prazo'}`,
+            `Taxa de cumprimento de prazo: ${stats.taxaCumprimentoPrazo >= 80 ? 'Satisfatoria' : 'Requer melhoria'}`,
+            `Custo medio por RNC: ${(stats.custoTotal / stats.total) > 100 ? 'Alto' : 'Controlado'}`
+        ];
+
+        tendencias.forEach(tendencia => {
+            doc.text(`- ${tendencia}`, margin + 5, yPos);
+            yPos += 5;
+        });
+
+        // ============================================
+        // RODAPE EM TODAS AS PAGINAS
+        // ============================================
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+
+            // Linha superior
+            doc.setDrawColor(0, 150, 136);
+            doc.setLineWidth(0.5);
+            doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+            // Texto do rodape
+            doc.setFontSize(8);
+            doc.setTextColor(120, 120, 120);
+            doc.setFont('helvetica', 'normal');
+            doc.text(
+                'Neoformula - Sistema de Gestao de Nao Conformidades',
+                pageWidth / 2,
+                pageHeight - 10,
+                { align: 'center' }
+            );
+
+            // Numero da pagina
+            doc.setFont('helvetica', 'bold');
+            doc.text(
+                `Pagina ${i} de ${totalPages}`,
+                pageWidth - margin,
+                pageHeight - 10,
+                { align: 'right' }
+            );
+        }
+
+        // ============================================
+        // SALVAR PDF
+        // ============================================
+        const filename = `relatorio_mega_completo_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+
+        hideLoading();
+        showSuccess(`PDF mega-completo exportado! (${totalPages} paginas)`);
+        debugLog('success', `PDF mega-completo exportado - ${totalPages} paginas - DEPLOY 39`);
+
+    } catch (error) {
+        hideLoading();
+        debugLog('error', 'Erro ao exportar PDF DEPLOY 39', { error: error.message });
+        showError('Erro ao exportar PDF: ' + error.message);
+    }
+}
+
+                function clearFilters() {
             document.getElementById('dataInicio').value = '';
             document.getElementById('dataFim').value = '';
             document.getElementById('setorFiltro').value = 'Todos';

@@ -7,6 +7,15 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 ---
 
 
+
+## Deploy 39 - 2025-12-04
+
+PDF Mega-Completo Profissional - 12 paginas, logo Neoformula, graficos pizza e barras, 50+ metricas, modal HTML, 100% ASCII
+
+**Arquivos Modificados:** Ver `archives/deploy-39_2025-12-04/`
+
+---
+
 ## Deploy 38 - 2025-12-04
 
 Relatorio PDF Executivo - Fix encoding, graficos visuais, layout profissional
