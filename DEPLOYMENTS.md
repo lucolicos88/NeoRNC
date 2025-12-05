@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @104 | `AKfycbz3FKJ5WSfKNYLfqu8awTbAq-NiRmY_WGLHrwFRtabVB6T7T_l2_c-Oq3a8mdhj8Qfl7g` | Ambiente de Desenvolvimento | **TESTES** |
+| **DEV** | @106 | `AKfycbxrRRU7bJw5Xgj_4WparxbnqH48UGkYmpkalYpvaL2wdalSSO5pJgTq4kLJB36kH-js2Q` | Deploy 53 - Security Phase 1 | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @104**:
+Use a versão **DEV @106**:
 ```
-https://script.google.com/macros/s/AKfycbz3FKJ5WSfKNYLfqu8awTbAq-NiRmY_WGLHrwFRtabVB6T7T_l2_c-Oq3a8mdhj8Qfl7g/exec
+https://script.google.com/macros/s/AKfycbxrRRU7bJw5Xgj_4WparxbnqH48UGkYmpkalYpvaL2wdalSSO5pJgTq4kLJB36kH-js2Q/exec
 ```
 
 ---
@@ -115,6 +115,18 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
+### Deploy 53 (Atual - DEV @106)
+- **Data**: 05/12/2024
+- **Tipo**: Melhorias de Segurança - Phase 1 (Critical)
+- **Vulnerabilidades Corrigidas**:
+  - ✅ CRÍTICO-01: XSS via innerHTML não sanitizado (função sanitizeHTML() implementada)
+  - ✅ CRÍTICO-02: Emails expostos no frontend removidos
+  - ✅ CRÍTICO-03: Admin hardcoded removido (PermissionsManager.js:69)
+  - ✅ ALTA-02: Content Security Policy adicionada via meta tag
+- **Arquivos Modificados**: index.html (+90 linhas), 08.Code.js, 10.PermissionsManager.js
+- **Impacto Funcional**: ZERO - Apenas melhorias de segurança
+- **Status**: 🧪 Em testes no DEV - Aguardando validação antes de PROD
+
 ### Deploy 51 (Atual - PROD @103)
 - **Data**: 05/12/2024
 - **Problema Resolvido**: Erro de sintaxe (SyntaxError: Unexpected token '}')
@@ -144,4 +156,4 @@ git push origin main
 
 **Última Atualização**: 05/12/2024
 **Versão PROD Atual**: @103 (Deploy 51)
-**Versão DEV Atual**: @104
+**Versão DEV Atual**: @106 (Deploy 53 - Security Phase 1)
