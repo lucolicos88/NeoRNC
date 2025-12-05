@@ -7,23 +7,23 @@
 | Ambiente | Versão | ID | Descrição | Uso |
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
-| **PROD** | @101 | `AKfycbxCzuxxSOw5h1ibOUAbVaUf68dX3s6qsC-d1R09k7kQ2hq8c1679JdamktEXmh1sicR-Q` | Deploy 39 - Versão Estável | **USUÁRIOS** |
-| **DEV** | @102 | `AKfycbzCPNEOLLeEyqRwefm8xlyEDQmDiC42b_5pNV0ZZiojUO5HwwH7Q0lYoMVLnql_OifSjA` | Ambiente de Desenvolvimento | **TESTES** |
+| **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
+| **DEV** | @104 | `AKfycbz3FKJ5WSfKNYLfqu8awTbAq-NiRmY_WGLHrwFRtabVB6T7T_l2_c-Oq3a8mdhj8Qfl7g` | Ambiente de Desenvolvimento | **TESTES** |
 
 ---
 
 ## 🚀 Como Usar
 
 ### Para USUÁRIOS FINAIS
-Use sempre a versão **PROD @101**:
+Use sempre a versão **PROD @103**:
 ```
-https://script.google.com/macros/s/AKfycbxCzuxxSOw5h1ibOUAbVaUf68dX3s6qsC-d1R09k7kQ2hq8c1679JdamktEXmh1sicR-Q/exec
+https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg/exec
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @102**:
+Use a versão **DEV @104**:
 ```
-https://script.google.com/macros/s/AKfycbzCPNEOLLeEyqRwefm8xlyEDQmDiC42b_5pNV0ZZiojUO5HwwH7Q0lYoMVLnql_OifSjA/exec
+https://script.google.com/macros/s/AKfycbz3FKJ5WSfKNYLfqu8awTbAq-NiRmY_WGLHrwFRtabVB6T7T_l2_c-Oq3a8mdhj8Qfl7g/exec
 ```
 
 ---
@@ -115,19 +115,22 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 39 (Atual - PROD @101)
+### Deploy 51 (Atual - PROD @103)
 - **Data**: 05/12/2024
+- **Problema Resolvido**: Erro de sintaxe (SyntaxError: Unexpected token '}')
+- **Causa**: 368 linhas de código duplicado (linhas 7851-8218)
+- **Solução**: Remoção do código duplicado da função exportToPdf()
+- **Status**: ✅ Todos os símbolos balanceados corretamente
+
+### Deploy 39 (Histórico)
+- **Data**: 04/12/2024
 - **Versão Original**: @82
 - **Funcionalidades**:
   - PDF Mega Completo (12 páginas)
   - Modal HTML
   - Fix de Encoding
   - Sistema de RNC completo e funcional
-
-### Rollback Realizado
-- **Data**: 05/12/2024
-- **Motivo**: Erro de sintaxe nas versões 48-49 (3 chaves `}` extras no código)
-- **Ação**: Rollback para versão estável @82 (Deploy 39)
+- **Problema**: Continha código duplicado que causava erro de sintaxe
 
 ---
 
@@ -140,5 +143,5 @@ git push origin main
 ---
 
 **Última Atualização**: 05/12/2024
-**Versão PROD Atual**: @101 (Deploy 39)
-**Versão DEV Atual**: @102
+**Versão PROD Atual**: @103 (Deploy 51)
+**Versão DEV Atual**: @104
