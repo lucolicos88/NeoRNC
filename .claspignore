@@ -1,0 +1,22 @@
+**/.git/**
+**/.gitignore
+**/.clasp.json
+**/node_modules/**
+**/archives/**
+**/*.md
+**/*.bat
+**/*.py
+**/*.js
+!01.Config.js
+!02.Logger.js
+!03.Database.js
+!04.ConfigManager.js
+!05.FileManager.js
+!06.RncOperations.js
+!07.Reports.js
+!08.Code.js
+!09. Tests.js
+!10.PermissionsManager.js
+!11.PrintRNC.js
+!12.MenuPlanilha.js
+!13.HistoricoManager.js
