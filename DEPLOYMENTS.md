@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @107 | `AKfycbw4xqeE1t3xTlA95h7IojO-MzkfqnwEIPbzQN8hjB5oHCTIw53YcrgsaLpoXDBssdL_WA` | Deploy 53 - Security Phase 1 + CSP Fix | **TESTES** |
+| **DEV** | @108 | `AKfycbzgNZ9PXsPMqkn0jemBU_niJzPl3ZzsjsBWrWi7kQ9hswqzEL0Z6tanO_6kvIy2P12y6A` | Deploy 53 - Security Phase 1 + Fixes | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @107**:
+Use a versão **DEV @108**:
 ```
-https://script.google.com/macros/s/AKfycbw4xqeE1t3xTlA95h7IojO-MzkfqnwEIPbzQN8hjB5oHCTIw53YcrgsaLpoXDBssdL_WA/exec
+https://script.google.com/macros/s/AKfycbzgNZ9PXsPMqkn0jemBU_niJzPl3ZzsjsBWrWi7kQ9hswqzEL0Z6tanO_6kvIy2P12y6A/exec
 ```
 
 ---
@@ -115,7 +115,7 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 53 (Atual - DEV @107)
+### Deploy 53 (Atual - DEV @108)
 - **Data**: 05/12/2024
 - **Tipo**: Melhorias de Segurança - Phase 1 (Critical)
 - **Vulnerabilidades Corrigidas**:
@@ -125,9 +125,10 @@ git push origin main
   - ✅ ALTA-02: Content Security Policy adicionada via meta tag
 - **Correções**:
   - ✅ CSP: Adicionado cdn.jsdelivr.net e cdnjs.cloudflare.com ao connect-src (fix source maps)
-- **Arquivos Modificados**: index.html (+92 linhas), 08.Code.js, 10.PermissionsManager.js
+  - ✅ Favicon: Adicionado emoji 📋 via SVG data URI (fix erro 404)
+- **Arquivos Modificados**: index.html (+96 linhas), 08.Code.js, 10.PermissionsManager.js
 - **Impacto Funcional**: ZERO - Apenas melhorias de segurança
-- **Status**: 🧪 Em testes no DEV @107 - Aguardando validação antes de PROD
+- **Status**: 🧪 Em testes no DEV @108 - Aguardando validação antes de PROD
 
 ### Deploy 51 (Atual - PROD @103)
 - **Data**: 05/12/2024
@@ -158,4 +159,4 @@ git push origin main
 
 **Última Atualização**: 05/12/2024
 **Versão PROD Atual**: @103 (Deploy 51)
-**Versão DEV Atual**: @107 (Deploy 53 - Security Phase 1 + CSP Fix)
+**Versão DEV Atual**: @108 (Deploy 53 - Security Phase 1 + Fixes)
