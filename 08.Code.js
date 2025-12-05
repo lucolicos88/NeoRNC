@@ -33,7 +33,8 @@ function doGet(e) {
       user = Session.getEffectiveUser().getEmail();
     }
     
-    console.log('🔍 [doGet] Email detectado: ' + user);
+    // TASK-002: Log sanitizado - não expõe email completo
+    console.log('🔍 [doGet] Usuário autenticado: ' + (user ? '***@' + user.split('@')[1] : 'nenhum'));
     
     // ❌ SE NÃO CONSEGUIR PEGAR EMAIL, MOSTRAR TELA DE LOGIN
     if (!user || user === '' || user === 'anonymous') {
@@ -168,10 +169,9 @@ function doGet(e) {
             </p>
             
             <div class="users-list">
-              <strong>📧 Contas Autorizadas:</strong>
-              <div class="user-item">📧 varejo.neoformula@gmail.com</div>
-              <div class="user-item">📧 lucolicos@gmail.com</div>
-              <div class="user-item">📧 producao.neoformula@gmail.com</div>
+              <strong>📧 Acesso Restrito:</strong>
+              <div class="user-item">✅ Apenas contas Google autorizadas podem acessar este sistema</div>
+              <div class="user-item">🔒 A lista de usuários autorizados é gerenciada pelo administrador</div>
             </div>
             
             <button class="btn" onclick="window.location.reload()">

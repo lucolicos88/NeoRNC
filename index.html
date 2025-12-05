@@ -3,6 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- TASK-005: Content Security Policy (Phase 1 - com 'unsafe-inline') -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' https://script.google.com https://script.googleusercontent.com;
+        script-src 'self' 'unsafe-inline'
+            https://cdn.jsdelivr.net
+            https://cdnjs.cloudflare.com
+            https://script.google.com
+            https://script.googleusercontent.com;
+        style-src 'self' 'unsafe-inline'
+            https://fonts.googleapis.com;
+        font-src 'self'
+            https://fonts.gstatic.com;
+        img-src 'self' data: https:;
+        connect-src 'self'
+            https://script.google.com
+            https://script.googleusercontent.com;
+    ">
+
     <title>RNC • Neoformula</title>
     
     <!-- ✨ CHART.JS - Biblioteca de Gráficos Animados -->
@@ -2577,6 +2596,66 @@ textarea.form-control,
     <script>
 
 // ==========================================
+// TASK-001: FUNÇÃO DE SANITIZAÇÃO HTML
+// SEGURANÇA: Previne XSS (Cross-Site Scripting)
+// ==========================================
+
+/**
+ * Sanitiza HTML removendo tags e atributos perigosos
+ * @param {string} html - HTML a ser sanitizado
+ * @returns {string} HTML sanitizado e seguro
+ */
+function sanitizeHTML(html) {
+    if (!html) return '';
+
+    // Criar elemento temporário para parsing
+    const temp = document.createElement('div');
+    temp.textContent = html; // textContent automaticamente escapa HTML
+
+    // Lista de tags permitidas (whitelist)
+    const allowedTags = ['b', 'i', 'u', 'strong', 'em', 'br', 'p', 'span', 'div'];
+
+    // Lista de atributos perigosos (blacklist)
+    const dangerousAttributes = [
+        'onclick', 'onload', 'onerror', 'onmouseover', 'onmouseout',
+        'onfocus', 'onblur', 'onchange', 'onsubmit', 'onkeydown',
+        'onkeyup', 'onkeypress', 'javascript:', 'data:', 'vbscript:'
+    ];
+
+    let sanitized = temp.innerHTML;
+
+    // Remover scripts
+    sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+    // Remover iframes
+    sanitized = sanitized.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+
+    // Remover event handlers
+    dangerousAttributes.forEach(attr => {
+        const regex = new RegExp(`\\s*${attr}\\s*=\\s*["'][^"']*["']`, 'gi');
+        sanitized = sanitized.replace(regex, '');
+    });
+
+    return sanitized;
+}
+
+/**
+ * Define conteúdo HTML de forma segura
+ * @param {HTMLElement} element - Elemento DOM
+ * @param {string} html - Conteúdo HTML
+ * @param {boolean} sanitize - Se deve sanitizar (padrão: true)
+ */
+function safeSetHTML(element, html, sanitize = true) {
+    if (!element) return;
+
+    if (sanitize) {
+        element.innerHTML = sanitizeHTML(html);
+    } else {
+        element.innerHTML = html;
+    }
+}
+
+// ==========================================
         // INICIALIZAR SISTEMA DE TABS
         // ==========================================
         document.addEventListener('DOMContentLoaded', function() {
@@ -2925,11 +3004,11 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
                     <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 600px; text-align: center;">
                         <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
                         <h2 style="color: #F44336; margin-bottom: 20px;">Acesso Negado</h2>
-                        <p style="margin-bottom: 15px; color: #666;">Seu email <strong>${appContext.email || 'desconhecido'}</strong> não possui permissões cadastradas.</p>
+                        <p style="margin-bottom: 15px; color: #666;">Seu email <strong>${sanitizeHTML(appContext.email) || 'desconhecido'}</strong> não possui permissões cadastradas.</p>
                         <p style="margin-bottom: 20px; color: #666;">Entre em contato com o administrador e informe:</p>
                         <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 13px; margin-bottom: 20px; text-align: left;">
-                            <strong>Email:</strong> ${appContext.email || 'N/A'}<br>
-                            <strong>Status:</strong> ${errorMessage}<br>
+                            <strong>Email:</strong> ${sanitizeHTML(appContext.email) || 'N/A'}<br>
+                            <strong>Status:</strong> ${sanitizeHTML(errorMessage)}<br>
                             <strong>Total de usuários na planilha:</strong> ${appContext.totalLinhasPlanilha || 'N/A'}
                         </div>
                         <button onclick="location.reload()" style="background: #009688; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
@@ -2980,7 +3059,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
                 <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 600px; text-align: center;">
                     <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
                     <h2 style="color: #F44336; margin-bottom: 20px;">Erro ao Carregar</h2>
-                    <p style="margin-bottom: 20px; color: #666;">${error.message}</p>
+                    <p style="margin-bottom: 20px; color: #666;">${sanitizeHTML(error.message)}</p>
                     <button onclick="location.reload()" style="background: #009688; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
                         🔄 Recarregar Página
                     </button>
@@ -3466,12 +3545,13 @@ function updateFileList(isEdit = false) {
         return;
     }
     
+    // TASK-004: Sanitizar file.name para prevenir XSS
     fileList.innerHTML = selectedFiles.map((file, index) => `
         <div class="file-item">
             <div class="file-info">
                 <div class="file-icon">📄</div>
                 <div class="file-details">
-                    <div class="file-name">${file.name}</div>
+                    <div class="file-name">${sanitizeHTML(file.name)}</div>
                     <div class="file-size">${formatFileSize(file.size)}</div>
                 </div>
             </div>

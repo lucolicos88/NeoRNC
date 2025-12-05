@@ -63,14 +63,11 @@ var PermissionsManager = (function() {
         }
       }
       
-      // Se não tem permissões, retornar Espectador
+      // TASK-003: Remover admin hardcoded (vulnerabilidade CRÍTICO-03)
+      // Se não tem permissões na tabela, retornar Espectador
+      // Admins devem ser gerenciados APENAS através da tabela de permissões
       if (roles.length === 0) {
-        // Verificar se é o email do admin padrão
-        if (email === 'producao.neoformula@gmail.com') {
-          roles.push('Admin');
-        } else {
-          roles.push('Espectador');
-        }
+        roles.push('Espectador');
       }
       
       Logger.logDebug('getUserRoles_SUCCESS', { 
