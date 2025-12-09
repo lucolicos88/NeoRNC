@@ -4782,7 +4782,7 @@ function exportToPdf() {
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(0, 0, 0);
-                const label = item.label.substring(0, 18);
+                const label = item.label.substring(0, 25); // Aumentado de 18 para 25 caracteres
                 doc.text(label, margin, y + 5.5);
 
                 // Value
@@ -4885,8 +4885,16 @@ function exportToPdf() {
 
         const dataInicio = document.getElementById('dataInicio').value;
         const dataFim = document.getElementById('dataFim').value;
+
+        // Formatar datas para dd/mm/yyyy
+        const formatarData = (dataISO) => {
+            if (!dataISO) return '';
+            const [ano, mes, dia] = dataISO.split('-');
+            return `${dia}/${mes}/${ano}`;
+        };
+
         const periodo = dataInicio && dataFim ?
-            `Período: ${dataInicio} até ${dataFim}` :
+            `Período: ${formatarData(dataInicio)} até ${formatarData(dataFim)}` :
             'Período: Todos os registros';
 
         doc.text(periodo, pageWidth / 2, yPos, { align: 'center' });

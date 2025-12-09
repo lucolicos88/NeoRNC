@@ -858,7 +858,7 @@ function calculateReportStats(rncs) {
     tempoMedioResolucao: 0,
     taxaResolucao: 0,
     rncsComAtraso: 0,
-    
+
     // === NOVOS KPIs (mesmos do Dashboard) ===
     impactoClienteTotal: 0,
     impactoClientePercentual: 0,
@@ -871,7 +871,22 @@ function calculateReportStats(rncs) {
     indiceSeveridadePonderado: 0,
     taxaCumprimentoPrazo: 0,
     finalizadasNoPrazo: 0,
-    finalizadasTotal: 0
+    finalizadasTotal: 0,
+
+    // === KPIs ADICIONAIS PARA PDF ===
+    finalizadas: 0,
+    abertas: 0,
+    rncsPrazo: 0,
+    rncsAtrasadas: 0,
+    rncsVencidas: 0,
+    maiorTempoResolucao: 0,
+    menorTempoResolucao: 0,
+    criticas: 0,
+    maiorCusto: 0,
+    taxaReincidencia: 0,
+    top5Setores: [],
+    top5TiposFalha: [],
+    acoesRecomendadas: []
   };
   
   if (rncs.length === 0) {
@@ -904,9 +919,22 @@ function calculateReportStats(rncs) {
     if (!stats.porStatus[status]) stats.porStatus[status] = 0;
     stats.porStatus[status]++;
     
-    // Finalizadas
+    // Finalizadas e Abertas
     if (status === CONFIG.STATUS_PIPELINE.FINALIZADA) {
       stats.finalizadasTotal++;
+      stats.finalizadas++;
+    } else if (status === CONFIG.STATUS_PIPELINE.ABERTURA) {
+      stats.abertas++;
+    }
+
+    // Críticas (Risco Alto/Crítico)
+    if (risco === 'Crítico' || risco === 'Alto') {
+      stats.criticas++;
+    }
+
+    // Maior custo
+    if (valor > stats.maiorCusto) {
+      stats.maiorCusto = valor;
     }
     
     // Por Setor
@@ -952,18 +980,34 @@ function calculateReportStats(rncs) {
               var diffTime = Math.abs(fechamentoObj - dataObj);
               var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
               temposResolucao.push(diffDays);
+
+              // Atualizar maior e menor tempo
+              if (diffDays > stats.maiorTempoResolucao) {
+                stats.maiorTempoResolucao = diffDays;
+              }
+              if (stats.menorTempoResolucao === 0 || diffDays < stats.menorTempoResolucao) {
+                stats.menorTempoResolucao = diffDays;
+              }
             }
           }
         }
       }
     }
     
-    // Verificar atraso
+    // Verificar atraso e prazos
     var dataLimite = rnc['Data limite para execução'];
-    if (dataLimite && status !== CONFIG.STATUS_PIPELINE.FINALIZADA) {
+    if (dataLimite) {
       var limiteObj = new Date(dataLimite);
-      if (!isNaN(limiteObj.getTime()) && limiteObj < today) {
-        stats.rncsComAtraso++;
+      if (!isNaN(limiteObj.getTime())) {
+        if (status !== CONFIG.STATUS_PIPELINE.FINALIZADA) {
+          if (limiteObj < today) {
+            stats.rncsComAtraso++;
+            stats.rncsAtrasadas++;
+            stats.rncsVencidas++;
+          } else {
+            stats.rncsPrazo++;
+          }
+        }
       }
     }
     
@@ -1047,7 +1091,23 @@ function calculateReportStats(rncs) {
   if (stats.finalizadasTotal > 0) {
     stats.taxaCumprimentoPrazo = Math.round((stats.finalizadasNoPrazo / stats.finalizadasTotal) * 100);
   }
-  
+
+  // === TOP 5 SETORES ===
+  var setoresArray = [];
+  for (var setor in stats.porSetor) {
+    setoresArray.push({ nome: setor, total: stats.porSetor[setor] });
+  }
+  setoresArray.sort(function(a, b) { return b.total - a.total; });
+  stats.top5Setores = setoresArray.slice(0, 5);
+
+  // === TOP 5 TIPOS DE FALHA ===
+  var falhasArray = [];
+  for (var tipoFalha in stats.porTipoFalha) {
+    falhasArray.push({ nome: tipoFalha, total: stats.porTipoFalha[tipoFalha] });
+  }
+  falhasArray.sort(function(a, b) { return b.total - a.total; });
+  stats.top5TiposFalha = falhasArray.slice(0, 5);
+
   return stats;
 }
   

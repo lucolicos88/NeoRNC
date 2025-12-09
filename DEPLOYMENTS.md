@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @115 | `AKfycbyy2ZyUG6UY24RbnWqbe57_b5PWbG2Qt-M3rOlIpp3b7eI5B77m99JkJZICmuVr13YjpA` | Deploy 60 - Acentuação Relatório | **TESTES** |
+| **DEV** | @116 | `AKfycbwxAhuahHKlHSoile3nVF2oEOjBu3ykwjKg7Pl8E89XwyP8pWdR0x-wY0XNI7oa705YfQ` | Deploy 61 - PDF Completo | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @115**:
+Use a versão **DEV @116**:
 ```
-https://script.google.com/macros/s/AKfycbyy2ZyUG6UY24RbnWqbe57_b5PWbG2Qt-M3rOlIpp3b7eI5B77m99JkJZICmuVr13YjpA/exec
+https://script.google.com/macros/s/AKfycbwxAhuahHKlHSoile3nVF2oEOjBu3ykwjKg7Pl8E89XwyP8pWdR0x-wY0XNI7oa705YfQ/exec
 ```
 
 ---
@@ -115,7 +115,24 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 60 (Atual - DEV @115)
+### Deploy 61 (Atual - DEV @116)
+- **Data**: 09/12/2024
+- **Tipo**: Correção Completa - Relatório PDF
+- **Correções Implementadas**:
+  - ✅ **Formato de datas corrigido**: yyyy-mm-dd → dd/mm/yyyy
+    * Adicionada função `formatarData()` em index.html
+    * Período exibe "01/12/2025 até 09/12/2025"
+  - ✅ **Textos truncados corrigidos**:
+    * Labels aumentados de 18 para 25 caracteres
+  - ✅ **Páginas TOP 5 preenchidas**:
+    * `top5Setores` e `top5TiposFalha` calculados
+  - ✅ **KPIs faltantes adicionados** (07.Reports.js):
+    * finalizadas, abertas, criticas, rncsPrazo, rncsVencidas
+    * maiorTempoResolucao, menorTempoResolucao, maiorCusto
+- **Arquivos Modificados**: index.html, 07.Reports.js (+40 linhas)
+- **Status**: 🧪 DEV @116
+
+### Deploy 60 (Histórico - DEV @115)
 - **Data**: 09/12/2024
 - **Tipo**: Correção - UX (Relatório Gerencial)
 - **Correções Implementadas**:
