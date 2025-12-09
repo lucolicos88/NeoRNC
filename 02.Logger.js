@@ -272,6 +272,78 @@ Ambiente: ${CONFIG.ENVIRONMENT}`;
   }
 
   /**
+   * MELHORIA-07: Log estruturado em formato JSON
+   * Facilita parsing e análise de logs
+   *
+   * @param {string} level - Nível do log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+   * @param {Object} logData - Dados estruturados do log
+   * @param {string} logData.action - Ação sendo executada
+   * @param {string} [logData.user] - Email do usuário (será sanitizado)
+   * @param {Object} [logData.metadata] - Metadados adicionais
+   * @param {Error} [logData.error] - Objeto de erro (se houver)
+   *
+   * @example
+   * Logger.logStructured('INFO', {
+   *   action: 'CREATE_RNC',
+   *   user: 'user@example.com',
+   *   metadata: { rncId: 'RNC-001', setor: 'Produção' }
+   * });
+   *
+   * @example
+   * Logger.logStructured('ERROR', {
+   *   action: 'SAVE_DATA',
+   *   user: 'user@example.com',
+   *   metadata: { sheetName: 'RNC', operation: 'INSERT' },
+   *   error: new Error('Timeout')
+   * });
+   */
+  function logStructured(level, logData) {
+    try {
+      const structuredLog = {
+        timestamp: new Date().toISOString(),
+        level: level,
+        action: logData.action || 'UNKNOWN',
+        user: logData.user ? sanitizeEmail(logData.user) : 'system',
+        metadata: sanitizeLogData(logData.metadata || {}),
+        version: CONFIG.VERSION,
+        environment: CONFIG.ENVIRONMENT
+      };
+
+      if (logData.error) {
+        structuredLog.error = {
+          message: logData.error.message || String(logData.error),
+          stack: logData.error.stack || null,
+          name: logData.error.name || 'Error'
+        };
+      }
+
+      // Log JSON no console para fácil parsing
+      console.log(JSON.stringify(structuredLog));
+
+      // Chamar função de log tradicional para gravar na planilha
+      logEvent(level, structuredLog.action, structuredLog.metadata, logData.error || null);
+
+    } catch (error) {
+      console.error('Erro ao criar log estruturado:', error);
+      // Fallback para log simples
+      logEvent(level, logData.action || 'UNKNOWN', logData, null);
+    }
+  }
+
+  /**
+   * Helper para sanitizar email (manter apenas domínio)
+   * @private
+   */
+  function sanitizeEmail(email) {
+    try {
+      const parts = email.split('@');
+      return parts.length === 2 ? '***@' + parts[1] : '***';
+    } catch (e) {
+      return '***';
+    }
+  }
+
+  /**
    * Obtém logs recentes
    */
   function getRecentLogs(limit) {
@@ -485,11 +557,12 @@ Ambiente: ${CONFIG.ENVIRONMENT}`;
     logError: logError,
     logCritical: logCritical,
     logPerformance: logPerformance,
+    logStructured: logStructured, // MELHORIA-07: Logging estruturado JSON
     getRecentLogs: getRecentLogs,
     cleanOldLogs: cleanOldLogs,
     exportLogs: exportLogs,
     setLogLevel: setLogLevel,
-    getLogStats: getLogStats, // ✅ NOVO
+    getLogStats: getLogStats,
     LOG_LEVELS: LOG_LEVELS
   };
 })();

@@ -20,17 +20,32 @@
 // ===== MÉDIA-01: STANDARDIZED RESPONSE MODULE =====
 
 /**
- * MÉDIA-01: Módulo para padronizar respostas de API
+ * MELHORIA-06: Módulo para padronizar respostas de API
  * Garante consistência em todas as respostas do sistema
+ *
+ * @module ApiResponse
+ * @description Fornece métodos para criar respostas padronizadas
+ * @example
+ * // Sucesso com dados
+ * return ApiResponse.success({ id: 123, name: 'RNC-001' }, 'RNC criada com sucesso');
+ *
+ * // Erro de validação
+ * return ApiResponse.validationError({ email: 'Email inválido', nome: 'Nome obrigatório' });
+ *
+ * // Uso do tryCatch
+ * return ApiResponse.tryCatch(() => createRnc(data), 'createRnc');
  */
 var ApiResponse = (function() {
   'use strict';
 
   /**
    * Cria resposta de sucesso padronizada
-   * @param {Object} data - Dados da resposta
-   * @param {string} message - Mensagem opcional de sucesso
-   * @returns {Object} Resposta padronizada
+   * @param {*} [data] - Dados da resposta (opcional)
+   * @param {string} [message] - Mensagem opcional de sucesso
+   * @returns {{success: boolean, timestamp: string, data?: *, message?: string}} Resposta padronizada
+   * @example
+   * ApiResponse.success({ count: 5 }, 'Operação concluída')
+   * // Returns: { success: true, timestamp: '2024-12-09T...', data: { count: 5 }, message: '...' }
    */
   function success(data, message) {
     var response = {
@@ -149,16 +164,38 @@ var ApiResponse = (function() {
 // ===== TASK-011: CSRF PROTECTION =====
 
 /**
- * TASK-011: Implementa proteção contra CSRF (Cross-Site Request Forgery)
- * Gera e valida tokens CSRF para operações de escrita
+ * MELHORIA-06: Módulo de proteção contra CSRF (Cross-Site Request Forgery)
+ *
+ * @module CSRFProtection
+ * @description Gera e valida tokens CSRF para prevenir ataques CSRF
+ * Tokens são armazenados no CacheService com TTL de 30 minutos
+ *
+ * @example
+ * // Gerar token ao autenticar
+ * const token = CSRFProtection.generateToken(userEmail);
+ *
+ * // Validar token em operações de escrita
+ * if (!CSRFProtection.validateToken(userEmail, token)) {
+ *   return ApiResponse.forbidden('Token CSRF inválido');
+ * }
+ *
+ * // Forçar validação (lança erro se inválido)
+ * CSRFProtection.enforce(userEmail, token);
  */
 var CSRFProtection = (function() {
   'use strict';
 
+  /** Tempo de vida do token em segundos */
+  var TOKEN_TTL = 1800; // 30 minutos
+
   /**
    * Gera um token CSRF único para o usuário
    * @param {string} user - Email do usuário
-   * @returns {string} Token CSRF
+   * @returns {string} Token CSRF codificado em Base64
+   * @throws {Error} Se falhar ao gerar o token
+   * @example
+   * const token = CSRFProtection.generateToken('user@example.com');
+   * // Returns: 'dXNlckBleGFtcGxlLmNvbXwxNjM...'
    */
   function generateToken(user) {
     try {
@@ -166,10 +203,10 @@ var CSRFProtection = (function() {
       var random = Math.random().toString(36).substring(2);
       var data = user + '|' + timestamp + '|' + random;
 
-      // Usar Cache Service para armazenar token temporariamente (30 min)
+      // Usar Cache Service para armazenar token temporariamente
       var cache = CacheService.getUserCache();
       var token = Utilities.base64Encode(data);
-      cache.put('csrf_' + user, token, 1800); // 30 minutos
+      cache.put('csrf_' + user, token, TOKEN_TTL);
 
       return token;
     } catch (error) {
