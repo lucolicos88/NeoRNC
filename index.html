@@ -3564,18 +3564,38 @@ function renderField(field, value, secao, isEditContext = false) {
         function handleFiles(files, isEdit = false) {
             debugLog('info', '📂 Processando arquivos DEPLOY 30', { count: files.length, isEdit });
 
+            // MÉDIA-11: Obter limite de tamanho do contexto (configurável)
+            const maxFileSize = (appContext && appContext.systemConfig && appContext.systemConfig.maxFileSize)
+                ? appContext.systemConfig.maxFileSize
+                : 10 * 1024 * 1024; // 10MB padrão
+
             files.forEach(file => {
-                // ✅ DEPLOY 33 FIX: Validar tamanho (10MB) com modal visível
-                if (file.size > 10 * 1024 * 1024) {
+                // MÉDIA-11: Validação robusta de tamanho de arquivo
+                if (!file || typeof file.size !== 'number') {
+                    showErrorModal('❌ Arquivo Inválido', 'Arquivo selecionado é inválido.');
+                    return;
+                }
+
+                if (file.size === 0) {
+                    showErrorModal(
+                        '❌ Arquivo Vazio',
+                        `<strong>Arquivo:</strong> ${sanitizeHTML(file.name)}<br><br>` +
+                        `O arquivo está vazio. Por favor, selecione um arquivo válido.`
+                    );
+                    return;
+                }
+
+                if (file.size > maxFileSize) {
                     const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                    const limitInMB = (maxFileSize / (1024 * 1024)).toFixed(0);
                     showErrorModal(
                         '❌ Arquivo Muito Grande',
-                        `<strong>Arquivo:</strong> ${file.name}<br>` +
+                        `<strong>Arquivo:</strong> ${sanitizeHTML(file.name)}<br>` +
                         `<strong>Tamanho:</strong> ${sizeInMB} MB<br><br>` +
-                        `<strong>Tamanho máximo permitido:</strong> 10 MB<br><br>` +
+                        `<strong>Tamanho máximo permitido:</strong> ${limitInMB} MB<br><br>` +
                         `Por favor, reduza o tamanho do arquivo ou divida-o em partes menores.`
                     );
-                    debugLog('error', `❌ Arquivo rejeitado (muito grande): ${file.name}`, { size: sizeInMB + ' MB' });
+                    debugLog('error', `❌ Arquivo rejeitado (muito grande): ${file.name}`, { size: sizeInMB + ' MB', limit: limitInMB + ' MB' });
                     return;
                 }
 
