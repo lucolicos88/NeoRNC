@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @112 | `AKfycbxL3L2sP5Go3lemiEWCsxIX8XErn8vheHhJrVP_HFR7ePoMJwH-V2M6Es0WOlEQWx8g2Q` | Deploy 57 - Phase 3: Error Handling + Global Namespace | **TESTES** |
+| **DEV** | @113 | `AKfycbzOdw-Coy8_lBpoj7NGON1DkRbcbmwbXz6EzYecTPamBASS3JZSriELw1kJeZFs_ExGUg` | Deploy 58 - Phase 3: Code Quality | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @112**:
+Use a versão **DEV @113**:
 ```
-https://script.google.com/macros/s/AKfycbxL3L2sP5Go3lemiEWCsxIX8XErn8vheHhJrVP_HFR7ePoMJwH-V2M6Es0WOlEQWx8g2Q/exec
+https://script.google.com/macros/s/AKfycbzOdw-Coy8_lBpoj7NGON1DkRbcbmwbXz6EzYecTPamBASS3JZSriELw1kJeZFs_ExGUg/exec
 ```
 
 ---
@@ -115,7 +115,26 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 57 (Atual - DEV @112)
+### Deploy 58 (Atual - DEV @113)
+- **Data**: 09/12/2024
+- **Tipo**: Melhorias - Phase 3 (Medium Priority)
+- **Melhorias Implementadas**:
+  - ✅ MÉDIA-05: Limpeza de comentários desatualizados
+    * Removidas referências a "Deploy XX" nos headers
+    * Atualizada versão do sistema para "v2.0"
+    * Comentários focados em funcionalidade, não em histórico
+  - ✅ MÉDIA-06: Substituição de magic numbers por constantes
+    * Criado namespace window.NeoRNC.constants
+    * Constantes para delays: ANIMATION_DELAY (300ms), RELOAD_DELAY (2s), APP_INIT_DELAY (500ms)
+    * Constantes para PDF: margins, line heights, page dimensions
+    * Constantes para limites: MAX_FILE_SIZE, CACHE_TTL
+    * 6+ magic numbers substituídos por constantes nomeadas
+- **Arquivos Modificados**: 01.Config.js, 08.Code.js, index.html (+30 linhas)
+- **Total Linhas Adicionadas**: +30 linhas
+- **Impacto Funcional**: ZERO - Apenas melhoria de manutenibilidade
+- **Status**: 🧪 Em testes no DEV @113
+
+### Deploy 57 (Histórico - DEV @112)
 - **Data**: 09/12/2024
 - **Tipo**: Melhorias - Phase 3 (Medium Priority)
 - **Melhorias Implementadas**:
@@ -218,4 +237,4 @@ git push origin main
 
 **Última Atualização**: 09/12/2024
 **Versão PROD Atual**: @103 (Deploy 51)
-**Versão DEV Atual**: @112 (Deploy 57 - Phase 3 Partial: Error Handling + Global Namespace)
+**Versão DEV Atual**: @113 (Deploy 58 - Phase 3: Code Quality Improvements)

@@ -1,7 +1,7 @@
 /**
  * ============================================
  * CODE.GS - Arquivo Principal de Coordenação
- * Sistema RNC Neoformula - Deploy 30 Modularizado
+ * Sistema RNC Neoformula
  * ============================================
  *
  * ORDEM DE CARREGAMENTO DOS ARQUIVOS NO GAS:

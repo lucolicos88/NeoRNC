@@ -1,15 +1,14 @@
 /**
  * ============================================
  * CONFIG.GS - Configurações e Constantes
- * Sistema RNC Neoformula - Deploy 31
+ * Sistema RNC Neoformula
  * ============================================
  *
- * CHANGELOG Deploy 31:
- * - ✅ Aumentado LOCK_TIMEOUT de 10s para 30s (Problema #5)
- * - ✅ Corrigido FIELD_MAPPING inconsistente (Problema #3)
- * - ✅ Migrado var para const (Problema #16)
- * - ✅ Adicionado modo DEBUG para controle de logs (Problema #8)
- * - ✅ Melhorada validação de dados (Problema #12)
+ * Configurações centralizadas do sistema:
+ * - IDs de recursos (Planilha, Drive)
+ * - Timeouts e limites
+ * - Mapeamento de campos
+ * - Mensagens de erro
  */
 
 // ===== CONFIGURAÇÕES GLOBAIS =====
@@ -21,12 +20,12 @@ const CONFIG = {
   DRIVE_FOLDER_ID: '1Bo5yU-rJtyz-1KVUTIQHlZRv7mFLZ_p6a9TClx0r2w060',
 
   // Versão do Sistema
-  VERSION: 'Deploy 31 - Correções Críticas',
-  BUILD_DATE: '2025-12-01',
+  VERSION: 'Sistema RNC v2.0',
+  BUILD_DATE: '2025-12-09',
 
   // Modo de Operação
-  DEBUG_MODE: false, // ✅ NOVO: Controle de logs de debug
-  ENVIRONMENT: 'development', // ✅ NOVO: development | production
+  DEBUG_MODE: false, // Controle de logs de debug
+  ENVIRONMENT: 'development', // development | production
 
   // Nomes das Planilhas
   SHEETS: {

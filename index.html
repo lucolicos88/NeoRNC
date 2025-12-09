@@ -2909,6 +2909,27 @@ function forceRefreshActiveTab() {
 // Encapsular variáveis globais em um único namespace
 window.NeoRNC = window.NeoRNC || {};
 
+// === MÉDIA-06: CONSTANTES PARA MAGIC NUMBERS ===
+window.NeoRNC.constants = {
+    // Timeouts e delays
+    ANIMATION_DELAY: 300,           // Delay para animações e transições
+    MULTISELECT_INIT_DELAY: 100,    // Delay para inicializar multiselect
+    RELOAD_DELAY: 2000,             // Delay antes de recarregar página
+    APP_INIT_DELAY: 500,            // Delay para inicializar app
+
+    // Limites de arquivo
+    MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB default
+
+    // PDF Generation
+    PDF_MARGIN: 20,                 // Margem do PDF
+    PDF_LINE_HEIGHT: 8,             // Altura da linha no PDF
+    PDF_PAGE_HEIGHT: 297,           // Altura da página A4 (mm)
+    PDF_FOOTER_MARGIN: 80,          // Margem do rodapé
+
+    // Cache TTL
+    CACHE_TTL: 5 * 60 * 1000        // 5 minutos
+};
+
 // Estado global da aplicação
 window.NeoRNC.state = {
     debugLogs: [],
@@ -2945,7 +2966,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof initializeApp === 'function') {
             initializeApp();
         }
-    }, 500);
+    }, window.NeoRNC.constants.APP_INIT_DELAY);
 });
 
 // === TRATAMENTO DE ERROS GLOBAL ===
@@ -3446,7 +3467,7 @@ function renderField(field, value, secao, isEditContext = false) {
     `;
     
     // Inicializar chips após renderização
-    setTimeout(() => initializeMultiselectChips(chipsContainerId, value, fieldName, isReadOnly), 100);
+    setTimeout(() => initializeMultiselectChips(chipsContainerId, value, fieldName, isReadOnly), window.NeoRNC.constants.MULTISELECT_INIT_DELAY);
     break;
 
             
@@ -3819,7 +3840,7 @@ function showErrorModal(title, message) {
             const removeModal = () => {
                 if (modal && modal.parentNode) {
                     modal.style.animation = 'fadeOut 0.3s';
-                    setTimeout(() => modal.remove(), 300);
+                    setTimeout(() => modal.remove(), window.NeoRNC.constants.ANIMATION_DELAY);
                 }
             };
 
@@ -9339,7 +9360,7 @@ function createDirectNotification(message, type) {
     // Auto remover após 5 segundos
     setTimeout(() => {
         notification.style.animation = 'slideOutRight 0.3s ease-in';
-        setTimeout(() => notification.remove(), 300);
+        setTimeout(() => notification.remove(), window.NeoRNC.constants.ANIMATION_DELAY);
     }, 5000);
     
     console.log(`📢 Notificação [${type}]: ${message}`);
@@ -10291,7 +10312,7 @@ async function saveUserRolesFixed(email) {
         // Se for o próprio usuário, recarregar página
         if (email === appContext.email) {
             showInfo('Suas permissões foram alteradas. Recarregando página...');
-            setTimeout(() => location.reload(), 2000);
+            setTimeout(() => location.reload(), window.NeoRNC.constants.RELOAD_DELAY);
         }
         
     } catch (error) {
@@ -10354,7 +10375,7 @@ async function saveUserRoles(email, oldRoles) {
         // Se for o próprio usuário, recarregar página
         if (email === appContext.email) {
             showInfo('Suas permissões foram alteradas. Recarregando página...');
-            setTimeout(() => location.reload(), 2000);
+            setTimeout(() => location.reload(), window.NeoRNC.constants.RELOAD_DELAY);
         }
         
     } catch (error) {
