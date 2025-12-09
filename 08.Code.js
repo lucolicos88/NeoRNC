@@ -696,7 +696,8 @@ function getRncNumbersBySetor(tipoSetor, setor) {
       var allNumbers = allRncs.map(function(rnc) {
         return rnc['Nº RNC'];
       }).filter(function(num) {
-        return num != null && num != '';
+        // TASK-007: Usar strict equality (!==) ao invés de loose equality (!=)
+        return num !== null && num !== '';
       });
       
       return allNumbers.sort(function(a, b) {

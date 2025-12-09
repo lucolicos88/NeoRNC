@@ -46,6 +46,42 @@ const Logger = (function() {
   }
 
   /**
+   * TASK-008: Sanitiza dados sensíveis antes de logar
+   * @private
+   */
+  function sanitizeLogData(data) {
+    if (!data || typeof data !== 'object') {
+      return data;
+    }
+
+    const sanitized = {};
+    const sensitiveFields = ['email', 'password', 'token', 'apiKey', 'secret', 'credential'];
+
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        const lowerKey = key.toLowerCase();
+        const isSensitive = sensitiveFields.some(function(field) {
+          return lowerKey.indexOf(field) !== -1;
+        });
+
+        if (isSensitive) {
+          // Sanitizar: mostrar apenas domínio do email, ocultar outros dados
+          if (lowerKey.indexOf('email') !== -1 && typeof data[key] === 'string') {
+            const parts = data[key].split('@');
+            sanitized[key] = parts.length === 2 ? '***@' + parts[1] : '***';
+          } else {
+            sanitized[key] = '***REDACTED***';
+          }
+        } else {
+          sanitized[key] = data[key];
+        }
+      }
+    }
+
+    return sanitized;
+  }
+
+  /**
    * Registra um evento no sistema
    * @private
    */
@@ -55,15 +91,21 @@ const Logger = (function() {
       let user = '';
 
       try {
-        user = Session.getActiveUser().getEmail();
+        const email = Session.getActiveUser().getEmail();
+        // TASK-008: Sanitizar email no log (mostrar apenas domínio)
+        const parts = email.split('@');
+        user = parts.length === 2 ? '***@' + parts[1] : '***';
       } catch(e) {
         user = 'system';
       }
 
+      // TASK-008: Sanitizar dados sensíveis antes de logar
+      const sanitizedInfo = info ? sanitizeLogData(info) : null;
+
       // Log no console
       let consoleMsg = `[${timestamp.toISOString()}] [${level}] ${action}`;
-      if (info && Object.keys(info).length > 0) {
-        consoleMsg += ` | Info: ${JSON.stringify(info)}`;
+      if (sanitizedInfo && Object.keys(sanitizedInfo).length > 0) {
+        consoleMsg += ` | Info: ${JSON.stringify(sanitizedInfo)}`;
       }
       if (error) {
         consoleMsg += ` | Error: ${error.message || String(error)}`;

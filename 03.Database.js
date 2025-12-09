@@ -7,19 +7,36 @@
 
 var Database = (function() {
   'use strict';
-  
-  // Cache de planilhas para evitar múltiplas aberturas
+
+  // TASK-010: Cache com TTL (Time-To-Live) para prevenir dados obsoletos
   var sheetCache = {};
+  var sheetCacheTimestamps = {}; // Timestamps para controle de TTL
   var spreadsheetCache = null;
+  var spreadsheetCacheTimestamp = null;
+
+  // TTL do cache: 5 minutos (300000ms)
+  var CACHE_TTL = 5 * 60 * 1000;
   
   /**
-   * Obtém a planilha principal com cache
+   * TASK-010: Verifica se o cache expirou
+   * @private
+   */
+  function isCacheExpired(timestamp) {
+    if (!timestamp) return true;
+    var now = new Date().getTime();
+    return (now - timestamp) > CACHE_TTL;
+  }
+
+  /**
+   * Obtém a planilha principal com cache e TTL
    * @private
    */
   function getSpreadsheet() {
     try {
-      if (!spreadsheetCache) {
+      // TASK-010: Verificar se o cache expirou
+      if (!spreadsheetCache || isCacheExpired(spreadsheetCacheTimestamp)) {
         spreadsheetCache = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+        spreadsheetCacheTimestamp = new Date().getTime();
       }
       return spreadsheetCache;
     } catch (error) {
@@ -36,11 +53,11 @@ var Database = (function() {
    */
   function getSheet(name, headers) {
     try {
-      // Verificar cache
-      if (sheetCache[name]) {
+      // TASK-010: Verificar cache com TTL
+      if (sheetCache[name] && !isCacheExpired(sheetCacheTimestamps[name])) {
         return sheetCache[name];
       }
-      
+
       var ss = getSpreadsheet();
       var sheet = ss.getSheetByName(name);
       
@@ -62,8 +79,9 @@ var Database = (function() {
         }
       }
       
-      // Adicionar ao cache
+      // TASK-010: Adicionar ao cache com timestamp
       sheetCache[name] = sheet;
+      sheetCacheTimestamps[name] = new Date().getTime();
       return sheet;
       
     } catch (error) {
@@ -172,12 +190,13 @@ var Database = (function() {
    * @private
    */
   function applyOperator(value, operator, compareValue) {
+    // TASK-007: Usar strict equality (===) ao invés de loose equality (==)
     switch (operator) {
       case '=':
       case '==':
-        return value == compareValue;
+        return value === compareValue;
       case '!=':
-        return value != compareValue;
+        return value !== compareValue;
       case '>':
         return value > compareValue;
       case '>=':
@@ -195,7 +214,7 @@ var Database = (function() {
       case 'in':
         return compareValue.indexOf(value) !== -1;
       default:
-        return value == compareValue;
+        return value === compareValue;
     }
   }
   

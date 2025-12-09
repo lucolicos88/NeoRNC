@@ -2661,6 +2661,91 @@ function safeSetHTML(element, html, sanitize = true) {
 }
 
 // ==========================================
+// TASK-006: FUNÇÕES DE VALIDAÇÃO DE INPUT
+// SEGURANÇA: Previne dados inválidos e ataques de injeção
+// ==========================================
+
+/**
+ * Valida um campo de email
+ * @param {string} email - Email a ser validado
+ * @returns {boolean} True se válido
+ */
+function validateEmail(email) {
+    if (!email || typeof email !== 'string') return false;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) && email.length <= 255;
+}
+
+/**
+ * Valida um campo de texto geral
+ * @param {string} text - Texto a ser validado
+ * @param {number} maxLength - Tamanho máximo permitido
+ * @returns {boolean} True se válido
+ */
+function validateText(text, maxLength = 5000) {
+    if (text === null || text === undefined) return false;
+    if (typeof text !== 'string') return false;
+    return text.length <= maxLength;
+}
+
+/**
+ * Valida um campo numérico
+ * @param {*} value - Valor a ser validado
+ * @param {number} min - Valor mínimo (opcional)
+ * @param {number} max - Valor máximo (opcional)
+ * @returns {boolean} True se válido
+ */
+function validateNumber(value, min = null, max = null) {
+    const num = Number(value);
+    if (isNaN(num)) return false;
+    if (min !== null && num < min) return false;
+    if (max !== null && num > max) return false;
+    return true;
+}
+
+/**
+ * Valida um campo de data
+ * @param {*} date - Data a ser validada
+ * @returns {boolean} True se válido
+ */
+function validateDate(date) {
+    if (!date) return false;
+    const dateObj = new Date(date);
+    return dateObj instanceof Date && !isNaN(dateObj.getTime());
+}
+
+/**
+ * Valida dados de um formulário antes de enviar
+ * @param {Object} formData - Dados do formulário
+ * @returns {Object} {valid: boolean, errors: Array}
+ */
+function validateFormData(formData) {
+    const errors = [];
+
+    // Validar campos obrigatórios
+    const requiredFields = ['Descrição Detalhada da RNC/Reclamação'];
+    requiredFields.forEach(field => {
+        if (!formData[field] || formData[field].trim() === '') {
+            errors.push(`Campo obrigatório: ${field}`);
+        }
+    });
+
+    // Validar tamanhos máximos
+    for (const key in formData) {
+        if (formData.hasOwnProperty(key) && typeof formData[key] === 'string') {
+            if (!validateText(formData[key], 10000)) {
+                errors.push(`Campo ${key} excede tamanho máximo permitido`);
+            }
+        }
+    }
+
+    return {
+        valid: errors.length === 0,
+        errors: errors
+    };
+}
+
+// ==========================================
         // INICIALIZAR SISTEMA DE TABS
         // ==========================================
         document.addEventListener('DOMContentLoaded', function() {
