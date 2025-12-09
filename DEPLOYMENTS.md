@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @114 | `AKfycbxW4OTiDljzsRR1qDSdOnvs6AcraJ6zNLrNYYMAVao30ZxArjqm8rKaDezVzEXa_SDD` | Deploy 59 - Phase 4: Documentation | **TESTES** |
+| **DEV** | @115 | `AKfycbyy2ZyUG6UY24RbnWqbe57_b5PWbG2Qt-M3rOlIpp3b7eI5B77m99JkJZICmuVr13YjpA` | Deploy 60 - Acentuação Relatório | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @114**:
+Use a versão **DEV @115**:
 ```
-https://script.google.com/macros/s/AKfycbxW4OTiDljzsRR1qDSdOnvs6AcraJ6zNLrNYYMAVao30ZxArjqm8rKaDezVzEXa_SDD/exec
+https://script.google.com/macros/s/AKfycbyy2ZyUG6UY24RbnWqbe57_b5PWbG2Qt-M3rOlIpp3b7eI5B77m99JkJZICmuVr13YjpA/exec
 ```
 
 ---
@@ -115,7 +115,28 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 59 (Atual - DEV @114)
+### Deploy 60 (Atual - DEV @115)
+- **Data**: 09/12/2024
+- **Tipo**: Correção - UX (Relatório Gerencial)
+- **Correções Implementadas**:
+  - ✅ Corrigida acentuação em todo o relatório gerencial PDF
+    * "RELATORIO" → "RELATÓRIO"
+    * "Gestao de Nao Conformidades" → "Gestão de Não Conformidades"
+    * "Periodo", "Geracao", "Finalizacao" → "Período", "Geração", "Finalização"
+    * "Distribuicao", "Analise", "Acoes" → "Distribuição", "Análise", "Ações"
+    * "Custo Medio", "Tempo Medio" → "Custo Médio", "Tempo Médio"
+    * "Nivel", "Indice", "Metrica" → "Nível", "Índice", "Métrica"
+    * "Resolucao", "Deteccao", "Reincidencia" → "Resolução", "Detecção", "Reincidência"
+    * "Criticas", "Tendencias", "incidencia" → "Críticas", "Tendências", "incidência"
+    * "atencao", "Atencao", "Satisfatoria" → "atenção", "Atenção", "Satisfatória"
+    * Rodapé corrigido: "Sistema de Gestão de Não Conformidades"
+  - ✅ Logo Neoformula já presente (confirmado)
+- **Arquivos Modificados**: index.html (30+ edições)
+- **Total de Correções**: ~40 palavras corrigidas
+- **Impacto Funcional**: Melhoria na apresentação profissional do relatório
+- **Status**: 🧪 Em testes no DEV @115
+
+### Deploy 59 (Histórico - DEV @114)
 - **Data**: 09/12/2024
 - **Tipo**: Melhorias - Phase 4 (Improvements - Documentation)
 - **Melhorias Implementadas**:
