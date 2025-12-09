@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @110 | `AKfycbyNcNkntNrMVudpnchic997YXP3vDsWAlHkShZQ0YYuGydXrJ9zY0vx3J1qp5Tp9_WJ9g` | Deploy 55 - Security Phase 2 Complete | **TESTES** |
+| **DEV** | @111 | `AKfycbz6Lk9I8qAlE_VpNB-N0gxB-LPp-LxYP62U9qVVJWb9feg3UQiP--L5p-BqhebHg6mU` | Deploy 56 - Phase 3 Medium Priority | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @110**:
+Use a versão **DEV @111**:
 ```
-https://script.google.com/macros/s/AKfycbyNcNkntNrMVudpnchic997YXP3vDsWAlHkShZQ0YYuGydXrJ9zY0vx3J1qp5Tp9_WJ9g/exec
+https://script.google.com/macros/s/AKfycbz6Lk9I8qAlE_VpNB-N0gxB-LPp-LxYP62U9qVVJWb9feg3UQiP--L5p-BqhebHg6mU/exec
 ```
 
 ---
@@ -115,7 +115,20 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 55 (Atual - DEV @110)
+### Deploy 56 (Atual - DEV @111)
+- **Data**: 05/12/2024
+- **Tipo**: Melhorias - Phase 3 (Medium Priority)
+- **Melhorias Implementadas**:
+  - ✅ MÉDIA-11: Validação robusta de tamanho de arquivo
+    * Validar arquivo inválido (null check + typeof)
+    * Validar arquivo vazio (size === 0)
+    * Limite configurável via systemConfig.maxFileSize
+    * Sanitizar file.name nas mensagens de erro
+- **Arquivos Modificados**: index.html (+20 linhas)
+- **Impacto Funcional**: ZERO - Apenas melhorias de validação
+- **Status**: 🧪 Em testes no DEV @111
+
+### Deploy 55 (Histórico - DEV @110)
 - **Data**: 05/12/2024
 - **Tipo**: Melhorias de Segurança - Phase 2 COMPLETA (High Priority)
 - **Vulnerabilidades Corrigidas**:
