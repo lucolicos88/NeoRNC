@@ -21,7 +21,12 @@
       "Bash(clasp logout:*)",
       "Bash(clasp login:*)",
       "Bash(echo:*)",
-      "Bash(timeout 5 clasp push:*)"
+      "Bash(timeout 5 clasp push:*)",
+      "Bash(for id in setorFilterEdit tipoSetorKanban setorFilterKanban tipoSetorDashboard setorFilterDashboard dataInicio dataFim statusFiltro tipoSetorRelatorio)",
+      "Bash(do echo -n \"$id: \")",
+      "Bash(done)",
+      "Bash(clasp undeploy:*)",
+      "Bash(node validate-syntax.js:*)"
     ],
     "deny": [],
     "ask": []

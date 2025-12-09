@@ -3,7 +3,7 @@
  * CODE.GS - Arquivo Principal de Coordenação
  * Sistema RNC Neoformula - Deploy 30 Modularizado
  * ============================================
- * 
+ *
  * ORDEM DE CARREGAMENTO DOS ARQUIVOS NO GAS:
  * 1. Config.gs
  * 2. Logger.gs
@@ -13,9 +13,138 @@
  * 6. RncOperations.gs
  * 7. Reports.gs
  * 8. Code.gs (este arquivo)
- * 
+ *
  * ============================================
  */
+
+// ===== MÉDIA-01: STANDARDIZED RESPONSE MODULE =====
+
+/**
+ * MÉDIA-01: Módulo para padronizar respostas de API
+ * Garante consistência em todas as respostas do sistema
+ */
+var ApiResponse = (function() {
+  'use strict';
+
+  /**
+   * Cria resposta de sucesso padronizada
+   * @param {Object} data - Dados da resposta
+   * @param {string} message - Mensagem opcional de sucesso
+   * @returns {Object} Resposta padronizada
+   */
+  function success(data, message) {
+    var response = {
+      success: true,
+      timestamp: new Date().toISOString()
+    };
+
+    if (data !== undefined && data !== null) {
+      response.data = data;
+    }
+
+    if (message) {
+      response.message = message;
+    }
+
+    return response;
+  }
+
+  /**
+   * Cria resposta de erro padronizada
+   * @param {string} errorCode - Código do erro (ex: 'VALIDATION_ERROR', 'NOT_FOUND')
+   * @param {string} message - Mensagem de erro amigável
+   * @param {Object} details - Detalhes adicionais do erro (opcional)
+   * @returns {Object} Resposta de erro padronizada
+   */
+  function error(errorCode, message, details) {
+    var response = {
+      success: false,
+      error: {
+        code: errorCode || 'UNKNOWN_ERROR',
+        message: message || 'Ocorreu um erro inesperado',
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    if (details) {
+      response.error.details = details;
+    }
+
+    return response;
+  }
+
+  /**
+   * Cria resposta de erro de validação
+   * @param {Object} validationErrors - Mapa de erros de validação {campo: mensagem}
+   * @returns {Object} Resposta de erro de validação
+   */
+  function validationError(validationErrors) {
+    return error(
+      'VALIDATION_ERROR',
+      'Dados inválidos',
+      { fields: validationErrors }
+    );
+  }
+
+  /**
+   * Cria resposta de erro de permissão
+   * @param {string} message - Mensagem de erro
+   * @returns {Object} Resposta de erro de permissão
+   */
+  function forbidden(message) {
+    return error(
+      'FORBIDDEN',
+      message || 'Você não tem permissão para executar esta ação'
+    );
+  }
+
+  /**
+   * Cria resposta de erro de não encontrado
+   * @param {string} resource - Recurso não encontrado
+   * @returns {Object} Resposta de erro de não encontrado
+   */
+  function notFound(resource) {
+    return error(
+      'NOT_FOUND',
+      resource ? resource + ' não encontrado(a)' : 'Recurso não encontrado'
+    );
+  }
+
+  /**
+   * Wrapper para capturar erros de funções e retornar resposta padronizada
+   * @param {Function} fn - Função a ser executada
+   * @param {string} operationName - Nome da operação (para log)
+   * @returns {Object} Resposta padronizada (sucesso ou erro)
+   */
+  function tryCatch(fn, operationName) {
+    try {
+      var result = fn();
+
+      // Se a função já retorna resposta padronizada, use-a
+      if (result && typeof result === 'object' && 'success' in result) {
+        return result;
+      }
+
+      // Caso contrário, envolva em resposta de sucesso
+      return success(result);
+    } catch (error) {
+      Logger.logError(operationName || 'tryCatch', error);
+      return ApiResponse.error(
+        'INTERNAL_ERROR',
+        'Erro ao processar operação: ' + (error.message || error.toString())
+      );
+    }
+  }
+
+  return {
+    success: success,
+    error: error,
+    validationError: validationError,
+    forbidden: forbidden,
+    notFound: notFound,
+    tryCatch: tryCatch
+  };
+})();
 
 // ===== TASK-011: CSRF PROTECTION =====
 
