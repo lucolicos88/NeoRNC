@@ -17,6 +17,160 @@
  * ============================================
  */
 
+// ===== TASK-011: CSRF PROTECTION =====
+
+/**
+ * TASK-011: Implementa proteção contra CSRF (Cross-Site Request Forgery)
+ * Gera e valida tokens CSRF para operações de escrita
+ */
+var CSRFProtection = (function() {
+  'use strict';
+
+  /**
+   * Gera um token CSRF único para o usuário
+   * @param {string} user - Email do usuário
+   * @returns {string} Token CSRF
+   */
+  function generateToken(user) {
+    try {
+      var timestamp = new Date().getTime();
+      var random = Math.random().toString(36).substring(2);
+      var data = user + '|' + timestamp + '|' + random;
+
+      // Usar Cache Service para armazenar token temporariamente (30 min)
+      var cache = CacheService.getUserCache();
+      var token = Utilities.base64Encode(data);
+      cache.put('csrf_' + user, token, 1800); // 30 minutos
+
+      return token;
+    } catch (error) {
+      Logger.logError('CSRFProtection.generateToken', error, { user: user });
+      throw new Error('Failed to generate CSRF token');
+    }
+  }
+
+  /**
+   * Valida um token CSRF
+   * @param {string} user - Email do usuário
+   * @param {string} token - Token a ser validado
+   * @returns {boolean} True se válido
+   */
+  function validateToken(user, token) {
+    try {
+      if (!token || !user) return false;
+
+      var cache = CacheService.getUserCache();
+      var cachedToken = cache.get('csrf_' + user);
+
+      return cachedToken === token;
+    } catch (error) {
+      Logger.logError('CSRFProtection.validateToken', error, { user: user });
+      return false;
+    }
+  }
+
+  /**
+   * Valida token e lança erro se inválido
+   * @param {string} user - Email do usuário
+   * @param {string} token - Token a ser validado
+   */
+  function enforce(user, token) {
+    if (!validateToken(user, token)) {
+      throw new Error('Invalid CSRF token. Please reload the page and try again.');
+    }
+  }
+
+  return {
+    generateToken: generateToken,
+    validateToken: validateToken,
+    enforce: enforce
+  };
+})();
+
+// ===== TASK-009: RATE LIMITING =====
+
+/**
+ * TASK-009: Implementa rate limiting usando Cache Service
+ * Previne abuse e ataques DoS
+ */
+var RateLimiter = (function() {
+  'use strict';
+
+  // Configurações de rate limiting
+  var LIMITS = {
+    // Limite de requisições por usuário
+    PER_USER: {
+      maxRequests: 60,      // 60 requisições
+      windowSeconds: 60     // por minuto
+    },
+    // Limite de operações de escrita
+    WRITE_OPS: {
+      maxRequests: 10,      // 10 escritas
+      windowSeconds: 60     // por minuto
+    }
+  };
+
+  /**
+   * Verifica se o usuário excedeu o rate limit
+   * @param {string} user - Email do usuário
+   * @param {string} type - Tipo de operação ('general' ou 'write')
+   * @returns {Object} {allowed: boolean, remaining: number, resetIn: number}
+   */
+  function checkLimit(user, type) {
+    try {
+      var cache = CacheService.getUserCache();
+      var limit = type === 'write' ? LIMITS.WRITE_OPS : LIMITS.PER_USER;
+      var cacheKey = 'ratelimit_' + type + '_' + user;
+
+      // Obter contagem atual do cache
+      var cachedData = cache.get(cacheKey);
+      var currentCount = cachedData ? parseInt(cachedData) : 0;
+
+      // Verificar se excedeu o limite
+      if (currentCount >= limit.maxRequests) {
+        return {
+          allowed: false,
+          remaining: 0,
+          resetIn: limit.windowSeconds
+        };
+      }
+
+      // Incrementar contador
+      currentCount++;
+      cache.put(cacheKey, currentCount.toString(), limit.windowSeconds);
+
+      return {
+        allowed: true,
+        remaining: limit.maxRequests - currentCount,
+        resetIn: limit.windowSeconds
+      };
+
+    } catch (error) {
+      Logger.logError('RateLimiter.checkLimit', error, { user: user, type: type });
+      // Em caso de erro, permitir a requisição (fail-open)
+      return { allowed: true, remaining: 999, resetIn: 0 };
+    }
+  }
+
+  /**
+   * Verifica rate limit e lança erro se excedido
+   * @param {string} user - Email do usuário
+   * @param {string} type - Tipo de operação
+   */
+  function enforce(user, type) {
+    var result = checkLimit(user, type || 'general');
+    if (!result.allowed) {
+      throw new Error('Rate limit exceeded. Try again in ' + result.resetIn + ' seconds.');
+    }
+    return result;
+  }
+
+  return {
+    checkLimit: checkLimit,
+    enforce: enforce
+  };
+})();
+
 // ===== FUNÇÕES PRINCIPAIS DO SISTEMA =====
 
 /**
@@ -35,7 +189,17 @@ function doGet(e) {
     
     // TASK-002: Log sanitizado - não expõe email completo
     console.log('🔍 [doGet] Usuário autenticado: ' + (user ? '***@' + user.split('@')[1] : 'nenhum'));
-    
+
+    // TASK-009: Aplicar rate limiting
+    if (user && user !== '' && user !== 'anonymous') {
+      try {
+        RateLimiter.enforce(user, 'general');
+      } catch (rateLimitError) {
+        Logger.logWarning('doGet_RATE_LIMIT', { user: user });
+        return HtmlService.createHtmlOutput('<h1>Rate Limit Exceeded</h1><p>' + rateLimitError.message + '</p>');
+      }
+    }
+
     // ❌ SE NÃO CONSEGUIR PEGAR EMAIL, MOSTRAR TELA DE LOGIN
     if (!user || user === '' || user === 'anonymous') {
       console.log('❌ [doGet] Usuário não autenticado, mostrando tela de login');
@@ -529,6 +693,9 @@ function getUserContextOptimized() {
       maxFileSize: getSystemConfig('MaxFileSize', CONFIG.SYSTEM.MAX_FILE_SIZE)
     };
     
+    // TASK-011: Gerar token CSRF para o usuário
+    var csrfToken = CSRFProtection.generateToken(email);
+
     var context = {
       email: email,
       role: userPermissions.roles[0] || 'Espectador',
@@ -537,6 +704,7 @@ function getUserContextOptimized() {
       isAdmin: userPermissions.isAdmin,
       canConfig: userPermissions.isAdmin,
       hasPermissions: true, // ✨ Flag explícita
+      csrfToken: csrfToken, // TASK-011: Token CSRF
       fieldsConfig: fieldsConfig,
       lists: lists,
       listNames: Object.keys(lists),
