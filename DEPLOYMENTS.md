@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @118 | `AKfycbwe0XZ7Sd6bGkt-TMFAyujHQG5Ms7XJXmmfVU350EIm5JLv82XyZeFaqFGSy49MrmJu` | Deploy 63 - PDF Profissional | **TESTES** |
+| **DEV** | @119 | `AKfycbwe0XZ7Sd6bGkt-TMFAyujHQG5Ms7XJXmmfVU350EIm5JLv82XyZeFaqFGSy49MrmJu` | Deploy 64 - Logo PNG + Gráficos Executivos | **TESTES** |
 
 ---
 
@@ -21,7 +21,7 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @118**:
+Use a versão **DEV @119**:
 ```
 https://script.google.com/macros/s/AKfycbwe0XZ7Sd6bGkt-TMFAyujHQG5Ms7XJXmmfVU350EIm5JLv82XyZeFaqFGSy49MrmJu/exec
 ```
@@ -115,7 +115,37 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 63 (Atual - DEV @118)
+### Deploy 64 (Atual - DEV @119)
+- **Data**: 10/12/2024
+- **Tipo**: UX - Logo Real PNG + Gráficos Executivos
+- **Melhorias Implementadas**:
+  - ✅ **LOGO NEOFORMULA - IMAGEM PNG REAL**:
+    * Logo oficial baixado de https://neoformula.com.br
+    * Convertido para base64 (26.86 KB)
+    * Inserido como imagem PNG no PDF via doc.addImage()
+    * Fallback para texto caso imagem falhe
+    * **LOGO AGORA APARECE PERFEITAMENTE!** 🎯
+  - ✅ **Gráficos Pizza - Qualidade Executiva**:
+    * Bordas brancas GROSSAS (2pt) entre fatias
+    * Sombra 3D com offset maior (2mm)
+    * 40-60 segmentos ultra-suaves
+    * Cores vibrantes e profissionais
+    * Total no centro em Teal (16pt bold)
+    * Legenda com caixas coloridas + bordas
+  - ✅ **Legendas Profissionais**:
+    * Caixas coloridas 4x4mm com bordas escuras
+    * Valor em negrito (9pt)
+    * Percentual em cinza (8pt)
+    * Labels descritivos (7pt, 22 chars)
+    * Espaçamento aumentado (11mm entre itens)
+- **Arquivos Modificados**:
+  * index.html (logo PNG + gráficos redesenhados)
+  * download-logo.js (novo script Node.js)
+  * neoformula-logo.png (26.86 KB)
+- **Impacto**: **RELATÓRIO PRONTO PARA DIRETORIA** 📊🏢
+- **Status**: 🧪 DEV @119
+
+### Deploy 63 (Histórico - DEV @118)
 - **Data**: 10/12/2024
 - **Tipo**: UX - Relatório PDF Nível Corporativo
 - **Melhorias Implementadas**:
