@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @117 | `AKfycbzV55rcDUd2P5VyEBAsy6NQP2WCL9mrfGhNisp8f-PKaz3x2u6vyoU7jFEEnoLETuJPiw` | Deploy 62 - Logo + Gráficos | **TESTES** |
+| **DEV** | @118 | `AKfycbwe0XZ7Sd6bGkt-TMFAyujHQG5Ms7XJXmmfVU350EIm5JLv82XyZeFaqFGSy49MrmJu` | Deploy 63 - PDF Profissional | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @117**:
+Use a versão **DEV @118**:
 ```
-https://script.google.com/macros/s/AKfycbzV55rcDUd2P5VyEBAsy6NQP2WCL9mrfGhNisp8f-PKaz3x2u6vyoU7jFEEnoLETuJPiw/exec
+https://script.google.com/macros/s/AKfycbwe0XZ7Sd6bGkt-TMFAyujHQG5Ms7XJXmmfVU350EIm5JLv82XyZeFaqFGSy49MrmJu/exec
 ```
 
 ---
@@ -115,7 +115,37 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 62 (Atual - DEV @117)
+### Deploy 63 (Atual - DEV @118)
+- **Data**: 10/12/2024
+- **Tipo**: UX - Relatório PDF Nível Corporativo
+- **Melhorias Implementadas**:
+  - ✅ **Logo NEOFORMULA VISÍVEL E DESTACADO**:
+    * Box branco maior (70x22mm)
+    * Borda dupla verde para destaque máximo
+    * "N" grande + "EOFORMULA" médio
+    * Subtítulo "Sistema de Gestão"
+    * **AGORA APARECE NO PDF!**
+  - ✅ **Gráficos Pizza - Estilo Donut Moderno**:
+    * Sombra 3D offset para profundidade
+    * 24-40 segmentos por fatia (super suave)
+    * Círculo branco central (estilo donut)
+    * Total exibido no centro do donut
+    * Legenda com círculos coloridos
+    * Paleta brand: Teal como cor principal
+    * Bordas brancas grossas (1pt) entre fatias
+  - ✅ **Gráficos Barras - Estilo Material Design**:
+    * Trilho cinza de fundo (track completo)
+    * Gradiente 3 camadas (escuro→médio→brilho)
+    * Números de ranking (1, 2, 3...)
+    * Valores dentro da barra (se couber)
+    * Percentual relativo ao máximo
+    * Barras mais altas (12mm) com espaço (16mm)
+    * Labels expandidos (30 caracteres)
+- **Arquivos Modificados**: index.html (+200 linhas de código visual)
+- **Impacto**: **RELATÓRIO NÍVEL CORPORATIVO PROFISSIONAL** 🎨
+- **Status**: 🧪 DEV @118
+
+### Deploy 62 (Histórico - DEV @117)
 - **Data**: 09/12/2024
 - **Tipo**: UX - Visual do Relatório PDF
 - **Melhorias Implementadas**:
