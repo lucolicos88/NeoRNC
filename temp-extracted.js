@@ -4751,9 +4751,10 @@ function exportToPdf() {
         }
 
         // Helper: Draw Horizontal Bar Chart
+        // Helper: Draw Bar Chart (MELHORADO - gradiente e sombras)
         function drawBarChart(data, startY, maxWidth = 120) {
-            const barHeight = 8;
-            const barSpacing = 12;
+            const barHeight = 10;
+            const barSpacing = 14;
             let y = startY;
 
             const maxValue = Math.max(...data.map(d => d.value));
@@ -4771,23 +4772,38 @@ function exportToPdf() {
                     y = 20;
                 }
 
-                const barWidth = (item.value / maxValue) * maxWidth;
+                const barWidth = Math.max((item.value / maxValue) * maxWidth, 2); // Min 2mm
                 const color = colors[index % 5];
 
-                // Draw bar
+                // Sombra (offset leve)
+                doc.setFillColor(200, 200, 200);
+                doc.rect(margin + 50.5, y + 0.5, barWidth, barHeight, 'F');
+
+                // Barra principal
                 doc.setFillColor(color[0], color[1], color[2]);
                 doc.rect(margin + 50, y, barWidth, barHeight, 'F');
+
+                // Borda da barra
+                doc.setDrawColor(color[0] * 0.7, color[1] * 0.7, color[2] * 0.7);
+                doc.setLineWidth(0.2);
+                doc.rect(margin + 50, y, barWidth, barHeight, 'S');
+
+                // Efeito de highlight (linha clara no topo)
+                doc.setDrawColor(255, 255, 255);
+                doc.setLineWidth(0.5);
+                doc.line(margin + 50, y + 0.5, margin + 50 + barWidth, y + 0.5);
 
                 // Label
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'normal');
-                doc.setTextColor(0, 0, 0);
-                const label = item.label.substring(0, 25); // Aumentado de 18 para 25 caracteres
-                doc.text(label, margin, y + 5.5);
+                doc.setTextColor(51, 51, 51);
+                const label = item.label.substring(0, 25);
+                doc.text(label, margin, y + 6.5);
 
-                // Value
+                // Valor
                 doc.setFont('helvetica', 'bold');
-                doc.text(String(item.value), margin + 52 + barWidth, y + 5.5);
+                doc.setTextColor(0, 0, 0);
+                doc.text(String(item.value), margin + 52 + barWidth, y + 6.5);
 
                 y += barSpacing;
             });
@@ -4795,10 +4811,10 @@ function exportToPdf() {
             return y + 5;
         }
 
-        // Helper: Draw Pie Chart
+        // Helper: Draw Pie Chart (MELHORADO - arcos suavizados)
         function drawPieChart(data, centerX, centerY, radius) {
             const total = data.reduce((sum, d) => sum + d.value, 0);
-            let startAngle = 0;
+            let startAngle = -Math.PI / 2; // Começar no topo
 
             const colors = [
                 [76, 175, 80],   // Green
@@ -4811,38 +4827,45 @@ function exportToPdf() {
                 [121, 85, 72]    // Brown
             ];
 
+            // Desenhar cada fatia com múltiplos pontos para arco suave
             data.forEach((item, index) => {
                 const sliceAngle = (item.value / total) * 2 * Math.PI;
                 const color = colors[index % colors.length];
 
-                // Draw slice
+                // Número de segmentos (mais = mais suave)
+                const segments = Math.max(16, Math.ceil(sliceAngle * 30));
+
                 doc.setFillColor(color[0], color[1], color[2]);
                 doc.setDrawColor(255, 255, 255);
-                doc.setLineWidth(0.5);
+                doc.setLineWidth(0.3);
 
-                // Calculate points
-                const x1 = centerX + radius * Math.cos(startAngle);
-                const y1 = centerY + radius * Math.sin(startAngle);
-                const x2 = centerX + radius * Math.cos(startAngle + sliceAngle);
-                const y2 = centerY + radius * Math.sin(startAngle + sliceAngle);
+                // Desenhar polígono aproximando o setor circular
+                for (let i = 0; i < segments; i++) {
+                    const angle1 = startAngle + (i / segments) * sliceAngle;
+                    const angle2 = startAngle + ((i + 1) / segments) * sliceAngle;
 
-                // Draw filled triangle (approximation of pie slice)
-                doc.triangle(centerX, centerY, x1, y1, x2, y2, 'FD');
+                    const x1 = centerX + radius * Math.cos(angle1);
+                    const y1 = centerY + radius * Math.sin(angle1);
+                    const x2 = centerX + radius * Math.cos(angle2);
+                    const y2 = centerY + radius * Math.sin(angle2);
+
+                    doc.triangle(centerX, centerY, x1, y1, x2, y2, 'FD');
+                }
 
                 startAngle += sliceAngle;
             });
 
-            // Draw legend
+            // Legenda
             let legendY = centerY - radius;
             data.forEach((item, index) => {
                 const color = colors[index % colors.length];
                 const pct = ((item.value / total) * 100).toFixed(1);
 
-                // Color box
+                // Caixa de cor
                 doc.setFillColor(color[0], color[1], color[2]);
                 doc.rect(centerX + radius + 10, legendY - 2, 4, 4, 'F');
 
-                // Text
+                // Texto
                 doc.setFontSize(8);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
@@ -4855,12 +4878,18 @@ function exportToPdf() {
         // ============================================
         // PAGE 1: CAPA PROFISSIONAL
         // ============================================
+        // Fundo verde do header
         doc.setFillColor(0, 150, 136);
         doc.rect(0, 0, pageWidth, 90, 'F');
 
-        // LOGO NEOFORMULA (estilizado)
+        // LOGO NEOFORMULA (box branco com borda)
         doc.setFillColor(255, 255, 255);
-        doc.roundedRect(pageWidth / 2 - 30, 20, 60, 18, 3, 3, 'F');
+        doc.rect(pageWidth / 2 - 30, 20, 60, 18, 'F'); // Retângulo branco
+        doc.setDrawColor(0, 150, 136);
+        doc.setLineWidth(0.5);
+        doc.rect(pageWidth / 2 - 30, 20, 60, 18, 'S'); // Borda verde
+
+        // Texto NEOFORMULA
         doc.setTextColor(0, 150, 136);
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');

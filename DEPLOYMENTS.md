@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @116 | `AKfycbwxAhuahHKlHSoile3nVF2oEOjBu3ykwjKg7Pl8E89XwyP8pWdR0x-wY0XNI7oa705YfQ` | Deploy 61 - PDF Completo | **TESTES** |
+| **DEV** | @117 | `AKfycbzV55rcDUd2P5VyEBAsy6NQP2WCL9mrfGhNisp8f-PKaz3x2u6vyoU7jFEEnoLETuJPiw` | Deploy 62 - Logo + Gráficos | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @116**:
+Use a versão **DEV @117**:
 ```
-https://script.google.com/macros/s/AKfycbwxAhuahHKlHSoile3nVF2oEOjBu3ykwjKg7Pl8E89XwyP8pWdR0x-wY0XNI7oa705YfQ/exec
+https://script.google.com/macros/s/AKfycbzV55rcDUd2P5VyEBAsy6NQP2WCL9mrfGhNisp8f-PKaz3x2u6vyoU7jFEEnoLETuJPiw/exec
 ```
 
 ---
@@ -115,7 +115,30 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 61 (Atual - DEV @116)
+### Deploy 62 (Atual - DEV @117)
+- **Data**: 09/12/2024
+- **Tipo**: UX - Visual do Relatório PDF
+- **Melhorias Implementadas**:
+  - ✅ **Logo Neoformula CORRIGIDO**:
+    * Substituído `roundedRect` (não suportado) por `rect` padrão
+    * Box branco com borda verde visível
+    * Logo agora aparece corretamente na capa
+  - ✅ **Gráficos de Pizza MUITO MELHORADOS**:
+    * Arcos suavizados com 16-30 segmentos (antes: 1 triângulo)
+    * Círculos começam no topo (12h) ao invés de 3h
+    * Bordas brancas finas entre fatias
+    * Visual muito mais profissional e suave
+  - ✅ **Gráficos de Barras MELHORADOS**:
+    * Adicionada sombra (offset cinza)
+    * Bordas escuras nas barras
+    * Linha de highlight branca no topo
+    * Altura aumentada (8mm → 10mm)
+    * Espaçamento aumentado (12mm → 14mm)
+- **Arquivos Modificados**: index.html (+50 linhas melhorias visuais)
+- **Impacto Visual**: Relatório muito mais profissional e polido
+- **Status**: 🧪 DEV @117
+
+### Deploy 61 (Histórico - DEV @116)
 - **Data**: 09/12/2024
 - **Tipo**: Correção Completa - Relatório PDF
 - **Correções Implementadas**:
