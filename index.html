@@ -7450,21 +7450,21 @@ function exportToPdf() {
             return y + 5;
         }
 
-        // Helper: Draw Pie Chart (PROFISSIONAL - Pronto para apresentação executiva)
+        // Helper: Draw Pie Chart (APRESENTAÇÃO DIRETORIA - Máxima qualidade)
         function drawPieChart(data, centerX, centerY, radius) {
             const total = data.reduce((sum, d) => sum + d.value, 0);
             let startAngle = -Math.PI / 2;
 
-            // Paleta de cores vibrantes e profissionais
+            // Paleta VIBRANTE para apresentações
             const colors = [
-                [0, 150, 136],    // Teal corporativo
-                [255, 152, 0],    // Laranja vibrante
-                [76, 175, 80],    // Verde profissional
-                [244, 67, 54],    // Vermelho forte
-                [33, 150, 243],   // Azul executivo
-                [156, 39, 176],   // Roxo moderno
-                [255, 193, 7],    // Dourado
-                [96, 125, 139]    // Cinza azulado
+                [0, 150, 136],    // Teal (BRAND)
+                [255, 138, 0],    // Laranja FORTE
+                [67, 160, 71],    // Verde INTENSO
+                [229, 57, 53],    // Vermelho VIBRANTE
+                [30, 136, 229],   // Azul ROYAL
+                [142, 36, 170],   // Roxo PROFUNDO
+                [251, 192, 45],   // Amarelo OURO
+                [84, 110, 122]    // Cinza AZULADO
             ];
 
             // SOMBRA 3D com maior offset
@@ -7491,16 +7491,16 @@ function exportToPdf() {
             // Resetar ângulo
             startAngle = -Math.PI / 2;
 
-            // FATIAS COLORIDAS com bordas brancas grossas
+            // FATIAS COLORIDAS com bordas PRETAS GROSSAS
             data.forEach((item, index) => {
                 const sliceAngle = (item.value / total) * 2 * Math.PI;
                 const color = colors[index % colors.length];
-                const segments = Math.max(40, Math.ceil(sliceAngle * 60));
+                const segments = Math.max(50, Math.ceil(sliceAngle * 80)); // ULTRA suave
 
-                // Fatia com borda branca grossa
+                // Fatia com borda PRETA GROSSA
                 doc.setFillColor(color[0], color[1], color[2]);
-                doc.setDrawColor(255, 255, 255); // Borda branca
-                doc.setLineWidth(2); // Borda GROSSA
+                doc.setDrawColor(40, 40, 40); // Borda PRETA (quase preta)
+                doc.setLineWidth(3); // Borda MUITO GROSSA
 
                 for (let i = 0; i < segments; i++) {
                     const angle1 = startAngle + (i / segments) * sliceAngle;
@@ -7516,6 +7516,22 @@ function exportToPdf() {
 
                 startAngle += sliceAngle;
             });
+
+            // CONTORNO EXTERNO PRETO no gráfico inteiro
+            doc.setDrawColor(30, 30, 30);
+            doc.setLineWidth(2.5);
+            doc.setFillColor(0, 0, 0, 0);
+            // Desenhar círculo externo
+            const circleSegments = 80;
+            for (let i = 0; i < circleSegments; i++) {
+                const angle1 = (i / circleSegments) * 2 * Math.PI;
+                const angle2 = ((i + 1) / circleSegments) * 2 * Math.PI;
+                const x1 = centerX + radius * Math.cos(angle1);
+                const y1 = centerY + radius * Math.sin(angle1);
+                const x2 = centerX + radius * Math.cos(angle2);
+                const y2 = centerY + radius * Math.sin(angle2);
+                doc.line(x1, y1, x2, y2);
+            }
 
             // CÍRCULO BRANCO CENTRAL (estilo donut)
             const innerRadius = radius * 0.5;
@@ -7580,22 +7596,36 @@ function exportToPdf() {
         doc.setFillColor(0, 150, 136);
         doc.rect(0, 0, pageWidth, 90, 'F');
 
-        // LOGO NEOFORMULA - Imagem PNG real
-        try {
-            const logoBase64 = 'data:image/png;base64,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';
-            doc.addImage(logoBase64, 'PNG', pageWidth / 2 - 35, 18, 70, 22);
-        } catch (error) {
-            // Fallback para texto caso a imagem falhe
-            doc.setFillColor(255, 255, 255);
-            doc.rect(pageWidth / 2 - 35, 18, 70, 22, 'F');
-            doc.setDrawColor(0, 150, 136);
-            doc.setLineWidth(1.5);
-            doc.rect(pageWidth / 2 - 35, 18, 70, 22, 'S');
-            doc.setFillColor(0, 150, 136);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
-            doc.text('NEOFORMULA', pageWidth / 2, 33, { align: 'center' });
-        }
+        // LOGO NEOFORMULA - Box destacado com texto grande
+        // Fundo branco com borda dupla
+        doc.setFillColor(255, 255, 255);
+        doc.rect(pageWidth / 2 - 40, 15, 80, 28, 'F');
+
+        // Borda externa verde grossa
+        doc.setDrawColor(0, 150, 136);
+        doc.setLineWidth(2.5);
+        doc.rect(pageWidth / 2 - 40, 15, 80, 28, 'S');
+
+        // Borda interna mais fina
+        doc.setLineWidth(0.8);
+        doc.rect(pageWidth / 2 - 38, 17, 76, 24, 'S');
+
+        // Texto "N" grande em Teal
+        doc.setFillColor(0, 150, 136);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(32);
+        doc.setTextColor(0, 150, 136);
+        doc.text('N', pageWidth / 2 - 30, 34);
+
+        // Texto "EOFORMULA" em Teal
+        doc.setFontSize(22);
+        doc.text('EOFORMULA', pageWidth / 2 - 20, 34);
+
+        // Subtítulo
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text('Sistema de Gestão', pageWidth / 2, 39, { align: 'center' });
 
         // Titulo principal
         doc.setTextColor(255, 255, 255);
