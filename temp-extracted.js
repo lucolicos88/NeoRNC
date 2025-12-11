@@ -4751,19 +4751,24 @@ function exportToPdf() {
         }
 
         // Helper: Draw Horizontal Bar Chart
-        // Helper: Draw Bar Chart (MELHORADO - gradiente e sombras)
+        // Helper: Draw Bar Chart (CORPORATIVO - Alta qualidade)
         function drawBarChart(data, startY, maxWidth = 120) {
-            const barHeight = 10;
-            const barSpacing = 14;
+            const barHeight = 12;
+            const barSpacing = 16;
             let y = startY;
 
             const maxValue = Math.max(...data.map(d => d.value));
+
+            // Gradiente de cores (do mais forte para mais suave)
             const colors = [
-                [244, 67, 54],   // Red
+                [0, 150, 136],   // Teal (brand)
                 [255, 152, 0],   // Orange
-                [255, 193, 7],   // Yellow
                 [76, 175, 80],   // Green
-                [33, 150, 243]   // Blue
+                [244, 67, 54],   // Red
+                [33, 150, 243],  // Blue
+                [156, 39, 176],  // Purple
+                [255, 193, 7],   // Amber
+                [96, 125, 139]   // Blue Grey
             ];
 
             data.forEach((item, index) => {
@@ -4772,38 +4777,70 @@ function exportToPdf() {
                     y = 20;
                 }
 
-                const barWidth = Math.max((item.value / maxValue) * maxWidth, 2); // Min 2mm
-                const color = colors[index % 5];
+                const barWidth = Math.max((item.value / maxValue) * maxWidth, 3);
+                const color = colors[index % colors.length];
 
-                // Sombra (offset leve)
-                doc.setFillColor(200, 200, 200);
+                // Background track (trilho cinza claro)
+                doc.setFillColor(240, 240, 240);
+                doc.rect(margin + 50, y, maxWidth, barHeight, 'F');
+
+                // Sombra da barra
+                doc.setFillColor(220, 220, 220);
                 doc.rect(margin + 50.5, y + 0.5, barWidth, barHeight, 'F');
 
-                // Barra principal
-                doc.setFillColor(color[0], color[1], color[2]);
-                doc.rect(margin + 50, y, barWidth, barHeight, 'F');
+                // Barra principal com gradiente simulado
+                // Parte mais escura (base)
+                doc.setFillColor(color[0] * 0.8, color[1] * 0.8, color[2] * 0.8);
+                doc.rect(margin + 50, y + barHeight * 0.6, barWidth, barHeight * 0.4, 'F');
 
-                // Borda da barra
-                doc.setDrawColor(color[0] * 0.7, color[1] * 0.7, color[2] * 0.7);
-                doc.setLineWidth(0.2);
+                // Parte mais clara (topo)
+                doc.setFillColor(color[0], color[1], color[2]);
+                doc.rect(margin + 50, y, barWidth, barHeight * 0.6, 'F');
+
+                // Highlight no topo (brilho)
+                doc.setFillColor(
+                    Math.min(255, color[0] + 40),
+                    Math.min(255, color[1] + 40),
+                    Math.min(255, color[2] + 40)
+                );
+                doc.rect(margin + 50, y, barWidth, barHeight * 0.2, 'F');
+
+                // Borda sutil
+                doc.setDrawColor(color[0] * 0.6, color[1] * 0.6, color[2] * 0.6);
+                doc.setLineWidth(0.3);
                 doc.rect(margin + 50, y, barWidth, barHeight, 'S');
 
-                // Efeito de highlight (linha clara no topo)
-                doc.setDrawColor(255, 255, 255);
-                doc.setLineWidth(0.5);
-                doc.line(margin + 50, y + 0.5, margin + 50 + barWidth, y + 0.5);
+                // Ícone de posição
+                doc.setFillColor(100, 100, 100);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.text(`${index + 1}`, margin + 2, y + 8);
 
                 // Label
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(51, 51, 51);
-                const label = item.label.substring(0, 25);
-                doc.text(label, margin, y + 6.5);
+                const label = item.label.substring(0, 30);
+                doc.text(label, margin + 7, y + 8);
 
-                // Valor
+                // Valor dentro da barra se couber, senão fora
                 doc.setFont('helvetica', 'bold');
-                doc.setTextColor(0, 0, 0);
-                doc.text(String(item.value), margin + 52 + barWidth, y + 6.5);
+                doc.setTextColor(255, 255, 255);
+                if (barWidth > 15) {
+                    // Dentro da barra
+                    doc.text(String(item.value), margin + 51 + barWidth - 8, y + 8);
+                } else {
+                    // Fora da barra
+                    doc.setTextColor(51, 51, 51);
+                    doc.text(String(item.value), margin + 52 + barWidth, y + 8);
+                }
+
+                // Percentual relativo ao máximo
+                const pct = ((item.value / maxValue) * 100).toFixed(0);
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(120, 120, 120);
+                doc.text(`${pct}%`, margin + 50 + maxWidth + 2, y + 8);
 
                 y += barSpacing;
             });
@@ -4811,35 +4848,58 @@ function exportToPdf() {
             return y + 5;
         }
 
-        // Helper: Draw Pie Chart (MELHORADO - arcos suavizados)
+        // Helper: Draw Pie Chart (APRESENTAÇÃO DIRETORIA - Máxima qualidade)
         function drawPieChart(data, centerX, centerY, radius) {
             const total = data.reduce((sum, d) => sum + d.value, 0);
-            let startAngle = -Math.PI / 2; // Começar no topo
+            let startAngle = -Math.PI / 2;
 
+            // Paleta VIBRANTE para apresentações
             const colors = [
-                [76, 175, 80],   // Green
-                [255, 152, 0],   // Orange
-                [244, 67, 54],   // Red
-                [33, 150, 243],  // Blue
-                [156, 39, 176],  // Purple
-                [255, 193, 7],   // Yellow
-                [0, 150, 136],   // Teal
-                [121, 85, 72]    // Brown
+                [0, 150, 136],    // Teal (BRAND)
+                [255, 138, 0],    // Laranja FORTE
+                [67, 160, 71],    // Verde INTENSO
+                [229, 57, 53],    // Vermelho VIBRANTE
+                [30, 136, 229],   // Azul ROYAL
+                [142, 36, 170],   // Roxo PROFUNDO
+                [251, 192, 45],   // Amarelo OURO
+                [84, 110, 122]    // Cinza AZULADO
             ];
 
-            // Desenhar cada fatia com múltiplos pontos para arco suave
+            // SOMBRA 3D com maior offset
+            doc.setFillColor(180, 180, 180);
+            doc.setDrawColor(180, 180, 180);
+            data.forEach((item, index) => {
+                const sliceAngle = (item.value / total) * 2 * Math.PI;
+                const segments = Math.max(40, Math.ceil(sliceAngle * 60)); // Ultra suave
+
+                for (let i = 0; i < segments; i++) {
+                    const angle1 = startAngle + (i / segments) * sliceAngle;
+                    const angle2 = startAngle + ((i + 1) / segments) * sliceAngle;
+
+                    const x1 = centerX + 2 + radius * Math.cos(angle1);
+                    const y1 = centerY + 2 + radius * Math.sin(angle1);
+                    const x2 = centerX + 2 + radius * Math.cos(angle2);
+                    const y2 = centerY + 2 + radius * Math.sin(angle2);
+
+                    doc.triangle(centerX + 2, centerY + 2, x1, y1, x2, y2, 'F');
+                }
+                startAngle += sliceAngle;
+            });
+
+            // Resetar ângulo
+            startAngle = -Math.PI / 2;
+
+            // FATIAS COLORIDAS com bordas PRETAS GROSSAS
             data.forEach((item, index) => {
                 const sliceAngle = (item.value / total) * 2 * Math.PI;
                 const color = colors[index % colors.length];
+                const segments = Math.max(50, Math.ceil(sliceAngle * 80)); // ULTRA suave
 
-                // Número de segmentos (mais = mais suave)
-                const segments = Math.max(16, Math.ceil(sliceAngle * 30));
-
+                // Fatia com borda PRETA GROSSA
                 doc.setFillColor(color[0], color[1], color[2]);
-                doc.setDrawColor(255, 255, 255);
-                doc.setLineWidth(0.3);
+                doc.setDrawColor(40, 40, 40); // Borda PRETA (quase preta)
+                doc.setLineWidth(3); // Borda MUITO GROSSA
 
-                // Desenhar polígono aproximando o setor circular
                 for (let i = 0; i < segments; i++) {
                     const angle1 = startAngle + (i / segments) * sliceAngle;
                     const angle2 = startAngle + ((i + 1) / segments) * sliceAngle;
@@ -4855,23 +4915,75 @@ function exportToPdf() {
                 startAngle += sliceAngle;
             });
 
-            // Legenda
-            let legendY = centerY - radius;
+            // CONTORNO EXTERNO PRETO no gráfico inteiro
+            doc.setDrawColor(30, 30, 30);
+            doc.setLineWidth(2.5);
+            doc.setFillColor(0, 0, 0, 0);
+            // Desenhar círculo externo
+            const circleSegments = 80;
+            for (let i = 0; i < circleSegments; i++) {
+                const angle1 = (i / circleSegments) * 2 * Math.PI;
+                const angle2 = ((i + 1) / circleSegments) * 2 * Math.PI;
+                const x1 = centerX + radius * Math.cos(angle1);
+                const y1 = centerY + radius * Math.sin(angle1);
+                const x2 = centerX + radius * Math.cos(angle2);
+                const y2 = centerY + radius * Math.sin(angle2);
+                doc.line(x1, y1, x2, y2);
+            }
+
+            // CÍRCULO BRANCO CENTRAL (estilo donut)
+            const innerRadius = radius * 0.5;
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(255, 255, 255);
+            for (let angle = 0; angle < 2 * Math.PI; angle += 0.05) {
+                const x1 = centerX + innerRadius * Math.cos(angle);
+                const y1 = centerY + innerRadius * Math.sin(angle);
+                const x2 = centerX + innerRadius * Math.cos(angle + 0.05);
+                const y2 = centerY + innerRadius * Math.sin(angle + 0.05);
+                doc.triangle(centerX, centerY, x1, y1, x2, y2, 'F');
+            }
+
+            // TOTAL NO CENTRO com destaque
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 150, 136); // Teal brand
+            doc.text(String(total), centerX, centerY - 2, { align: 'center' });
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(120, 120, 120);
+            doc.text('Total', centerX, centerY + 4, { align: 'center' });
+
+            // LEGENDA PROFISSIONAL com caixas coloridas e bordas
+            let legendY = centerY - radius + 8;
             data.forEach((item, index) => {
                 const color = colors[index % colors.length];
                 const pct = ((item.value / total) * 100).toFixed(1);
 
-                // Caixa de cor
+                // Caixa colorida com borda
                 doc.setFillColor(color[0], color[1], color[2]);
-                doc.rect(centerX + radius + 10, legendY - 2, 4, 4, 'F');
+                doc.setDrawColor(color[0] * 0.7, color[1] * 0.7, color[2] * 0.7);
+                doc.setLineWidth(0.5);
+                doc.rect(centerX + radius + 10, legendY - 2, 4, 4, 'FD');
 
-                // Texto
-                doc.setFontSize(8);
-                doc.setTextColor(0, 0, 0);
+                // Valor em negrito
+                doc.setFontSize(9);
+                doc.setTextColor(51, 51, 51);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${item.value}`, centerX + radius + 16, legendY + 1.5);
+
+                // Percentual
                 doc.setFont('helvetica', 'normal');
-                doc.text(`${item.label}: ${item.value} (${pct}%)`, centerX + radius + 16, legendY + 1);
+                doc.setFontSize(8);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`(${pct}%)`, centerX + radius + 23, legendY + 1.5);
 
-                legendY += 6;
+                // Label em cinza
+                doc.setFontSize(7);
+                doc.setTextColor(130, 130, 130);
+                const labelTrunc = item.label.substring(0, 22);
+                doc.text(labelTrunc, centerX + radius + 16, legendY + 5);
+
+                legendY += 11;
             });
         }
 
@@ -4882,18 +4994,36 @@ function exportToPdf() {
         doc.setFillColor(0, 150, 136);
         doc.rect(0, 0, pageWidth, 90, 'F');
 
-        // LOGO NEOFORMULA (box branco com borda)
+        // LOGO NEOFORMULA - Box destacado com texto grande
+        // Fundo branco com borda dupla
         doc.setFillColor(255, 255, 255);
-        doc.rect(pageWidth / 2 - 30, 20, 60, 18, 'F'); // Retângulo branco
-        doc.setDrawColor(0, 150, 136);
-        doc.setLineWidth(0.5);
-        doc.rect(pageWidth / 2 - 30, 20, 60, 18, 'S'); // Borda verde
+        doc.rect(pageWidth / 2 - 40, 15, 80, 28, 'F');
 
-        // Texto NEOFORMULA
-        doc.setTextColor(0, 150, 136);
-        doc.setFontSize(18);
+        // Borda externa verde grossa
+        doc.setDrawColor(0, 150, 136);
+        doc.setLineWidth(2.5);
+        doc.rect(pageWidth / 2 - 40, 15, 80, 28, 'S');
+
+        // Borda interna mais fina
+        doc.setLineWidth(0.8);
+        doc.rect(pageWidth / 2 - 38, 17, 76, 24, 'S');
+
+        // Texto "N" grande em Teal
+        doc.setFillColor(0, 150, 136);
         doc.setFont('helvetica', 'bold');
-        doc.text('NEOFORMULA', pageWidth / 2, 32, { align: 'center' });
+        doc.setFontSize(32);
+        doc.setTextColor(0, 150, 136);
+        doc.text('N', pageWidth / 2 - 30, 34);
+
+        // Texto "EOFORMULA" em Teal
+        doc.setFontSize(22);
+        doc.text('EOFORMULA', pageWidth / 2 - 20, 34);
+
+        // Subtítulo
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text('Sistema de Gestão', pageWidth / 2, 39, { align: 'center' });
 
         // Titulo principal
         doc.setTextColor(255, 255, 255);

@@ -26,7 +26,8 @@
       "Bash(do echo -n \"$id: \")",
       "Bash(done)",
       "Bash(clasp undeploy:*)",
-      "Bash(node validate-syntax.js:*)"
+      "Bash(node validate-syntax.js:*)",
+      "Bash(node download-logo.js:*)"
     ],
     "deny": [],
     "ask": []

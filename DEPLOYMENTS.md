@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @119 | `AKfycbwe0XZ7Sd6bGkt-TMFAyujHQG5Ms7XJXmmfVU350EIm5JLv82XyZeFaqFGSy49MrmJu` | Deploy 64 - Logo PNG + Gráficos Executivos | **TESTES** |
+| **DEV** | @119 | `AKfycbyqi8YzFPsBeYFy6-C84ZDKmYqOt2ev_0D_17uI38NrcJo36Ca1TRFglDdDKP3NGAHNhw` | Deploy 65 - Logo Grande + Bordas Pretas | **TESTES** |
 
 ---
 
@@ -23,7 +23,7 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ### Para TESTES e DESENVOLVIMENTO
 Use a versão **DEV @119**:
 ```
-https://script.google.com/macros/s/AKfycbwe0XZ7Sd6bGkt-TMFAyujHQG5Ms7XJXmmfVU350EIm5JLv82XyZeFaqFGSy49MrmJu/exec
+https://script.google.com/macros/s/AKfycbyqi8YzFPsBeYFy6-C84ZDKmYqOt2ev_0D_17uI38NrcJo36Ca1TRFglDdDKP3NGAHNhw/exec
 ```
 
 ---
