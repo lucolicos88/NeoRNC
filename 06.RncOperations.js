@@ -142,6 +142,22 @@ var RncOperations = (function() {
       // ✅ Deploy 34: Registrar criação no histórico
       HistoricoManager.registrarCriacao(rncNumber, user, rncData);
 
+      // ✅ Deploy 66: Enviar notificação por email
+      try {
+        var notificationResult = NotificationManager.notifyRncCreated(rncNumber, rncData);
+        if (notificationResult.success) {
+          Logger.logInfo('saveRnc_NOTIFICATION_SENT', {
+            rncNumber: rncNumber,
+            emailsSent: notificationResult.successCount
+          });
+        }
+      } catch (notifError) {
+        Logger.logError('saveRnc_NOTIFICATION_ERROR', notifError, {
+          rncNumber: rncNumber
+        });
+        // Não falhar a operação se notificação falhar
+      }
+
       // ✅ Retornar sucesso com mensagens de arquivo
       var successMessage = 'RNC criada com sucesso';
       if (fileErrors.length > 0) {
@@ -343,24 +359,63 @@ function updateRnc(rncNumber, formData, files) {
             HistoricoManager.registrarAlteracoes(rncNumber, modifiedFields, user);
         }
 
+        // ✅ Deploy 66: Enviar notificações por email
+        try {
+            // Verificar se houve mudança de status
+            if (statusResult.statusChanged && updates['Status Geral']) {
+                var notifStatusResult = NotificationManager.notifyStatusChanged(
+                    rncNumber,
+                    currentRnc['Status Geral'],
+                    updates['Status Geral'],
+                    user
+                );
+                if (notifStatusResult.success) {
+                    Logger.logInfo('updateRnc_STATUS_NOTIFICATION_SENT', {
+                        rncNumber: rncNumber,
+                        emailsSent: notifStatusResult.successCount
+                    });
+                }
+            }
+
+            // Notificar sobre outras alterações
+            if (Object.keys(modifiedFields).length > 0) {
+                var notifUpdateResult = NotificationManager.notifyRncUpdated(
+                    rncNumber,
+                    modifiedFields,
+                    user
+                );
+                if (notifUpdateResult.success) {
+                    Logger.logInfo('updateRnc_NOTIFICATION_SENT', {
+                        rncNumber: rncNumber,
+                        emailsSent: notifUpdateResult.successCount
+                    });
+                }
+            }
+        } catch (notifError) {
+            Logger.logError('updateRnc_NOTIFICATION_ERROR', notifError, {
+                rncNumber: rncNumber
+            });
+            // Não falhar a operação se notificação falhar
+        }
+
         // Processar arquivos se houver
         if (files && files.length > 0) {
             var fileResults = FileManager.uploadFiles(rncNumber, files, 'Edição');
-            Logger.logInfo('updateRnc_FILES', { 
+            Logger.logInfo('updateRnc_FILES', {
                 rncNumber: rncNumber,
                 filesUploaded: fileResults.uploaded,
                 filesFailed: fileResults.failed
             });
         }
-        
-        Logger.logInfo('updateRnc_SUCCESS', { 
+
+        Logger.logInfo('updateRnc_SUCCESS', {
             rncNumber: rncNumber,
             user: user,
             duration: Logger.logPerformance('updateRnc', startTime)
         });
-        
-        return { 
-            success: true, 
+
+        return {
+            success: true,
             message: 'RNC atualizada com sucesso',
             rncNumber: rncNumber
         };
@@ -1166,21 +1221,23 @@ function determineNewStatus(currentRnc, updates) {
   
   /**
  * Busca RNCs por setor
+ * Deploy 66: Usa campo "Setor onde ocorreu a não conformidade"
  */
 function getRncsBySetor(setor) {
     try {
         if (!setor || setor === 'Todos') {
             return getAllRncs();
         }
-        
+
+        // Deploy 66: Usar campo correto de setor
         var filters = {};
-        filters['Setor onde foi feita abertura\n'] = setor;
-        
+        filters['Setor onde ocorreu a não conformidade'] = setor;
+
         var rncs = Database.findData(CONFIG.SHEETS.RNC, filters, {
             orderBy: 'Data Criação',
             orderDesc: true
         });
-        
+
         for (var i = 0; i < rncs.length; i++) {
             for (var key in rncs[i]) {
                 if (rncs[i][key] instanceof Date) {
@@ -1188,12 +1245,46 @@ function getRncsBySetor(setor) {
                 }
             }
         }
-        
+
         Logger.logInfo('getRncsBySetor', { setor: setor, count: rncs.length });
         return rncs;
-        
+
     } catch (error) {
         Logger.logError('getRncsBySetor', error);
+        return [];
+    }
+}
+
+/**
+ * Deploy 66: Busca RNCs do setor do usuário
+ * @param {string} email - Email do usuário
+ * @return {Array} Lista de RNCs do setor do usuário
+ */
+function getRncsByUserSetor(email) {
+    try {
+        Logger.logDebug('getRncsByUserSetor_START', { email: email });
+
+        // Obter setor do usuário
+        var userSetor = PermissionsManager.getUserSetor(email);
+
+        if (!userSetor) {
+            Logger.logWarning('getRncsByUserSetor_NO_SETOR', { email: email });
+            return [];
+        }
+
+        // Buscar RNCs do setor
+        var rncs = getRncsBySetor(userSetor);
+
+        Logger.logInfo('getRncsByUserSetor_SUCCESS', {
+            email: email,
+            setor: userSetor,
+            count: rncs.length
+        });
+
+        return rncs;
+
+    } catch (error) {
+        Logger.logError('getRncsByUserSetor_ERROR', error, { email: email });
         return [];
     }
 }
@@ -1270,6 +1361,7 @@ return {
     prepareRncData: prepareRncData,
     determineNewStatus: determineNewStatus,
     getRncsBySetor: getRncsBySetor,
+    getRncsByUserSetor: getRncsByUserSetor, // Deploy 66
     getSetoresUnicos: getSetoresUnicos,
     getRncNumbersBySetor: getRncNumbersBySetor
 };

@@ -27,7 +27,10 @@
       "Bash(done)",
       "Bash(clasp undeploy:*)",
       "Bash(node validate-syntax.js:*)",
-      "Bash(node download-logo.js:*)"
+      "Bash(node download-logo.js:*)",
+      "Bash(xargs cat:*)",
+      "Bash(find:*)",
+      "Bash(del nul)"
     ],
     "deny": [],
     "ask": []

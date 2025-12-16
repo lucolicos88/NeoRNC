@@ -951,6 +951,20 @@ function getAllRncNumbers() { return RncOperations.getAllRncNumbers(); }
 function searchRncs(searchTerm) { return RncOperations.searchRncs(searchTerm); }
 function getRncsBySetor(setor) { return RncOperations.getRncsBySetor(setor); }
 
+// Deploy 66: Filtrar RNCs por setor do usuário
+function getRncsByUserSetor() {
+  var userEmail = Session.getActiveUser().getEmail();
+  var userPerms = PermissionsManager.getUserPermissions(userEmail);
+
+  // Se for Admin, retornar todas as RNCs
+  if (userPerms.isAdmin) {
+    return RncOperations.getAllRncs();
+  }
+
+  // Se não for Admin, filtrar por setor
+  return RncOperations.getRncsByUserSetor(userEmail);
+}
+
 // ✅ Deploy 34: Histórico de alterações
 function getHistoricoRnc(rncNumber) {
   try {

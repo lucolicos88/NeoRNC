@@ -47,14 +47,14 @@ var PermissionsManager = (function() {
   function getUserRoles(email) {
     try {
       Logger.logDebug('getUserRoles', { email: email });
-      
+
       var permissions = Database.findData(CONFIG.SHEETS.PERMISSOES, {
         'Email': email,
         'Ativo': 'Sim'
       });
-      
+
       var roles = [];
-      
+
       // Coletar todas as roles do usuário
       for (var i = 0; i < permissions.length; i++) {
         var role = permissions[i]['Role'];
@@ -62,25 +62,60 @@ var PermissionsManager = (function() {
           roles.push(role);
         }
       }
-      
+
       // TASK-003: Remover admin hardcoded (vulnerabilidade CRÍTICO-03)
       // Se não tem permissões na tabela, retornar Espectador
       // Admins devem ser gerenciados APENAS através da tabela de permissões
       if (roles.length === 0) {
         roles.push('Espectador');
       }
-      
-      Logger.logDebug('getUserRoles_SUCCESS', { 
-        email: email, 
+
+      Logger.logDebug('getUserRoles_SUCCESS', {
+        email: email,
         roles: roles.join(', '),
         count: roles.length
       });
-      
+
       return roles;
-      
+
     } catch (error) {
       Logger.logError('getUserRoles_ERROR', error, { email: email });
       return ['Espectador']; // Fallback seguro
+    }
+  }
+
+  /**
+   * Deploy 66: Obtém o setor de um usuário
+   * @param {string} email - Email do usuário
+   * @return {string} Setor do usuário ou null
+   */
+  function getUserSetor(email) {
+    try {
+      Logger.logDebug('getUserSetor', { email: email });
+
+      var permissions = Database.findData(CONFIG.SHEETS.PERMISSOES, {
+        'Email': email,
+        'Ativo': 'Sim'
+      });
+
+      // Retornar o primeiro setor encontrado
+      for (var i = 0; i < permissions.length; i++) {
+        var setor = permissions[i]['Setor'];
+        if (setor && setor.trim() !== '') {
+          Logger.logDebug('getUserSetor_SUCCESS', {
+            email: email,
+            setor: setor
+          });
+          return setor.trim();
+        }
+      }
+
+      Logger.logDebug('getUserSetor_NOT_FOUND', { email: email });
+      return null;
+
+    } catch (error) {
+      Logger.logError('getUserSetor_ERROR', error, { email: email });
+      return null;
     }
   }
   
@@ -95,16 +130,18 @@ var PermissionsManager = (function() {
   
   /**
    * Obtém permissões consolidadas do usuário
+   * Deploy 66: Agora inclui setor do usuário
    * @param {string} email - Email do usuário
-   * @return {Object} Objeto com roles e permissões
+   * @return {Object} Objeto com roles, permissões e setor
    */
   function getUserPermissions(email) {
     try {
       Logger.logInfo('getUserPermissions_START', { email: email });
-      
+
       var roles = getUserRoles(email);
+      var setor = getUserSetor(email); // Deploy 66: Obter setor
       var permissions = {};
-      
+
       // Se é Admin, pode editar tudo
       if (isAdmin(roles)) {
         permissions = {
@@ -115,24 +152,24 @@ var PermissionsManager = (function() {
       } else {
         // Consolidar permissões de todas as roles
         // Prioridade: editar > visualizar > negar
-        
+
         roles.forEach(function(role) {
           var rolePermissions = PERMISSIONS_MAP[role] || {};
-          
+
           Object.keys(rolePermissions).forEach(function(secao) {
             var permissao = rolePermissions[secao];
-            
+
             // Se já tem "editar", não sobrescrever
             if (permissions[secao] === 'editar') {
               return;
             }
-            
+
             // Se tem "visualizar" e a nova é "editar", sobrescrever
             if (permissions[secao] === 'visualizar' && permissao === 'editar') {
               permissions[secao] = permissao;
               return;
             }
-            
+
             // Se não tem nada, definir
             if (!permissions[secao]) {
               permissions[secao] = permissao;
@@ -140,25 +177,27 @@ var PermissionsManager = (function() {
           });
         });
       }
-      
+
       var result = {
         roles: roles,
         permissions: permissions,
-        isAdmin: isAdmin(roles)
+        isAdmin: isAdmin(roles),
+        setor: setor // Deploy 66: Incluir setor
       };
-      
+
       Logger.logInfo('getUserPermissions_SUCCESS', {
         email: email,
         roles: roles.join(', '),
         isAdmin: result.isAdmin,
+        setor: setor || 'Nenhum',
         sections: Object.keys(permissions).length
       });
-      
+
       return result;
-      
+
     } catch (error) {
       Logger.logError('getUserPermissions_ERROR', error, { email: email });
-      
+
       // Retornar permissões mínimas em caso de erro
       return {
         roles: ['Espectador'],
@@ -167,7 +206,8 @@ var PermissionsManager = (function() {
           'Qualidade': 'visualizar',
           'Liderança': 'visualizar'
         },
-        isAdmin: false
+        isAdmin: false,
+        setor: null // Deploy 66
       };
     }
   }
@@ -398,6 +438,7 @@ var PermissionsManager = (function() {
   // API Pública
   return {
     getUserRoles: getUserRoles,
+    getUserSetor: getUserSetor, // Deploy 66
     getUserPermissions: getUserPermissions,
     canEditSection: canEditSection,
     checkPermissionToSave: checkPermissionToSave,
