@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @123 | `AKfycbyi1BgrnCp9OLLYT8wAKuAY5EODEhGCqUjkyW9ZUE4VW_gHGVvlx1CGMoxuSWHvMMwvUA` | Deploy 68 - Filtros de Setor + Setores da Planilha Listas | **TESTES** |
+| **DEV** | @124 | `AKfycbxkCARmMeFwcCc0zIzc3OhnZc8zumRgf7pOHNhKE2wr3LkWR5GOr5jZDeNC8jljn_QUvg` | Deploy 68.1 - Abas Admin Only | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @123**:
+Use a versão **DEV @124**:
 ```
-https://script.google.com/macros/s/AKfycbyi1BgrnCp9OLLYT8wAKuAY5EODEhGCqUjkyW9ZUE4VW_gHGVvlx1CGMoxuSWHvMMwvUA/exec
+https://script.google.com/macros/s/AKfycbxkCARmMeFwcCc0zIzc3OhnZc8zumRgf7pOHNhKE2wr3LkWR5GOr5jZDeNC8jljn_QUvg/exec
 ```
 
 ---
@@ -115,7 +115,22 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 68 (Atual - DEV @123)
+### Deploy 68.1 (Atual - DEV @124)
+- **Data**: 16/12/2024
+- **Tipo**: UX - Restrição de Acesso a Abas Administrativas
+- **Funcionalidades Implementadas**:
+  - ✅ **Abas Restritas para Admins**:
+    * Aba "Relatórios" agora visível apenas para administradores
+    * Aba "Configurações" continua visível apenas para administradores
+    * Usuários não-admin não veem essas abas na interface
+    * Verificação baseada em `appContext.isAdmin`
+- **Arquivos Modificados**:
+  - index.html (controle de visibilidade das abas)
+- **Versão**: Sistema RNC v2.2 - Deploy 68.1
+- **Impacto**: Melhor segurança e UX mais limpa para usuários não-admin
+- **Status**: 🧪 DEV @124
+
+### Deploy 68 (Histórico - DEV @123 - REMOVIDO)
 - **Data**: 16/12/2024
 - **Tipo**: Fix + Feature - Filtros Personalizados por Setor + Setores Centralizados
 - **Funcionalidades Corrigidas/Implementadas**:

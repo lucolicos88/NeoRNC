@@ -2205,7 +2205,7 @@ textarea.form-control,
                 <span>📊</span>
                 <span>Dashboard</span>
             </button>
-            <button class="tab" data-tab="relatorios">
+            <button class="tab" data-tab="relatorios" id="relatoriosTab" style="display: none;">
                 <span>📈</span>
                 <span>Relatórios</span>
             </button>
@@ -3160,10 +3160,17 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
         
         var userRoleEl = document.getElementById('userRole');
         if (userRoleEl) userRoleEl.textContent = appContext.role || 'Usuario';
-        
+
+        // Deploy 68: Mostrar abas apenas para admins
         var configTab = document.getElementById('configTab');
+        var relatoriosTab = document.getElementById('relatoriosTab');
+
         if (configTab && appContext.canConfig) {
             configTab.style.display = 'flex';
+        }
+
+        if (relatoriosTab && appContext.isAdmin) {
+            relatoriosTab.style.display = 'flex';
         }
         
         // Renderizar formulário de abertura
@@ -3216,9 +3223,14 @@ if (typeof appContext !== 'undefined' && appContext && appContext.email) {
     }
 }
     document.getElementById('userRole').textContent = appContext.role || 'Usuario';
-    
+
+    // Deploy 68: Mostrar abas apenas para admins
     if (appContext.canConfig) {
         document.getElementById('configTab').style.display = 'flex';
+    }
+
+    if (appContext.isAdmin) {
+        document.getElementById('relatoriosTab').style.display = 'flex';
     }
     
     // Renderizar formulário de abertura
