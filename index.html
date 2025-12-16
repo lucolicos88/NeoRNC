@@ -3161,16 +3161,35 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
         var userRoleEl = document.getElementById('userRole');
         if (userRoleEl) userRoleEl.textContent = appContext.role || 'Usuario';
 
-        // Deploy 68: Mostrar abas apenas para admins
+        // Deploy 69: Mostrar abas apenas para admins (com debug)
+        console.log('=== DEBUG DEPLOY 69: VERIFICAÇÃO DE TABS ===');
+        console.log('appContext.isAdmin:', appContext.isAdmin);
+        console.log('appContext.canConfig:', appContext.canConfig);
+        console.log('appContext.roles:', appContext.roles);
+        console.log('appContext.email:', appContext.email);
+        console.log('===========================================');
+
         var configTab = document.getElementById('configTab');
         var relatoriosTab = document.getElementById('relatoriosTab');
 
-        if (configTab && appContext.canConfig) {
-            configTab.style.display = 'flex';
+        if (configTab) {
+            if (appContext.canConfig) {
+                console.log('✅ Mostrando aba Configurações (canConfig = true)');
+                configTab.style.display = 'flex';
+            } else {
+                console.log('❌ Ocultando aba Configurações (canConfig = false)');
+                configTab.style.display = 'none';
+            }
         }
 
-        if (relatoriosTab && appContext.isAdmin) {
-            relatoriosTab.style.display = 'flex';
+        if (relatoriosTab) {
+            if (appContext.isAdmin) {
+                console.log('✅ Mostrando aba Relatórios (isAdmin = true)');
+                relatoriosTab.style.display = 'flex';
+            } else {
+                console.log('❌ Ocultando aba Relatórios (isAdmin = false)');
+                relatoriosTab.style.display = 'none';
+            }
         }
         
         // Renderizar formulário de abertura

@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @124 | `AKfycbxkCARmMeFwcCc0zIzc3OhnZc8zumRgf7pOHNhKE2wr3LkWR5GOr5jZDeNC8jljn_QUvg` | Deploy 68.1 - Abas Admin Only | **TESTES** |
+| **DEV** | @125 | `AKfycbwCZF4SIWxa-u_Yl0ZPbjxL59v-adRHjGMZVfrJ8RPI190MKyZBGDrX-sUo5f6V7Pzy` | Deploy 69 - Debug tabs admin | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @124**:
+Use a versão **DEV @125**:
 ```
-https://script.google.com/macros/s/AKfycbxkCARmMeFwcCc0zIzc3OhnZc8zumRgf7pOHNhKE2wr3LkWR5GOr5jZDeNC8jljn_QUvg/exec
+https://script.google.com/macros/s/AKfycbwCZF4SIWxa-u_Yl0ZPbjxL59v-adRHjGMZVfrJ8RPI190MKyZBGDrX-sUo5f6V7Pzy/exec
 ```
 
 ---
@@ -115,7 +115,26 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 68.1 (Atual - DEV @124)
+### Deploy 69 (Atual - DEV @125)
+- **Data**: 16/12/2024
+- **Tipo**: Debug - Adição de logs para diagnóstico de tabs admin
+- **Funcionalidades Implementadas**:
+  - ✅ **Debug de Visibilidade de Tabs**:
+    * Adicionado console.log detalhado ao verificar appContext.isAdmin
+    * Logs mostram valores de: isAdmin, canConfig, roles, email
+    * Logs indicam se tabs estão sendo mostradas ou ocultadas
+    * Facilita diagnóstico de problemas de visibilidade
+  - ✅ **Melhoria na Lógica de Tabs**:
+    * Adicionada verificação explícita para ocultar tabs quando não-admin
+    * Garantia de que tabs iniciam ocultas e só aparecem se admin
+- **Arquivos Modificados**:
+  - 01.Config.js (versão Deploy 69)
+  - index.html (logs de debug na verificação de tabs)
+- **Versão**: Sistema RNC v2.2 - Deploy 69
+- **Impacto**: Facilita diagnóstico de problemas com visibilidade de tabs
+- **Status**: 🧪 DEV @125
+
+### Deploy 68.1 (Histórico - DEV @124 - REMOVIDO)
 - **Data**: 16/12/2024
 - **Tipo**: UX - Restrição de Acesso a Abas Administrativas
 - **Funcionalidades Implementadas**:
@@ -128,7 +147,7 @@ git push origin main
   - index.html (controle de visibilidade das abas)
 - **Versão**: Sistema RNC v2.2 - Deploy 68.1
 - **Impacto**: Melhor segurança e UX mais limpa para usuários não-admin
-- **Status**: 🧪 DEV @124
+- **Status**: 🧪 DEV @124 - REMOVIDO
 
 ### Deploy 68 (Histórico - DEV @123 - REMOVIDO)
 - **Data**: 16/12/2024
