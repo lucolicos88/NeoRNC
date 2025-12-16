@@ -869,6 +869,7 @@ function getUserContextOptimized() {
       permissions: userPermissions.permissions,
       isAdmin: userPermissions.isAdmin,
       canConfig: userPermissions.isAdmin,
+      setor: userPermissions.setor, // Deploy 68: Incluir setor do usuário
       hasPermissions: true, // ✨ Flag explícita
       csrfToken: csrfToken, // TASK-011: Token CSRF
       fieldsConfig: fieldsConfig,
@@ -1022,6 +1023,16 @@ function getSetoresUnicos() {
     Logger.logError('getSetoresUnicos', error);
     return [];
   }
+}
+
+/**
+ * Deploy 68: Obtém lista de setores da planilha Listas
+ * @return {Array} Lista de setores configurados
+ */
+function getSetoresFromListas() {
+  return ApiResponse.tryCatch(function() {
+    return ConfigManager.getSetoresFromListas();
+  }, 'getSetoresFromListas');
 }
 
 /**

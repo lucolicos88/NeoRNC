@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @122 | `AKfycbxB8KjGtlc-2Y6Kgd-wgPjGfIo_R7z-vajubP67jFwxqUux9oj2Ch_-UBrmnAHFRnZTnw` | Deploy 67 - Notificações Corrigidas + Modais Setor | **TESTES** |
+| **DEV** | @123 | `AKfycbyi1BgrnCp9OLLYT8wAKuAY5EODEhGCqUjkyW9ZUE4VW_gHGVvlx1CGMoxuSWHvMMwvUA` | Deploy 68 - Filtros de Setor + Setores da Planilha Listas | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @122**:
+Use a versão **DEV @123**:
 ```
-https://script.google.com/macros/s/AKfycbxB8KjGtlc-2Y6Kgd-wgPjGfIo_R7z-vajubP67jFwxqUux9oj2Ch_-UBrmnAHFRnZTnw/exec
+https://script.google.com/macros/s/AKfycbyi1BgrnCp9OLLYT8wAKuAY5EODEhGCqUjkyW9ZUE4VW_gHGVvlx1CGMoxuSWHvMMwvUA/exec
 ```
 
 ---
@@ -115,7 +115,39 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 67 (Atual - DEV @122)
+### Deploy 68 (Atual - DEV @123)
+- **Data**: 16/12/2024
+- **Tipo**: Fix + Feature - Filtros Personalizados por Setor + Setores Centralizados
+- **Funcionalidades Corrigidas/Implementadas**:
+  - ✅ **Filtros de Setor Personalizados por Usuário**:
+    * Usuários não-admin veem APENAS seu próprio setor nos filtros
+    * Admins continuam vendo todos os setores
+    * Opção "Todos os Setores" removida para usuários não-admin
+    * Aplicado em: Editar RNC, Kanban e Dashboard
+  - ✅ **Setores da Planilha Listas**:
+    * Modais de novo usuário e editar usuário agora buscam setores da planilha "Listas"
+    * Antes: usavam `getSetoresUnicos()` (derivado de RNCs existentes)
+    * Agora: usam `getSetoresFromListas()` (lista configurável e centralizada)
+    * Garante consistência e permite gestão centralizada de setores
+  - ✅ **Nova Função Backend - getSetoresFromListas()**:
+    * Implementada em ConfigManager.js
+    * Lê diretamente da coluna "Setores" da planilha "Listas"
+    * Usa cache para melhor performance
+    * Exposta via API para o frontend
+  - ✅ **Setor do Usuário no Contexto**:
+    * appContext.setor agora disponível no frontend
+    * getUserContextOptimized() retorna setor do usuário
+    * Permite verificações de setor em tempo real
+- **Arquivos Modificados**:
+  - 01.Config.js (v2.2 - Deploy 68)
+  - 04.ConfigManager.js (getSetoresFromListas)
+  - 08.Code.js (API getSetoresFromListas, setor no contexto)
+  - index.html (filtros personalizados, modais usando Listas)
+- **Versão**: Sistema RNC v2.2 - Deploy 68
+- **Impacto**: Melhor segurança (usuários veem apenas seu setor) + Gestão centralizada de setores
+- **Status**: 🧪 DEV @123
+
+### Deploy 67 (Histórico - DEV @122 - REMOVIDO)
 - **Data**: 16/12/2024
 - **Tipo**: Fix + Feature - Correção de Notificações + Gestão de Setores
 - **Funcionalidades Corrigidas/Implementadas**:

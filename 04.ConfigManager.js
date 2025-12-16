@@ -822,6 +822,32 @@ function updateAttachmentStatus(rncNumber) {
 
 
 
+  /**
+   * Deploy 68: Obtém lista de setores da planilha Listas
+   * @return {Array} Lista de setores
+   */
+  function getSetoresFromListas() {
+    try {
+      Logger.logDebug('getSetoresFromListas_START');
+
+      // Usar getLists() que já tem cache
+      var lists = getLists();
+
+      // Retornar lista de setores (coluna "Setores")
+      var setores = lists['Setores'] || [];
+
+      Logger.logInfo('getSetoresFromListas_SUCCESS', {
+        count: setores.length
+      });
+
+      return setores;
+
+    } catch (error) {
+      Logger.logError('getSetoresFromListas_ERROR', error);
+      return [];
+    }
+  }
+
 // API Pública
 return {
   getFieldsForSection: getFieldsForSection,
@@ -838,6 +864,7 @@ return {
   removeFieldColumn: removeFieldColumn,
   fullSyncRncWithConfig: fullSyncRncWithConfig,
   updateAttachmentStatus: updateAttachmentStatus,
-  clearCache: clearCache                            // ✅ DEPLOY 33: Novo
+  clearCache: clearCache,                           // ✅ DEPLOY 33
+  getSetoresFromListas: getSetoresFromListas        // ✅ DEPLOY 68: Novo
 };
 })();

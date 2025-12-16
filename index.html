@@ -4332,48 +4332,70 @@ async function loadSetoresFilter() {
     try {
         const tipoSetorSelect = document.getElementById('tipoSetorEdit');
         const setorFilterSelect = document.getElementById('setorFilterEdit');
-        
+
         if (!tipoSetorSelect || !setorFilterSelect) return;
-        
+
         debugLog('info', '🏢 Carregando filtros de setores - Editar RNC');
-        
-        const setores = await apiCall('getSetoresDuplos', []);
-        
+
+        // Deploy 68: Verificar se é admin
+        const isAdmin = appContext && appContext.isAdmin;
+        const userSetor = appContext && appContext.setor;
+
+        let setores;
+        if (isAdmin) {
+            // Admin vê todos os setores
+            setores = await apiCall('getSetoresDuplos', []);
+        } else {
+            // Não-admin vê apenas seu setor
+            setores = {
+                setoresAbertura: userSetor ? [userSetor] : [],
+                setoresQualidade: userSetor ? [userSetor] : []
+            };
+        }
+
         // Função para atualizar lista de setores
         function atualizarListaSetores() {
             const tipoSetor = tipoSetorSelect.value;
-            const listaSetores = tipoSetor === 'abertura' 
-                ? setores.setoresAbertura 
+            const listaSetores = tipoSetor === 'abertura'
+                ? setores.setoresAbertura
                 : setores.setoresQualidade;
-            
-            setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
-            
+
+            // Deploy 68: Admins veem "Todos", não-admins não
+            if (isAdmin) {
+                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
+            } else {
+                setorFilterSelect.innerHTML = '';
+            }
+
             listaSetores.forEach(setor => {
                 const option = document.createElement('option');
                 option.value = setor;
                 option.textContent = `🏢 ${setor}`;
                 setorFilterSelect.appendChild(option);
             });
-            
-            debugLog('success', `✅ ${listaSetores.length} setores carregados (${tipoSetor}) - Editar`);
+
+            debugLog('success', `✅ ${listaSetores.length} setores carregados (${tipoSetor}) - Editar`, {
+                isAdmin: isAdmin,
+                userSetor: userSetor
+            });
         }
-        
+
         // Event listeners
         tipoSetorSelect.addEventListener('change', function() {
             debugLog('info', '🔄 Tipo de setor alterado - Editar', { tipo: this.value });
             atualizarListaSetores();
             loadAvailableRncs(); // Recarregar RNCs com novo tipo
         });
-        
+
         setorFilterSelect.addEventListener('change', function() {
             const setorSelecionado = this.value;
             debugLog('info', '🔄 Setor alterado - Editar', { setor: setorSelecionado });
             loadAvailableRncs(setorSelecionado);
         });
-        
+
         // Carregar lista inicial
         atualizarListaSetores();
-        
+
     } catch (error) {
         debugLog('error', '❌ Erro ao carregar filtros - Editar RNC', { error: error.message });
         showError('Erro ao carregar filtro de setores');
@@ -5851,45 +5873,67 @@ async function loadSetoresKanban() {
     try {
         const tipoSetorSelect = document.getElementById('tipoSetorKanban');
         const setorFilterSelect = document.getElementById('setorFilterKanban');
-        
+
         if (!tipoSetorSelect || !setorFilterSelect) return;
-        
+
         debugLog('info', '🏢 Carregando filtros de setores - Kanban');
-        
-        const setores = await apiCall('getSetoresDuplos', []);
-        
+
+        // Deploy 68: Verificar se é admin
+        const isAdmin = appContext && appContext.isAdmin;
+        const userSetor = appContext && appContext.setor;
+
+        let setores;
+        if (isAdmin) {
+            // Admin vê todos os setores
+            setores = await apiCall('getSetoresDuplos', []);
+        } else {
+            // Não-admin vê apenas seu setor
+            setores = {
+                setoresAbertura: userSetor ? [userSetor] : [],
+                setoresQualidade: userSetor ? [userSetor] : []
+            };
+        }
+
         // Função para atualizar lista de setores
         function atualizarListaSetores() {
             const tipoSetor = tipoSetorSelect.value;
-            const listaSetores = tipoSetor === 'abertura' 
-                ? setores.setoresAbertura 
+            const listaSetores = tipoSetor === 'abertura'
+                ? setores.setoresAbertura
                 : setores.setoresQualidade;
-            
-            setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
-            
+
+            // Deploy 68: Admins veem "Todos", não-admins não
+            if (isAdmin) {
+                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
+            } else {
+                setorFilterSelect.innerHTML = '';
+            }
+
             listaSetores.forEach(setor => {
                 const option = document.createElement('option');
                 option.value = setor;
                 option.textContent = `🏢 ${setor}`;
                 setorFilterSelect.appendChild(option);
             });
-            
-            debugLog('success', `✅ ${listaSetores.length} setores carregados (${tipoSetor})`);
+
+            debugLog('success', `✅ ${listaSetores.length} setores carregados (${tipoSetor}) - Kanban`, {
+                isAdmin: isAdmin,
+                userSetor: userSetor
+            });
         }
-        
+
         // Event listeners
         tipoSetorSelect.addEventListener('change', function() {
             atualizarListaSetores();
             refreshKanban();
         });
-        
+
         setorFilterSelect.addEventListener('change', function() {
             refreshKanban();
         });
-        
+
         // Carregar lista inicial
         atualizarListaSetores();
-        
+
     } catch (error) {
         debugLog('error', '❌ Erro ao carregar filtros Kanban', { error: error.message });
     }
@@ -6050,40 +6094,64 @@ async function refreshKanban() {
     try {
         const tipoSetorSelect = document.getElementById('tipoSetorDashboard');
         const setorFilterSelect = document.getElementById('setorFilterDashboard');
-        
+
         if (!tipoSetorSelect || !setorFilterSelect) return;
-        
+
         debugLog('info', '🏢 Carregando filtros de setores - Dashboard');
-        
-        const setores = await apiCall('getSetoresDuplos', []);
-        
+
+        // Deploy 68: Verificar se é admin
+        const isAdmin = appContext && appContext.isAdmin;
+        const userSetor = appContext && appContext.setor;
+
+        let setores;
+        if (isAdmin) {
+            // Admin vê todos os setores
+            setores = await apiCall('getSetoresDuplos', []);
+        } else {
+            // Não-admin vê apenas seu setor
+            setores = {
+                setoresAbertura: userSetor ? [userSetor] : [],
+                setoresQualidade: userSetor ? [userSetor] : []
+            };
+        }
+
         function atualizarListaSetores() {
             const tipoSetor = tipoSetorSelect.value;
-            const listaSetores = tipoSetor === 'abertura' 
-                ? setores.setoresAbertura 
+            const listaSetores = tipoSetor === 'abertura'
+                ? setores.setoresAbertura
                 : setores.setoresQualidade;
-            
-            setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
-            
+
+            // Deploy 68: Admins veem "Todos", não-admins não
+            if (isAdmin) {
+                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
+            } else {
+                setorFilterSelect.innerHTML = '';
+            }
+
             listaSetores.forEach(setor => {
                 const option = document.createElement('option');
                 option.value = setor;
                 option.textContent = `🏢 ${setor}`;
                 setorFilterSelect.appendChild(option);
             });
+
+            debugLog('success', `✅ ${listaSetores.length} setores carregados (${tipoSetor}) - Dashboard`, {
+                isAdmin: isAdmin,
+                userSetor: userSetor
+            });
         }
-        
+
         tipoSetorSelect.addEventListener('change', function() {
             atualizarListaSetores();
             refreshDashboard();
         });
-        
+
         setorFilterSelect.addEventListener('change', function() {
             refreshDashboard();
         });
-        
+
         atualizarListaSetores();
-        
+
     } catch (error) {
         debugLog('error', '❌ Erro ao carregar filtros Dashboard');
     }
@@ -9251,10 +9319,11 @@ document.getElementById('addNewUser').addEventListener('click', function() {
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-    // Deploy 67: Carregar setores para o select
+    // Deploy 68: Carregar setores da planilha Listas
     (async function loadSetoresForNewUser() {
         try {
-            const setores = await apiCall('getSetoresUnicos', []);
+            const response = await apiCall('getSetoresFromListas', []);
+            const setores = response && response.data ? response.data : response;
             const setorSelect = document.getElementById('newUserSetor');
 
             if (setorSelect && setores && setores.length > 0) {
@@ -10469,8 +10538,9 @@ async function editUserRoles(email) {
         // Deploy 67: Carregar setores e selecionar setor atual do usuário
         (async function loadSetoresForEditUser() {
             try {
-                // Buscar setores disponíveis
-                const setores = await apiCall('getSetoresUnicos', []);
+                // Deploy 68: Buscar setores da planilha Listas
+                const response = await apiCall('getSetoresFromListas', []);
+                const setores = response && response.data ? response.data : response;
                 // Buscar setor atual do usuário
                 const userPerms = await apiCall('getUserPermissions', [email]);
                 const currentSetor = userPerms && userPerms.setor ? userPerms.setor : '';
