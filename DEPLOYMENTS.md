@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @125 | `AKfycbwCZF4SIWxa-u_Yl0ZPbjxL59v-adRHjGMZVfrJ8RPI190MKyZBGDrX-sUo5f6V7Pzy` | Deploy 69 - Debug tabs admin | **TESTES** |
+| **DEV** | @126 | `AKfycbx6qSRdouXtzU87-kvUttRIQRsLxRHZMYMWKk_KxTPnXr-m53YsWoI2qlbIQSkTwos4CA` | Deploy 70 - FIX Tabs Admin | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @125**:
+Use a versão **DEV @126**:
 ```
-https://script.google.com/macros/s/AKfycbwCZF4SIWxa-u_Yl0ZPbjxL59v-adRHjGMZVfrJ8RPI190MKyZBGDrX-sUo5f6V7Pzy/exec
+https://script.google.com/macros/s/AKfycbx6qSRdouXtzU87-kvUttRIQRsLxRHZMYMWKk_KxTPnXr-m53YsWoI2qlbIQSkTwos4CA/exec
 ```
 
 ---
@@ -115,7 +115,34 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 69 (Atual - DEV @125)
+### Deploy 70 (Atual - DEV @126)
+- **Data**: 16/12/2024
+- **Tipo**: FIX CRÍTICO - Correção definitiva de visibilidade de tabs admin
+- **Problema Identificado**:
+  - CSS com `display: flex !important` no container `.tabs` sobrescrevia `display: none` inline
+  - Tabs de Relatórios e Configurações apareciam para todos os usuários
+  - Deploy 69 revelou que a lógica estava correta, mas CSS tinha precedência
+- **Solução Implementada**:
+  - ✅ **Nova Classe CSS `admin-only`**:
+    * Criada regra `.tab.admin-only { display: none !important; }`
+    * Tabs de Relatórios e Configurações recebem classe `admin-only` por padrão
+    * CSS garante ocultação por padrão com `!important`
+  - ✅ **JavaScript Remove Classe para Admins**:
+    * Ao invés de usar `style.display`, JavaScript remove classe `admin-only`
+    * Apenas admins têm a classe removida, revelando as tabs
+    * Abordagem mais robusta e resistente a conflitos CSS
+  - ✅ **Debug Logs Melhorados**:
+    * Logs mostram quantas tabs foram liberadas para admin
+    * Logs mostram quantas tabs permanecem ocultas para não-admin
+    * Lista cada tab por nome para facilitar troubleshooting
+- **Arquivos Modificados**:
+  - 01.Config.js (versão Deploy 70)
+  - index.html (regra CSS `.tab.admin-only`, classes nas tabs, lógica JavaScript)
+- **Versão**: Sistema RNC v2.2 - Deploy 70
+- **Impacto**: FIX CRÍTICO - Agora tabs realmente aparecem apenas para admins
+- **Status**: 🧪 DEV @126
+
+### Deploy 69 (Histórico - DEV @125 - REMOVIDO)
 - **Data**: 16/12/2024
 - **Tipo**: Debug - Adição de logs para diagnóstico de tabs admin
 - **Funcionalidades Implementadas**:
@@ -132,7 +159,7 @@ git push origin main
   - index.html (logs de debug na verificação de tabs)
 - **Versão**: Sistema RNC v2.2 - Deploy 69
 - **Impacto**: Facilita diagnóstico de problemas com visibilidade de tabs
-- **Status**: 🧪 DEV @125
+- **Status**: 🧪 DEV @125 - REMOVIDO
 
 ### Deploy 68.1 (Histórico - DEV @124 - REMOVIDO)
 - **Data**: 16/12/2024

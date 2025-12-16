@@ -609,6 +609,11 @@ textarea.form-control,
             display: inline-block !important;
         }
 
+        /* Deploy 69: Ocultar tabs admin-only por padrão */
+        .tab.admin-only {
+            display: none !important;
+        }
+
         /* ========================================== */
         /* ✅ CONTAINER COM ESPAÇO CORRETO */
         /* ========================================== */
@@ -2205,11 +2210,11 @@ textarea.form-control,
                 <span>📊</span>
                 <span>Dashboard</span>
             </button>
-            <button class="tab" data-tab="relatorios" id="relatoriosTab" style="display: none;">
+            <button class="tab admin-only" data-tab="relatorios" id="relatoriosTab">
                 <span>📈</span>
                 <span>Relatórios</span>
             </button>
-            <button class="tab" data-tab="configuracoes" id="configTab" style="display: none;">
+            <button class="tab admin-only" data-tab="configuracoes" id="configTab">
                 <span>⚙️</span>
                 <span>Configurações</span>
             </button>
@@ -3161,7 +3166,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
         var userRoleEl = document.getElementById('userRole');
         if (userRoleEl) userRoleEl.textContent = appContext.role || 'Usuario';
 
-        // Deploy 69: Mostrar abas apenas para admins (com debug)
+        // Deploy 69: Mostrar abas apenas para admins (usando classes CSS)
         console.log('=== DEBUG DEPLOY 69: VERIFICAÇÃO DE TABS ===');
         console.log('appContext.isAdmin:', appContext.isAdmin);
         console.log('appContext.canConfig:', appContext.canConfig);
@@ -3169,27 +3174,21 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
         console.log('appContext.email:', appContext.email);
         console.log('===========================================');
 
-        var configTab = document.getElementById('configTab');
-        var relatoriosTab = document.getElementById('relatoriosTab');
-
-        if (configTab) {
-            if (appContext.canConfig) {
-                console.log('✅ Mostrando aba Configurações (canConfig = true)');
-                configTab.style.display = 'flex';
-            } else {
-                console.log('❌ Ocultando aba Configurações (canConfig = false)');
-                configTab.style.display = 'none';
-            }
-        }
-
-        if (relatoriosTab) {
-            if (appContext.isAdmin) {
-                console.log('✅ Mostrando aba Relatórios (isAdmin = true)');
-                relatoriosTab.style.display = 'flex';
-            } else {
-                console.log('❌ Ocultando aba Relatórios (isAdmin = false)');
-                relatoriosTab.style.display = 'none';
-            }
+        // Se for admin, remover classe admin-only das tabs
+        if (appContext.isAdmin) {
+            console.log('✅ Usuário é ADMIN - Mostrando todas as tabs');
+            var adminTabs = document.querySelectorAll('.tab.admin-only');
+            adminTabs.forEach(function(tab) {
+                tab.classList.remove('admin-only');
+                console.log('  ✅ Tab liberada:', tab.getAttribute('data-tab'));
+            });
+        } else {
+            console.log('❌ Usuário NÃO é admin - Tabs restritas permanecem ocultas');
+            var adminTabs = document.querySelectorAll('.tab.admin-only');
+            console.log('  ❌ Total de tabs ocultas:', adminTabs.length);
+            adminTabs.forEach(function(tab) {
+                console.log('    - Tab oculta:', tab.getAttribute('data-tab'));
+            });
         }
         
         // Renderizar formulário de abertura
