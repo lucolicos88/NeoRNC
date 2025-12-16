@@ -282,14 +282,16 @@ var PermissionsManager = (function() {
   
   /**
    * Adiciona uma role a um usuário
+   * Deploy 67: Agora aceita setor opcional
    * @param {string} email - Email do usuário
    * @param {string} role - Role a adicionar
+   * @param {string} setor - Setor do usuário (opcional)
    * @return {Object} Resultado da operação
    */
-  function addUserRole(email, role) {
+  function addUserRole(email, role, setor) {
     try {
-      Logger.logInfo('addUserRole_START', { email: email, role: role });
-      
+      Logger.logInfo('addUserRole_START', { email: email, role: role, setor: setor });
+
       // Validar role
       var validRoles = ['Admin', 'Abertura', 'Qualidade', 'Liderança', 'Espectador'];
       if (validRoles.indexOf(role) === -1) {
@@ -298,35 +300,43 @@ var PermissionsManager = (function() {
           message: 'Role inválida: ' + role
         };
       }
-      
+
       // Verificar se já existe
       var existing = Database.findData(CONFIG.SHEETS.PERMISSOES, {
         'Email': email,
         'Role': role,
         'Ativo': 'Sim'
       });
-      
+
       if (existing.length > 0) {
         return {
           success: false,
           message: 'Usuário já possui esta role'
         };
       }
-      
-      // Adicionar nova role
-      Database.insertData(CONFIG.SHEETS.PERMISSOES, {
+
+      // Deploy 67: Incluir setor na inserção
+      var newPermission = {
         'Email': email,
         'Role': role,
         'Ativo': 'Sim'
-      });
-      
-      Logger.logInfo('addUserRole_SUCCESS', { email: email, role: role });
-      
+      };
+
+      // Adicionar setor se fornecido
+      if (setor && setor.trim() !== '') {
+        newPermission['Setor'] = setor.trim();
+      }
+
+      // Adicionar nova role
+      Database.insertData(CONFIG.SHEETS.PERMISSOES, newPermission);
+
+      Logger.logInfo('addUserRole_SUCCESS', { email: email, role: role, setor: setor });
+
       return {
         success: true,
         message: 'Role adicionada com sucesso'
       };
-      
+
     } catch (error) {
       Logger.logError('addUserRole_ERROR', error, { email: email, role: role });
       return {
@@ -390,51 +400,120 @@ var PermissionsManager = (function() {
   }
   
   /**
+   * Deploy 67: Atualiza o setor de todas as permissões de um usuário
+   * @param {string} email - Email do usuário
+   * @param {string} novoSetor - Novo setor para o usuário
+   * @return {Object} Resultado da operação
+   */
+  function updateUserSetor(email, novoSetor) {
+    try {
+      Logger.logInfo('updateUserSetor_START', { email: email, novoSetor: novoSetor });
+
+      if (!email || !novoSetor) {
+        return {
+          success: false,
+          message: 'Email e setor são obrigatórios'
+        };
+      }
+
+      // Buscar todas as permissões ativas do usuário
+      var permissions = Database.findData(CONFIG.SHEETS.PERMISSOES, {
+        'Email': email,
+        'Ativo': 'Sim'
+      });
+
+      if (permissions.length === 0) {
+        return {
+          success: false,
+          message: 'Nenhuma permissão encontrada para o usuário'
+        };
+      }
+
+      // Atualizar setor em todas as permissões
+      var updateCount = 0;
+      for (var i = 0; i < permissions.length; i++) {
+        var result = Database.updateData(
+          CONFIG.SHEETS.PERMISSOES,
+          {
+            'Email': email,
+            'Role': permissions[i]['Role'],
+            'Ativo': 'Sim'
+          },
+          {
+            'Setor': novoSetor.trim()
+          }
+        );
+        if (result.success) {
+          updateCount++;
+        }
+      }
+
+      Logger.logInfo('updateUserSetor_SUCCESS', {
+        email: email,
+        novoSetor: novoSetor,
+        updatedCount: updateCount
+      });
+
+      return {
+        success: true,
+        message: 'Setor atualizado em ' + updateCount + ' permissão(ões)'
+      };
+
+    } catch (error) {
+      Logger.logError('updateUserSetor_ERROR', error, { email: email, novoSetor: novoSetor });
+      return {
+        success: false,
+        message: 'Erro ao atualizar setor: ' + error.toString()
+      };
+    }
+  }
+
+  /**
    * Lista todos os usuários com suas roles
    * @return {Array} Lista de usuários
    */
   function getAllUsers() {
     try {
       Logger.logDebug('getAllUsers_START');
-      
+
       var permissions = Database.findData(CONFIG.SHEETS.PERMISSOES, {
         'Ativo': 'Sim'
       });
-      
+
       // Agrupar roles por email
       var usersMap = {};
-      
+
       permissions.forEach(function(perm) {
         var email = perm['Email'];
         var role = perm['Role'];
-        
+
         if (!usersMap[email]) {
           usersMap[email] = {
             email: email,
             roles: []
           };
         }
-        
+
         if (usersMap[email].roles.indexOf(role) === -1) {
           usersMap[email].roles.push(role);
         }
       });
-      
+
       // Converter para array
       var users = Object.keys(usersMap).map(function(email) {
         return usersMap[email];
       });
-      
+
       Logger.logDebug('getAllUsers_SUCCESS', { count: users.length });
-      
+
       return users;
-      
+
     } catch (error) {
       Logger.logError('getAllUsers_ERROR', error);
       return [];
     }
   }
-  
+
   // API Pública
   return {
     getUserRoles: getUserRoles,
@@ -444,6 +523,7 @@ var PermissionsManager = (function() {
     checkPermissionToSave: checkPermissionToSave,
     addUserRole: addUserRole,
     removeUserRole: removeUserRole,
+    updateUserSetor: updateUserSetor, // Deploy 67
     getAllUsers: getAllUsers,
     isAdmin: isAdmin
   };

@@ -9197,7 +9197,14 @@ document.getElementById('addNewUser').addEventListener('click', function() {
                     <label>📧 Email do Usuário</label>
                     <input type="email" id="newUserEmail" class="form-control" placeholder="usuario@exemplo.com">
                 </div>
-                
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>🏢 Setor do Usuário</label>
+                    <select id="newUserSetor" class="form-control">
+                        <option value="">Carregando setores...</option>
+                    </select>
+                </div>
+
                 <div class="form-group" style="margin-top: 20px;">
                     <label>🎭 Roles do Usuário</label>
                     <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
@@ -9241,8 +9248,34 @@ document.getElementById('addNewUser').addEventListener('click', function() {
             </div>
         </div>
     `;
-    
+
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Deploy 67: Carregar setores para o select
+    (async function loadSetoresForNewUser() {
+        try {
+            const setores = await apiCall('getSetoresUnicos', []);
+            const setorSelect = document.getElementById('newUserSetor');
+
+            if (setorSelect && setores && setores.length > 0) {
+                setorSelect.innerHTML = '<option value="">Selecione um setor</option>';
+                setores.forEach(function(setor) {
+                    const option = document.createElement('option');
+                    option.value = setor;
+                    option.textContent = setor;
+                    setorSelect.appendChild(option);
+                });
+            } else if (setorSelect) {
+                setorSelect.innerHTML = '<option value="">Nenhum setor disponível</option>';
+            }
+        } catch (error) {
+            debugLog('error', 'Erro ao carregar setores', { error: error.message });
+            const setorSelect = document.getElementById('newUserSetor');
+            if (setorSelect) {
+                setorSelect.innerHTML = '<option value="">Erro ao carregar setores</option>';
+            }
+        }
+    })();
 });
 
 // Função para fechar modal de novo campo
@@ -10292,50 +10325,57 @@ function closeAddUserModal() {
 async function saveNewUser() {
     try {
         const email = document.getElementById('newUserEmail').value.trim();
-        
+        const setor = document.getElementById('newUserSetor').value.trim(); // Deploy 67: Obter setor
+
         if (!email) {
             showError('Digite um email válido');
             return;
         }
-        
+
         // Validar formato de email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             showError('Email inválido');
             return;
         }
-        
+
+        // Deploy 67: Validar setor
+        if (!setor) {
+            showError('Selecione um setor');
+            return;
+        }
+
         // Coletar roles selecionadas
         const selectedRoles = [];
-        
+
         if (document.getElementById('role_admin').checked) selectedRoles.push('Admin');
         if (document.getElementById('role_abertura').checked) selectedRoles.push('Abertura');
         if (document.getElementById('role_qualidade').checked) selectedRoles.push('Qualidade');
         if (document.getElementById('role_lideranca').checked) selectedRoles.push('Liderança');
         if (document.getElementById('role_espectador').checked) selectedRoles.push('Espectador');
-        
+
         if (selectedRoles.length === 0) {
             showError('Selecione pelo menos uma role');
             return;
         }
-        
+
         showLoading('Adicionando usuário...');
-        
-        // Adicionar cada role
+
+        // Deploy 67: Adicionar cada role COM setor
         for (let i = 0; i < selectedRoles.length; i++) {
-            const result = await apiCall('addUserRole', [email, selectedRoles[i]]);
-            
+            const result = await apiCall('addUserRole', [email, selectedRoles[i], setor]);
+
             if (!result.success && !result.message.includes('já possui')) {
                 throw new Error(result.message);
             }
         }
-        
-        showSuccess(`✅ Usuário ${email} adicionado com ${selectedRoles.length} role(s)`);
-        
+
+        showSuccess(`✅ Usuário ${email} adicionado ao setor ${setor} com ${selectedRoles.length} role(s)`);
+
         closeAddUserModal();
         loadUsers();
         hideLoading();
-        
+
     } catch (error) {
         debugLog('error', '❌ Erro ao adicionar usuário', { error: error.message });
         showError('Erro ao adicionar usuário: ' + error.message);
@@ -10373,7 +10413,14 @@ async function editUserRoles(email) {
             <div id="editUserRolesModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
                 <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
                     <h3 style="margin-bottom: 1rem; color: #009688;">✏️ Editar Roles de ${email}</h3>
-                    
+
+                    <div class="form-group">
+                        <label>🏢 Setor do Usuário</label>
+                        <select id="editUserSetor" class="form-control">
+                            <option value="">Carregando setores...</option>
+                        </select>
+                    </div>
+
                     <div class="form-group" style="margin-top: 20px;">
                         <label>🎭 Roles Ativas</label>
                         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
@@ -10416,9 +10463,44 @@ async function editUserRoles(email) {
                 </div>
             </div>
         `;
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
+
+        // Deploy 67: Carregar setores e selecionar setor atual do usuário
+        (async function loadSetoresForEditUser() {
+            try {
+                // Buscar setores disponíveis
+                const setores = await apiCall('getSetoresUnicos', []);
+                // Buscar setor atual do usuário
+                const userPerms = await apiCall('getUserPermissions', [email]);
+                const currentSetor = userPerms && userPerms.setor ? userPerms.setor : '';
+
+                const setorSelect = document.getElementById('editUserSetor');
+
+                if (setorSelect && setores && setores.length > 0) {
+                    setorSelect.innerHTML = '<option value="">Selecione um setor</option>';
+                    setores.forEach(function(setor) {
+                        const option = document.createElement('option');
+                        option.value = setor;
+                        option.textContent = setor;
+                        // Pré-selecionar setor atual
+                        if (setor === currentSetor) {
+                            option.selected = true;
+                        }
+                        setorSelect.appendChild(option);
+                    });
+                } else if (setorSelect) {
+                    setorSelect.innerHTML = '<option value="">Nenhum setor disponível</option>';
+                }
+            } catch (error) {
+                debugLog('error', 'Erro ao carregar setores para edição', { error: error.message });
+                const setorSelect = document.getElementById('editUserSetor');
+                if (setorSelect) {
+                    setorSelect.innerHTML = '<option value="">Erro ao carregar setores</option>';
+                }
+            }
+        })();
+
     } catch (error) {
         debugLog('error', '❌ Erro ao editar roles', { error: error.message });
         showError('Erro ao carregar roles: ' + error.message);
@@ -10431,26 +10513,42 @@ async function editUserRoles(email) {
  */
 async function saveUserRolesFixed(email) {
     try {
-        showLoading('Salvando roles...');
-        
+        showLoading('Salvando alterações...');
+
+        // Deploy 67: Coletar setor selecionado
+        const newSetor = document.getElementById('editUserSetor').value.trim();
+
+        if (!newSetor) {
+            showError('Selecione um setor');
+            hideLoading();
+            return;
+        }
+
         // Coletar novas roles
         const newRoles = [];
-        
+
         if (document.getElementById('edit_role_admin').checked) newRoles.push('Admin');
         if (document.getElementById('edit_role_abertura').checked) newRoles.push('Abertura');
         if (document.getElementById('edit_role_qualidade').checked) newRoles.push('Qualidade');
         if (document.getElementById('edit_role_lideranca').checked) newRoles.push('Liderança');
         if (document.getElementById('edit_role_espectador').checked) newRoles.push('Espectador');
-        
+
         if (newRoles.length === 0) {
             showError('O usuário deve ter pelo menos uma role');
             hideLoading();
             return;
         }
-        
+
         // ✅ USAR ROLES SALVAS NO WINDOW
         const oldRoles = window.currentEditingUserRoles || [];
-        
+
+        // Deploy 67: Atualizar setor primeiro
+        const setorResult = await apiCall('updateUserSetor', [email, newSetor]);
+        if (!setorResult.success) {
+            throw new Error('Erro ao atualizar setor: ' + setorResult.message);
+        }
+        debugLog('info', `🏢 Setor atualizado: ${newSetor}`);
+
         // Remover roles antigas que não estão mais selecionadas
         for (let i = 0; i < oldRoles.length; i++) {
             if (newRoles.indexOf(oldRoles[i]) === -1) {
@@ -10458,21 +10556,21 @@ async function saveUserRolesFixed(email) {
                 debugLog('info', `🗑️ Role removida: ${oldRoles[i]}`);
             }
         }
-        
-        // Adicionar novas roles
+
+        // Adicionar novas roles COM setor
         for (let i = 0; i < newRoles.length; i++) {
             if (oldRoles.indexOf(newRoles[i]) === -1) {
-                await apiCall('addUserRole', [email, newRoles[i]]);
+                await apiCall('addUserRole', [email, newRoles[i], newSetor]);
                 debugLog('info', `➕ Role adicionada: ${newRoles[i]}`);
             }
         }
-        
-        showSuccess('✅ Roles atualizadas com sucesso!');
-        
+
+        showSuccess(`✅ Usuário atualizado! Setor: ${newSetor}`);
+
         closeEditUserRolesModal();
         loadUsers();
         hideLoading();
-        
+
         // Limpar variável temporária
         delete window.currentEditingUserRoles;
         

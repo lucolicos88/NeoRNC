@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @121 | `AKfycbziZCI3T3HUeVh8XLj6vYT5JvAszB2x1uEeLdJClGqwtLuPYR9RAJfI6z-vHiP57jJoEg` | Deploy 66 COMPLETO - Notificações + Filtro por Setor | **TESTES** |
+| **DEV** | @122 | `AKfycbxB8KjGtlc-2Y6Kgd-wgPjGfIo_R7z-vajubP67jFwxqUux9oj2Ch_-UBrmnAHFRnZTnw` | Deploy 67 - Notificações Corrigidas + Modais Setor | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @121**:
+Use a versão **DEV @122**:
 ```
-https://script.google.com/macros/s/AKfycbziZCI3T3HUeVh8XLj6vYT5JvAszB2x1uEeLdJClGqwtLuPYR9RAJfI6z-vHiP57jJoEg/exec
+https://script.google.com/macros/s/AKfycbxB8KjGtlc-2Y6Kgd-wgPjGfIo_R7z-vajubP67jFwxqUux9oj2Ch_-UBrmnAHFRnZTnw/exec
 ```
 
 ---
@@ -115,7 +115,40 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 66 (Atual - DEV @121)
+### Deploy 67 (Atual - DEV @122)
+- **Data**: 16/12/2024
+- **Tipo**: Fix + Feature - Correção de Notificações + Gestão de Setores
+- **Funcionalidades Corrigidas/Implementadas**:
+  - ✅ **Sistema de Notificações CORRIGIDO**:
+    * Ao CRIAR RNC: notifica setor de ABERTURA + Admins
+    * Ao MUDAR STATUS: notifica setor ABERTURA + setor NÃO CONFORMIDADE + Admins
+    * Correção: agora usa campos corretos (antes usava apenas setor não conformidade)
+  - ✅ **Filtro de RNCs Aprimorado**:
+    * Usuários veem RNCs onde estão no setor de ABERTURA **OU** setor da NÃO CONFORMIDADE
+    * Sistema filtra corretamente ambos os setores
+    * Admins continuam vendo todas as RNCs
+  - ✅ **Modal de Novo Usuário - Campo Setor**:
+    * Adicionado select de setor no modal de adicionar usuário
+    * Lista de setores carregada dinamicamente via `getSetoresUnicos()`
+    * Campo obrigatório para criar novo usuário
+  - ✅ **Modal de Editar Usuário - Campo Setor**:
+    * Adicionado select de setor no modal de editar usuário
+    * Setor atual do usuário pré-selecionado automaticamente
+    * Atualização de setor reflete em todas as roles do usuário
+  - ✅ **Nova Função Backend - updateUserSetor()**:
+    * Atualiza setor de todas as permissões do usuário simultaneamente
+    * Garante consistência de dados
+- **Arquivos Modificados**:
+  - 01.Config.js (v2.2)
+  - 06.RncOperations.js (filtro duplo setor)
+  - 10.PermissionsManager.js (updateUserSetor)
+  - 14.NotificationManager.js (lógica de notificações corrigida)
+  - index.html (modais com campo setor)
+- **Versão**: Sistema RNC v2.2 - Deploy 67
+- **Impacto**: Correção crítica de notificações + UX melhorado para gestão de setores
+- **Status**: 🧪 DEV @122
+
+### Deploy 66 (Histórico - DEV @121 - REMOVIDO)
 - **Data**: 16/12/2024
 - **Tipo**: Feature - Sistema de Notificações + Filtro por Setor
 - **Funcionalidades Implementadas**:
@@ -419,4 +452,4 @@ git push origin main
 
 **Última Atualização**: 16/12/2024
 **Versão PROD Atual**: @103 (Deploy 51)
-**Versão DEV Atual**: @121 (Deploy 66 COMPLETO - Sistema de Notificações + Filtro por Setor)
+**Versão DEV Atual**: @122 (Deploy 67 - Notificações Corrigidas + Gestão de Setores)

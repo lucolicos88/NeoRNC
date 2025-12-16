@@ -1256,7 +1256,8 @@ function getRncsBySetor(setor) {
 }
 
 /**
- * Deploy 66: Busca RNCs do setor do usuário
+ * Deploy 67: Busca RNCs do setor do usuário
+ * Retorna RNCs onde o usuário está no setor de abertura OU setor da não conformidade
  * @param {string} email - Email do usuário
  * @return {Array} Lista de RNCs do setor do usuário
  */
@@ -1272,16 +1273,28 @@ function getRncsByUserSetor(email) {
             return [];
         }
 
-        // Buscar RNCs do setor
-        var rncs = getRncsBySetor(userSetor);
+        // Deploy 67: Buscar TODAS as RNCs e filtrar por ambos os setores
+        var allRncs = getAllRncs();
+        var filteredRncs = [];
+
+        for (var i = 0; i < allRncs.length; i++) {
+            var rnc = allRncs[i];
+            var setorAbertura = rnc['Setor onde foi feita abertura'] || '';
+            var setorNaoConformidade = rnc['Setor onde ocorreu a não conformidade'] || '';
+
+            // Incluir RNC se o usuário está no setor de abertura OU setor da não conformidade
+            if (setorAbertura === userSetor || setorNaoConformidade === userSetor) {
+                filteredRncs.push(rnc);
+            }
+        }
 
         Logger.logInfo('getRncsByUserSetor_SUCCESS', {
             email: email,
             setor: userSetor,
-            count: rncs.length
+            count: filteredRncs.length
         });
 
-        return rncs;
+        return filteredRncs;
 
     } catch (error) {
         Logger.logError('getRncsByUserSetor_ERROR', error, { email: email });

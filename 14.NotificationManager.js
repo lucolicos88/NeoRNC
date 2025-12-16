@@ -157,6 +157,7 @@ var NotificationManager = (function() {
 
   /**
    * Notifica usuários sobre criação de nova RNC
+   * Deploy 67: Notifica setor de ABERTURA + Admins
    * @param {string} rncNumber - Número da RNC criada
    * @param {Object} rncData - Dados da RNC
    * @return {Object} Resultado da notificação
@@ -165,16 +166,16 @@ var NotificationManager = (function() {
     try {
       Logger.logInfo('notifyRncCreated_START', { rncNumber: rncNumber });
 
-      // Obter setor onde ocorreu a não conformidade
-      var setor = rncData['Setor onde ocorreu a não conformidade'] || '';
+      // Deploy 67: Obter setor onde foi feita a ABERTURA
+      var setorAbertura = rncData['Setor onde foi feita abertura'] || '';
 
-      if (!setor || setor.trim() === '') {
+      if (!setorAbertura || setorAbertura.trim() === '') {
         Logger.logWarning('notifyRncCreated_NO_SETOR', { rncNumber: rncNumber });
-        return { success: false, message: 'Setor não definido' };
+        return { success: false, message: 'Setor de abertura não definido' };
       }
 
-      // Obter usuários do setor
-      var recipients = getUsersBySetor(setor);
+      // Obter usuários do setor de abertura
+      var recipients = getUsersBySetor(setorAbertura);
 
       // Incluir admins
       var admins = getAdminUsers();
@@ -187,7 +188,7 @@ var NotificationManager = (function() {
       if (recipients.length === 0) {
         Logger.logWarning('notifyRncCreated_NO_USERS', {
           rncNumber: rncNumber,
-          setor: setor
+          setor: setorAbertura
         });
         return { success: false, message: 'Nenhum usuário no setor' };
       }
@@ -196,10 +197,13 @@ var NotificationManager = (function() {
       var subject = '[RNC] Nova RNC Criada - ' + rncNumber;
       var link = getRncLink(rncNumber);
 
+      var setorNaoConformidade = rncData['Setor onde ocorreu a não conformidade'] || 'N/A';
+
       var body = 'Uma nova RNC foi criada e necessita de atenção.\n\n';
       body += '=== DADOS DA RNC ===\n';
       body += 'Número: ' + rncNumber + '\n';
-      body += 'Setor: ' + setor + '\n';
+      body += 'Setor de Abertura: ' + setorAbertura + '\n';
+      body += 'Setor da Não Conformidade: ' + setorNaoConformidade + '\n';
       body += 'Status: ' + (rncData['Status Geral'] || 'Abertura RNC') + '\n';
       body += 'Responsável: ' + (rncData['Responsável pela abertura da RNC'] || 'N/A') + '\n';
       body += 'Cliente: ' + (rncData['Nome do Cliente'] || 'N/A') + '\n';
@@ -217,7 +221,7 @@ var NotificationManager = (function() {
 
       Logger.logInfo('notifyRncCreated_SUCCESS', {
         rncNumber: rncNumber,
-        setor: setor,
+        setorAbertura: setorAbertura,
         recipientsCount: recipients.length,
         emailsSent: result.successCount
       });
@@ -335,6 +339,7 @@ var NotificationManager = (function() {
 
   /**
    * Notifica usuários sobre mudança de status da RNC
+   * Deploy 67: Notifica setor ABERTURA + setor NÃO CONFORMIDADE + Admins
    * @param {string} rncNumber - Número da RNC
    * @param {string} oldStatus - Status anterior
    * @param {string} newStatus - Novo status
@@ -355,15 +360,31 @@ var NotificationManager = (function() {
         return { success: false, message: 'RNC não encontrada' };
       }
 
-      var setor = rnc['Setor onde ocorreu a não conformidade'] || '';
+      // Deploy 67: Obter AMBOS os setores
+      var setorAbertura = rnc['Setor onde foi feita abertura'] || '';
+      var setorNaoConformidade = rnc['Setor onde ocorreu a não conformidade'] || '';
 
-      if (!setor || setor.trim() === '') {
-        Logger.logWarning('notifyStatusChanged_NO_SETOR', { rncNumber: rncNumber });
-        return { success: false, message: 'Setor não definido' };
+      var recipients = [];
+
+      // Adicionar usuários do setor de abertura
+      if (setorAbertura && setorAbertura.trim() !== '') {
+        var usersAbertura = getUsersBySetor(setorAbertura);
+        usersAbertura.forEach(function(email) {
+          if (recipients.indexOf(email) === -1) {
+            recipients.push(email);
+          }
+        });
       }
 
-      // Obter usuários do setor
-      var recipients = getUsersBySetor(setor);
+      // Adicionar usuários do setor da não conformidade
+      if (setorNaoConformidade && setorNaoConformidade.trim() !== '') {
+        var usersNaoConf = getUsersBySetor(setorNaoConformidade);
+        usersNaoConf.forEach(function(email) {
+          if (recipients.indexOf(email) === -1) {
+            recipients.push(email);
+          }
+        });
+      }
 
       // Incluir admins
       var admins = getAdminUsers();
@@ -397,7 +418,8 @@ var NotificationManager = (function() {
 
       body += '=== DADOS DA RNC ===\n';
       body += 'Número: ' + rncNumber + '\n';
-      body += 'Setor: ' + setor + '\n';
+      body += 'Setor de Abertura: ' + (setorAbertura || 'N/A') + '\n';
+      body += 'Setor da Não Conformidade: ' + (setorNaoConformidade || 'N/A') + '\n';
       body += 'Cliente: ' + (rnc['Nome do Cliente'] || 'N/A') + '\n';
       body += 'Tipo: ' + (rnc['Tipo RNC'] || 'N/A') + '\n\n';
 
@@ -423,6 +445,8 @@ var NotificationManager = (function() {
         rncNumber: rncNumber,
         oldStatus: oldStatus,
         newStatus: newStatus,
+        setorAbertura: setorAbertura,
+        setorNaoConformidade: setorNaoConformidade,
         recipientsCount: recipients.length,
         emailsSent: result.successCount
       });
