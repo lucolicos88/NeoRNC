@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @120 | `AKfycbx9s9cxXzvO0LkVex85NIBuHrBTDR6hks_uF4sbZJoJpQHEZ8-hSRulNNBYwKX_ShAUAg` | Deploy 66 - Notificações + Filtro por Setor | **TESTES** |
+| **DEV** | @121 | `AKfycbziZCI3T3HUeVh8XLj6vYT5JvAszB2x1uEeLdJClGqwtLuPYR9RAJfI6z-vHiP57jJoEg` | Deploy 66 COMPLETO - Notificações + Filtro por Setor | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @120**:
+Use a versão **DEV @121**:
 ```
-https://script.google.com/macros/s/AKfycbx9s9cxXzvO0LkVex85NIBuHrBTDR6hks_uF4sbZJoJpQHEZ8-hSRulNNBYwKX_ShAUAg/exec
+https://script.google.com/macros/s/AKfycbziZCI3T3HUeVh8XLj6vYT5JvAszB2x1uEeLdJClGqwtLuPYR9RAJfI6z-vHiP57jJoEg/exec
 ```
 
 ---
@@ -115,7 +115,7 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 66 (Atual - DEV @120)
+### Deploy 66 (Atual - DEV @121)
 - **Data**: 16/12/2024
 - **Tipo**: Feature - Sistema de Notificações + Filtro por Setor
 - **Funcionalidades Implementadas**:
@@ -152,7 +152,8 @@ git push origin main
 - **Arquivos Modificados**: 01.Config.js, 06.RncOperations.js, 08.Code.js, 10.PermissionsManager.js
 - **Versão**: Sistema RNC v2.1 - Deploy 66
 - **Impacto**: Sistema de comunicação + Segmentação por setor
-- **Status**: 🧪 DEV @120
+- **Status**: 🧪 DEV @121 (Deploy completo com NotificationManager incluído)
+- **Nota**: Deploy @120 foi removido por estar incompleto (faltava 14.NotificationManager.js)
 
 ### Deploy 65 (Histórico - DEV @119 - REMOVIDO)
 - **Data**: 10/12/2024
@@ -418,4 +419,4 @@ git push origin main
 
 **Última Atualização**: 16/12/2024
 **Versão PROD Atual**: @103 (Deploy 51)
-**Versão DEV Atual**: @120 (Deploy 66 - Sistema de Notificações + Filtro por Setor)
+**Versão DEV Atual**: @121 (Deploy 66 COMPLETO - Sistema de Notificações + Filtro por Setor)
