@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @134 | `AKfycbwr8T7IMGQomq9RgpZ4begCN5eX0jXBZLn9EbKYdLO3rzI_HS2UccgteXrhJsS6iMBt` | Deploy 72 - Filtros Kanban/Dashboard | **TESTES** |
+| **DEV** | @137 | `AKfycbzV9BcgdkOZ0KsyvXx6YXUvAwZvQB8m8YkZYJFDQdMVhwIVTvbVHs25fvszcWp7hhGZWw` | Deploy 72.1 - Debug Kanban filter | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @134**:
+Use a versão **DEV @137**:
 ```
-https://script.google.com/macros/s/AKfycbwr8T7IMGQomq9RgpZ4begCN5eX0jXBZLn9EbKYdLO3rzI_HS2UccgteXrhJsS6iMBt/exec
+https://script.google.com/macros/s/AKfycbzV9BcgdkOZ0KsyvXx6YXUvAwZvQB8m8YkZYJFDQdMVhwIVTvbVHs25fvszcWp7hhGZWw/exec
 ```
 
 ---
@@ -115,7 +115,26 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 72 (Atual - DEV @134)
+### Deploy 72.1 (Atual - DEV @137)
+- **Data**: 17/12/2024 - 12:40
+- **Tipo**: Fix - Debug e melhorias no filtro Kanban
+- **Melhorias Implementadas**:
+  - ✅ **Fallback para campo setorAbertura**:
+    * Adicionado fallback para campo sem `\n`
+    * Garante que valor seja extraído corretamente
+  - ✅ **Logs de Debug Detalhados**:
+    * Logs em `getKanbanDataFiltered` para rastrear valores
+    * Campos `_debugSetorAberturaBruto` e `_debugSetorQualidadeBruto`
+    * Mostra tipoSetor, setores e resultado do match
+  - ✅ **Conversão de String Melhorada**:
+    * Usando `.toString()` ao invés de `String()` para evitar "undefined"
+- **Arquivos Modificados**:
+  - [07.Reports.js:610-616](07.Reports.js#L610-L616) (fallback e campos debug)
+  - [08.Code.js:1334-1341](08.Code.js#L1334-L1341) (logs detalhados)
+- **Versão**: Sistema RNC v2.2 - Deploy 72.1
+- **Status**: 🧪 DEV @137
+
+### Deploy 72 (Histórico - DEV @134 - REMOVIDO)
 - **Data**: 17/12/2024
 - **Tipo**: Fix - Correção de filtros de setor no Kanban e Dashboard
 - **Problema Identificado**:
