@@ -545,6 +545,22 @@ textarea.form-control,
             flex-shrink: 0 !important;  /* ✅ NÃO ENCOLHE */
         }
 
+        /* Deploy 71: Badge de setor com design diferenciado */
+        .user-info .user-badge-setor {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
+            color: white !important;
+            padding: 0.25rem 0.6rem !important;
+            border-radius: 8px !important;
+            font-size: 0.65rem !important;
+            font-weight: 600 !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3) !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+        }
+
 
       /* ========================================== */
       /* ✅ TABS FIXAS LOGO ABAIXO - DEPLOY 41 */
@@ -2186,7 +2202,10 @@ textarea.form-control,
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <span class="user-badge" id="userRole">Admin</span>
-                    <span class="user-badge" id="userSetor" style="background: #2196F3;">🏢 Setor</span>
+                    <span class="user-badge-setor" id="userSetor">
+                        <span>🏢</span>
+                        <span>Setor</span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -3170,7 +3189,10 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
         if (userRoleEl) userRoleEl.textContent = appContext.role || 'Usuario';
 
         var userSetorEl = document.getElementById('userSetor');
-        if (userSetorEl) userSetorEl.textContent = '🏢 ' + (appContext.setor || 'Sem setor');
+        if (userSetorEl) {
+            var setorText = appContext.setor || 'Sem setor';
+            userSetorEl.innerHTML = '<span>🏢</span><span>' + setorText + '</span>';
+        }
 
         // Deploy 69: Mostrar abas apenas para admins (usando classes CSS)
         console.log('=== DEBUG DEPLOY 69: VERIFICAÇÃO DE TABS ===');

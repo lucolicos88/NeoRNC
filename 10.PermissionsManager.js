@@ -486,16 +486,23 @@ var PermissionsManager = (function() {
       permissions.forEach(function(perm) {
         var email = perm['Email'];
         var role = perm['Role'];
+        var setor = perm['Setor'] || '';
 
         if (!usersMap[email]) {
           usersMap[email] = {
             email: email,
-            roles: []
+            roles: [],
+            setor: setor  // Deploy 71: Incluir setor
           };
         }
 
         if (usersMap[email].roles.indexOf(role) === -1) {
           usersMap[email].roles.push(role);
+        }
+
+        // Deploy 71: Atualizar setor se ainda não estiver definido
+        if (!usersMap[email].setor && setor) {
+          usersMap[email].setor = setor;
         }
       });
 
