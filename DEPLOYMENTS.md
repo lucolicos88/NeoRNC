@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @126 | `AKfycbx6qSRdouXtzU87-kvUttRIQRsLxRHZMYMWKk_KxTPnXr-m53YsWoI2qlbIQSkTwos4CA` | Deploy 70 - FIX Tabs Admin | **TESTES** |
+| **DEV** | @129 | `AKfycbxrU66UBC-3RD51grwAlqURxYpe3MdddXMHt048EIcB5ZS3uF9seyo4Bw-GWbr8FELY2Q` | Deploy 71 - Setor Header | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @126**:
+Use a versão **DEV @129**:
 ```
-https://script.google.com/macros/s/AKfycbx6qSRdouXtzU87-kvUttRIQRsLxRHZMYMWKk_KxTPnXr-m53YsWoI2qlbIQSkTwos4CA/exec
+https://script.google.com/macros/s/AKfycbxrU66UBC-3RD51grwAlqURxYpe3MdddXMHt048EIcB5ZS3uF9seyo4Bw-GWbr8FELY2Q/exec
 ```
 
 ---
@@ -115,7 +115,27 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 70 (Atual - DEV @126)
+### Deploy 71 (Atual - DEV @129)
+- **Data**: 16/12/2024
+- **Tipo**: Feature - Exibição de setor do usuário
+- **Funcionalidades Implementadas**:
+  - ✅ **Badge de Setor no Header**:
+    * Novo badge azul mostrando o setor ao lado do role
+    * Atualiza automaticamente com appContext.setor
+    * Design consistente com badge de role
+  - ✅ **Setor nos Cards de Usuários**:
+    * Exibido na aba Configurações → Usuários
+    * Aparece abaixo do email, antes dos roles
+    * Ícone 🏢 + nome do setor
+    * Só exibe se usuário tiver setor cadastrado
+- **Arquivos Modificados**:
+  - 01.Config.js (versão Deploy 71)
+  - index.html (badge no header, setor nos cards, JavaScript)
+- **Versão**: Sistema RNC v2.2 - Deploy 71
+- **Impacto**: Melhor visibilidade do setor do usuário logado e dos demais usuários
+- **Status**: 🧪 DEV @129
+
+### Deploy 70 (Histórico - DEV @126 - REMOVIDO)
 - **Data**: 16/12/2024
 - **Tipo**: FIX CRÍTICO - Correção definitiva de visibilidade de tabs admin
 - **Problema Identificado**:
@@ -140,7 +160,7 @@ git push origin main
   - index.html (regra CSS `.tab.admin-only`, classes nas tabs, lógica JavaScript)
 - **Versão**: Sistema RNC v2.2 - Deploy 70
 - **Impacto**: FIX CRÍTICO - Agora tabs realmente aparecem apenas para admins
-- **Status**: 🧪 DEV @126
+- **Status**: 🧪 DEV @126 - REMOVIDO
 
 ### Deploy 69 (Histórico - DEV @125 - REMOVIDO)
 - **Data**: 16/12/2024
