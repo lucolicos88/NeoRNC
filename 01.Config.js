@@ -21,7 +21,7 @@ const CONFIG = {
 
   // Versão do Sistema
   VERSION: 'Sistema RNC v2.2 - Deploy 72',
-  BUILD_DATE: '2025-12-16',
+  BUILD_DATE: '2025-12-17',
 
   // Modo de Operação
   DEBUG_MODE: false, // Controle de logs de debug

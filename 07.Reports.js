@@ -606,7 +606,10 @@ var Reports = (function() {
           data: dataCriacao || '',
           diasAberto: diasAberto,
           status: status,
-          setor: String(rnc['Setor onde ocorreu a não conformidade'] || rnc['Setor onde foi feita abertura\n'] || ''),
+          // Deploy 72: Adicionar ambos os setores separadamente
+          setorAbertura: String(rnc['Setor onde foi feita abertura\n'] || ''),
+          setorQualidade: String(rnc['Setor onde ocorreu a não conformidade'] || ''),
+          setor: String(rnc['Setor onde ocorreu a não conformidade'] || rnc['Setor onde foi feita abertura\n'] || ''),  // Mantido para compatibilidade
           tipo: String(rnc['Tipo RNC'] || ''),
           risco: String(rnc['Risco'] || ''),
           prioridade: prioridade,

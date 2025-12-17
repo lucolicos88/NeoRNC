@@ -1322,14 +1322,14 @@ function getKanbanDataFiltered(tipoSetor, setor) {
     }
     
     var filteredData = {};
-    var campoSetor = tipoSetor === 'abertura' 
-      ? 'Setor onde foi feita abertura\n' 
-      : 'Setor onde ocorreu a não conformidade';
-    
+
+    // Deploy 72: Usar campo correto baseado no tipoSetor
     // Filtrar cada coluna do kanban
     Object.keys(kanbanData).forEach(function(status) {
       filteredData[status] = kanbanData[status].filter(function(card) {
-        var cardSetor = card.setor || '';
+        var cardSetor = tipoSetor === 'abertura'
+          ? (card.setorAbertura || '')
+          : (card.setorQualidade || '');
         return cardSetor.trim() === setor.trim();
       });
     });

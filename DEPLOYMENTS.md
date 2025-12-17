@@ -8,7 +8,7 @@
 |----------|--------|-----|-----------|-----|
 | **@HEAD** | Latest | `AKfycbwplqsFH8dWwn1f3JwF53CJtI6M4VpYnYJHU28jAphX` | Versão HEAD do código | Editor/Debug |
 | **PROD** | @103 | `AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w1r38iQDLRwisopzKAPGfgWREBb6Hg` | Deploy 51 - Fix SyntaxError | **USUÁRIOS** |
-| **DEV** | @129 | `AKfycbxrU66UBC-3RD51grwAlqURxYpe3MdddXMHt048EIcB5ZS3uF9seyo4Bw-GWbr8FELY2Q` | Deploy 71 - Setor Header | **TESTES** |
+| **DEV** | @134 | `AKfycbwr8T7IMGQomq9RgpZ4begCN5eX0jXBZLn9EbKYdLO3rzI_HS2UccgteXrhJsS6iMBt` | Deploy 72 - Filtros Kanban/Dashboard | **TESTES** |
 
 ---
 
@@ -21,9 +21,9 @@ https://script.google.com/macros/s/AKfycbwj2tyYak0ZKI8TXl1PHmunf5s0ABX0T31RzG-6w
 ```
 
 ### Para TESTES e DESENVOLVIMENTO
-Use a versão **DEV @129**:
+Use a versão **DEV @134**:
 ```
-https://script.google.com/macros/s/AKfycbxrU66UBC-3RD51grwAlqURxYpe3MdddXMHt048EIcB5ZS3uF9seyo4Bw-GWbr8FELY2Q/exec
+https://script.google.com/macros/s/AKfycbwr8T7IMGQomq9RgpZ4begCN5eX0jXBZLn9EbKYdLO3rzI_HS2UccgteXrhJsS6iMBt/exec
 ```
 
 ---
@@ -115,7 +115,33 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 71 (Atual - DEV @129)
+### Deploy 72 (Atual - DEV @134)
+- **Data**: 17/12/2024
+- **Tipo**: Fix - Correção de filtros de setor no Kanban e Dashboard
+- **Problema Identificado**:
+  - Filtros do Kanban e Dashboard não estavam filtrando corretamente por tipo de setor
+  - Cache do Dashboard não era invalidado ao mudar filtros
+  - Campo único de setor não diferenciava "Setor de Abertura" vs "Setor da Não Conformidade"
+- **Correções Implementadas**:
+  - ✅ **Separação de Campos de Setor no Kanban**:
+    * Adicionado `setorAbertura` e `setorQualidade` em kanbanItem
+    * Filtro agora usa o campo correto baseado em `tipoSetor`
+  - ✅ **Invalidação de Cache do Dashboard**:
+    * Cache agora é limpo quando usuário muda os filtros
+    * Previne exibição de dados desatualizados
+  - ✅ **Consistência com Editar RNC**:
+    * Kanban e Dashboard agora filtram igual ao Editar RNC
+    * "Setor de Abertura" e "Setor da Não Conformidade" funcionam corretamente
+- **Arquivos Modificados**:
+  - [07.Reports.js:610-612](07.Reports.js#L610-L612) (campos setorAbertura e setorQualidade)
+  - [08.Code.js:1324-1335](08.Code.js#L1324-L1335) (getKanbanDataFiltered)
+  - [index.html:6204-6215](index.html#L6204-L6215) (invalidação de cache)
+  - [01.Config.js:24](01.Config.js#L24) (data de build)
+- **Versão**: Sistema RNC v2.2 - Deploy 72
+- **Impacto**: Filtros de setor agora funcionam corretamente em todas as abas
+- **Status**: 🧪 DEV @134
+
+### Deploy 71 (Histórico - DEV @129 - REMOVIDO)
 - **Data**: 16/12/2024
 - **Tipo**: Feature - Exibição de setor do usuário
 - **Funcionalidades Implementadas**:

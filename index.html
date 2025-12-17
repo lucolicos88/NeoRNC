@@ -6201,10 +6201,16 @@ async function refreshKanban() {
 
         tipoSetorSelect.addEventListener('change', function() {
             atualizarListaSetores();
+            // Deploy 72: Limpar cache ao mudar filtros
+            dashboardCache = null;
+            dashboardCacheTime = null;
             refreshDashboard();
         });
 
         setorFilterSelect.addEventListener('change', function() {
+            // Deploy 72: Limpar cache ao mudar filtros
+            dashboardCache = null;
+            dashboardCacheTime = null;
             refreshDashboard();
         });
 
