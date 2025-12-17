@@ -1315,45 +1315,47 @@ function getSetoresDuplos() {
  */
 function getKanbanDataFiltered(tipoSetor, setor) {
   try {
-    var kanbanData = Reports.getKanbanData();
-    
+    // Deploy 72.2: Filtrar RNCs ANTES de criar Kanban (mesma lógica do Dashboard)
     if (!setor || setor === 'Todos') {
-      return kanbanData;
+      return Reports.getKanbanData();
     }
-    
-    var filteredData = {};
 
-    // Deploy 72: Usar campo correto baseado no tipoSetor
-    // Filtrar cada coluna do kanban
-    Object.keys(kanbanData).forEach(function(status) {
-      filteredData[status] = kanbanData[status].filter(function(card) {
-        var cardSetor = tipoSetor === 'abertura'
-          ? (card.setorAbertura || '')
-          : (card.setorQualidade || '');
+    // Obter todos os RNCs brutos
+    var allRncs = RncOperations.getAllRncs();
 
-        // Deploy 72: Log temporário para debug
-        Logger.log('DEBUG Kanban Filter - Numero: ' + card.numero +
-                   ', tipoSetor: ' + tipoSetor +
-                   ', setorAbertura: "' + (card.setorAbertura || 'vazio') + '"' +
-                   ', setorQualidade: "' + (card.setorQualidade || 'vazio') + '"' +
-                   ', cardSetor: "' + cardSetor + '"' +
-                   ', filtroSetor: "' + setor + '"' +
-                   ', match: ' + (cardSetor.trim() === setor.trim()));
+    // Determinar qual campo de setor usar (mesma lógica do Dashboard)
+    var campoSetor;
+    if (tipoSetor === 'abertura') {
+      campoSetor = 'Setor onde foi feita abertura\n';
+    } else {
+      campoSetor = 'Setor onde ocorreu a não conformidade';
+    }
 
-        return cardSetor.trim() === setor.trim();
-      });
+    // Filtrar RNCs pelo setor (mesma lógica do Dashboard)
+    var filteredRncs = allRncs.filter(function(rnc) {
+      var rncSetor = rnc[campoSetor] || rnc[campoSetor.replace('\n', '')] || '';
+      var match = rncSetor.trim() === setor.trim();
+
+      // Deploy 72.2: Log de debug
+      Logger.log('DEBUG Kanban Filter - RNC: ' + rnc['Nº RNC'] +
+                 ', tipoSetor: ' + tipoSetor +
+                 ', campoSetor: "' + campoSetor + '"' +
+                 ', rncSetor: "' + rncSetor + '"' +
+                 ', filtroSetor: "' + setor + '"' +
+                 ', match: ' + match);
+
+      return match;
     });
-    
+
     Logger.logDebug('getKanbanDataFiltered', {
       tipoSetor: tipoSetor,
       setor: setor,
-      totalCards: Object.values(filteredData).reduce(function(sum, arr) { 
-        return sum + arr.length; 
-      }, 0)
+      totalRncs: filteredRncs.length
     });
-    
-    return filteredData;
-    
+
+    // Criar Kanban apenas com RNCs filtrados
+    return Reports.getKanbanDataFromRncs(filteredRncs);
+
   } catch (error) {
     Logger.logError('getKanbanDataFiltered', error);
     return Reports.getKanbanData();

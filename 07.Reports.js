@@ -660,7 +660,110 @@ var Reports = (function() {
       return emptyKanban;
     }
   }
-  
+
+  /**
+   * Deploy 72.2: Cria dados do Kanban a partir de uma lista específica de RNCs
+   * @param {Array} rncs - Lista de RNCs para criar o Kanban
+   * @return {Object} Dados organizados por coluna
+   */
+  function getKanbanDataFromRncs(rncs) {
+    var startTime = new Date().getTime();
+
+    try {
+      Logger.logInfo('getKanbanDataFromRncs_START', { totalRncs: rncs.length });
+
+      // Inicializar colunas do kanban
+      var kanban = {};
+      kanban[CONFIG.STATUS_PIPELINE.ABERTURA] = [];
+      kanban[CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE] = [];
+      kanban[CONFIG.STATUS_PIPELINE.ANALISE_ACAO] = [];
+      kanban[CONFIG.STATUS_PIPELINE.FINALIZADA] = [];
+
+      for (var i = 0; i < rncs.length; i++) {
+        var rnc = rncs[i];
+        var status = String(rnc['Status Geral'] || CONFIG.STATUS_PIPELINE.ABERTURA).trim();
+
+        // Mapear status para coluna correta
+        var kanbanColumn = status;
+        if (!kanban[kanbanColumn]) {
+          kanbanColumn = CONFIG.STATUS_PIPELINE.ABERTURA;
+        }
+
+        // Calcular dias abertos
+        var diasAberto = 0;
+        var dataCriacao = rnc['Data Criação'];
+        if (dataCriacao) {
+          var dataObj = new Date(dataCriacao);
+          if (!isNaN(dataObj.getTime())) {
+            var agora = new Date();
+            var diffTime = Math.abs(agora - dataObj);
+            diasAberto = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          }
+        }
+
+        // Determinar prioridade
+        var prioridade = 'Normal';
+        if (diasAberto > 30) prioridade = 'Alta';
+        else if (diasAberto > 15) prioridade = 'Média';
+
+        // Criar item do kanban
+        var kanbanItem = {
+          numero: String(rnc['Nº RNC'] || ''),
+          cliente: String(rnc['Nome do Cliente'] || 'Cliente não informado'),
+          descricao: String(rnc['Descrição Detalhada da RNC/Reclamação'] || rnc['Descrição do Problema'] || '').substring(0, 100),
+          responsavel: String(rnc['Responsável pela abertura da RNC'] || 'Não atribuído'),
+          data: dataCriacao || '',
+          diasAberto: diasAberto,
+          status: status,
+          setorAbertura: (rnc['Setor onde foi feita abertura\n'] || rnc['Setor onde foi feita abertura'] || '').toString(),
+          setorQualidade: (rnc['Setor onde ocorreu a não conformidade'] || '').toString(),
+          setor: String(rnc['Setor onde ocorreu a não conformidade'] || rnc['Setor onde foi feita abertura\n'] || ''),
+          tipo: String(rnc['Tipo RNC'] || ''),
+          risco: String(rnc['Risco'] || ''),
+          prioridade: prioridade,
+          dataAnalise: String(rnc['Data da Análise'] || ''),
+          statusAcao: String(rnc['Status da Ação Corretiva'] || '')
+        };
+
+        kanban[kanbanColumn].push(kanbanItem);
+      }
+
+      // Ordenar cards por prioridade e data
+      for (var column in kanban) {
+        kanban[column].sort(function(a, b) {
+          // Prioridade primeiro
+          var prioOrder = {'Alta': 0, 'Média': 1, 'Normal': 2};
+          if (prioOrder[a.prioridade] !== prioOrder[b.prioridade]) {
+            return prioOrder[a.prioridade] - prioOrder[b.prioridade];
+          }
+          // Depois por dias aberto
+          return b.diasAberto - a.diasAberto;
+        });
+      }
+
+      Logger.logInfo('getKanbanDataFromRncs_SUCCESS', {
+        abertura: kanban[CONFIG.STATUS_PIPELINE.ABERTURA].length,
+        qualidade: kanban[CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE].length,
+        acao: kanban[CONFIG.STATUS_PIPELINE.ANALISE_ACAO].length,
+        finalizadas: kanban[CONFIG.STATUS_PIPELINE.FINALIZADA].length,
+        duration: Logger.logPerformance('getKanbanDataFromRncs', startTime)
+      });
+
+      return kanban;
+
+    } catch (error) {
+      Logger.logError('getKanbanDataFromRncs_ERROR', error);
+
+      // Retornar estrutura vazia em caso de erro
+      var emptyKanban = {};
+      emptyKanban[CONFIG.STATUS_PIPELINE.ABERTURA] = [];
+      emptyKanban[CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE] = [];
+      emptyKanban[CONFIG.STATUS_PIPELINE.ANALISE_ACAO] = [];
+      emptyKanban[CONFIG.STATUS_PIPELINE.FINALIZADA] = [];
+      return emptyKanban;
+    }
+  }
+
   /**
    * Gera relatório com filtros
    * @param {Object} filters - Filtros do relatório
@@ -1205,6 +1308,7 @@ function calculateReportStats(rncs) {
   return {
     getDashboardData: getDashboardData,
     getKanbanData: getKanbanData,
+    getKanbanDataFromRncs: getKanbanDataFromRncs,  // Deploy 72.2
     generateReport: generateReport,
     clearDashboardCache: clearDashboardCache,
     getReportFilterOptions: getReportFilterOptions
