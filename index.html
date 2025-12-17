@@ -10600,15 +10600,20 @@ async function editUserRoles(email) {
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-        // Deploy 67: Carregar setores e selecionar setor atual do usuário
+        // Deploy 72: Carregar setores e selecionar setor atual do usuário
         (async function loadSetoresForEditUser() {
             try {
                 // Deploy 68: Buscar setores da planilha Listas
                 const response = await apiCall('getSetoresFromListas', []);
                 const setores = response && response.data ? response.data : response;
-                // Buscar setor atual do usuário
-                const userPerms = await apiCall('getUserPermissions', [email]);
-                const currentSetor = userPerms && userPerms.setor ? userPerms.setor : '';
+                // Deploy 72: Usar setor do objeto user que já foi carregado
+                const currentSetor = user.setor || '';
+
+                debugLog('info', 'Carregando setores para edição', {
+                    email: email,
+                    currentSetor: currentSetor,
+                    totalSetores: setores.length
+                });
 
                 const setorSelect = document.getElementById('editUserSetor');
 
@@ -10618,9 +10623,10 @@ async function editUserRoles(email) {
                         const option = document.createElement('option');
                         option.value = setor;
                         option.textContent = setor;
-                        // Pré-selecionar setor atual
+                        // Deploy 72: Pré-selecionar setor atual do usuário
                         if (setor === currentSetor) {
                             option.selected = true;
+                            debugLog('info', 'Setor selecionado', { setor: setor });
                         }
                         setorSelect.appendChild(option);
                     });
