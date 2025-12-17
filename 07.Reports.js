@@ -607,9 +607,14 @@ var Reports = (function() {
           diasAberto: diasAberto,
           status: status,
           // Deploy 72: Adicionar ambos os setores separadamente
-          setorAbertura: String(rnc['Setor onde foi feita abertura\n'] || ''),
-          setorQualidade: String(rnc['Setor onde ocorreu a não conformidade'] || ''),
+          setorAbertura: (rnc['Setor onde foi feita abertura\n'] || rnc['Setor onde foi feita abertura'] || '').toString(),
+          setorQualidade: (rnc['Setor onde ocorreu a não conformidade'] || '').toString(),
           setor: String(rnc['Setor onde ocorreu a não conformidade'] || rnc['Setor onde foi feita abertura\n'] || ''),  // Mantido para compatibilidade
+
+          // Deploy 72: Log temporário para debug
+          _debugSetorAberturaBruto: rnc['Setor onde foi feita abertura\n'],
+          _debugSetorQualidadeBruto: rnc['Setor onde ocorreu a não conformidade'],
+
           tipo: String(rnc['Tipo RNC'] || ''),
           risco: String(rnc['Risco'] || ''),
           prioridade: prioridade,

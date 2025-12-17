@@ -1330,6 +1330,16 @@ function getKanbanDataFiltered(tipoSetor, setor) {
         var cardSetor = tipoSetor === 'abertura'
           ? (card.setorAbertura || '')
           : (card.setorQualidade || '');
+
+        // Deploy 72: Log temporário para debug
+        Logger.log('DEBUG Kanban Filter - Numero: ' + card.numero +
+                   ', tipoSetor: ' + tipoSetor +
+                   ', setorAbertura: "' + (card.setorAbertura || 'vazio') + '"' +
+                   ', setorQualidade: "' + (card.setorQualidade || 'vazio') + '"' +
+                   ', cardSetor: "' + cardSetor + '"' +
+                   ', filtroSetor: "' + setor + '"' +
+                   ', match: ' + (cardSetor.trim() === setor.trim()));
+
         return cardSetor.trim() === setor.trim();
       });
     });
