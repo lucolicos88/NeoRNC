@@ -115,7 +115,26 @@ git push origin main
 
 ## 📝 Histórico de Versões
 
-### Deploy 72.1 (Atual - DEV @137)
+### Deploy 72.2 (Atual - DEV - Aguardando Deployment)
+- **Data**: 17/12/2024 - 13:00
+- **Tipo**: Fix - Correção definitiva do filtro Kanban
+- **Problema Identificado**:
+  * Kanban ainda mostrava 2 RNCs para ambos os filtros
+  * Lógica de filtragem diferente entre Kanban e Dashboard
+  * Filtrar DEPOIS de criar kanbanItems não funcionava
+- **Solução Implementada**:
+  - ✅ **Nova Abordagem**: Filtrar RNCs ANTES de criar Kanban (mesma lógica do Dashboard)
+  - ✅ **Nova Função getKanbanDataFromRncs()**: Cria Kanban a partir de RNCs já filtrados
+  - ✅ **getKanbanDataFiltered() Reformulado**: Filtra RNCs brutos primeiro, depois cria Kanban
+  - ✅ **Logs de Debug**: Mostra RNC, tipoSetor, campo usado, valor e match
+- **Arquivos Modificados**:
+  - [01.Config.js:23](01.Config.js#L23) (versão 72.2)
+  - [07.Reports.js:669-765](07.Reports.js#L669-L765) (getKanbanDataFromRncs)
+  - [08.Code.js:1316-1363](08.Code.js#L1316-L1363) (getKanbanDataFiltered)
+- **Resultado Esperado**: Setor Abertura = 1 RNC | Setor Não Conformidade = 2 RNCs
+- **Status**: 🔄 Aguardando Deployment Manual
+
+### Deploy 72.1 (Histórico - DEV @137 - SERÁ REMOVIDO)
 - **Data**: 17/12/2024 - 12:40
 - **Tipo**: Fix - Debug e melhorias no filtro Kanban
 - **Melhorias Implementadas**:
