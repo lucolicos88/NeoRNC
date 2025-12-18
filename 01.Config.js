@@ -238,6 +238,12 @@ function formatDateBR(dateValue) {
     }
     // Se é string
     else if (typeof dateValue === 'string') {
+      // SEGURANÇA: Validar contra formula injection
+      if (/^[=+\-@]/.test(dateValue.trim())) {
+        Logger.logWarning('formatDateBR_FORMULA_INJECTION_ATTEMPT', { dateValue: dateValue });
+        return '';
+      }
+
       // Verificar se é formato DD/MM/YYYY
       if (dateValue.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
         return dateValue; // Já está no formato correto
@@ -259,6 +265,11 @@ function formatDateBR(dateValue) {
     }
     // Se é timestamp numérico
     else if (typeof dateValue === 'number') {
+      // SEGURANÇA: Validar range razoável (anos 1970-2100)
+      if (dateValue < 0 || dateValue > 4102444800000) {
+        Logger.logWarning('formatDateBR_INVALID_TIMESTAMP', { dateValue: dateValue });
+        return '';
+      }
       date = new Date(dateValue);
     }
     else {
