@@ -783,6 +783,29 @@ function prepareRncData(formData, rncNumber, user, isNew) {
         // 2. ✅ DEPLOY 33: Validar usando ValidaçãoRegex da planilha
         if (value && value !== '' && regexPattern && regexPattern.trim() !== '') {
           try {
+            // TASK-008: Validar complexidade do regex (proteção ReDoS)
+            // Verificar padrões perigosos: quantificadores aninhados, backtracking excessivo
+            var dangerousPatterns = [
+              /(\.\*){2,}/,           // Múltiplos .* consecutivos
+              /(\.\+){2,}/,           // Múltiplos .+ consecutivos
+              /(\*\+|\+\*)/,          // Quantificadores conflitantes
+              /(\{.*,.*\}){2,}/       // Quantificadores aninhados
+            ];
+
+            var isDangerous = dangerousPatterns.some(function(pattern) {
+              return pattern.test(regexPattern);
+            });
+
+            if (isDangerous) {
+              Logger.logWarning('validateRncData_DANGEROUS_REGEX', {
+                field: fieldName,
+                pattern: regexPattern
+              });
+              validation.errors.push('Padrão de validação do campo "' + fieldName + '" é muito complexo');
+              validation.valid = false;
+              continue;
+            }
+
             var regex = new RegExp(regexPattern);
 
             if (!regex.test(String(value))) {
