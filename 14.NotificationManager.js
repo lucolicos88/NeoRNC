@@ -105,7 +105,7 @@ var NotificationManager = (function() {
    * @return {string} HTML completo do email
    */
   function createEmailTemplate(title, content) {
-    var logoUrl = 'https://neoformula.com.br/wp-content/uploads/2023/01/logo-neoformula.png';
+    var logoUrl = 'https://neoformula.com.br/cdn/shop/files/Logotipo-NeoFormula-Manipulacao-Homeopatia_76b2fa98-5ffa-4cc3-ac0a-6d41e1bc8810.png?height=200&v=1677088468';
 
     return `
 <!DOCTYPE html>
@@ -291,24 +291,25 @@ var NotificationManager = (function() {
       var link = getRncLink(rncNumber);
       var setorNaoConformidade = rncData['Setor onde ocorreu a não conformidade'] || 'N/A';
 
+      // Obter link de anexos se existir
+      var linkAnexos = rncData['Anexo de Documentos'] || rncData['Link Anexos'] || '';
+
       var content = `
         <p style="font-size: 16px; color: #555;">Uma nova RNC foi criada e necessita de atenção.</p>
 
         <div class="info-box">
-          <h3>📋 Dados da RNC</h3>
+          <h3>📋 Dados da Abertura</h3>
           <div class="info-row"><span class="info-label">Número:</span> <span class="info-value" style="font-size: 18px; font-weight: bold; color: #009688;">${rncNumber}</span></div>
           <div class="info-row"><span class="info-label">Setor de Abertura:</span> <span class="info-value">${setorAbertura}</span></div>
-          <div class="info-row"><span class="info-label">Setor da Não Conformidade:</span> <span class="info-value">${setorNaoConformidade}</span></div>
-          <div class="info-row"><span class="info-label">Status:</span> <span class="info-value">${rncData['Status Geral'] || 'Abertura RNC'}</span></div>
-          <div class="info-row"><span class="info-label">Responsável:</span> <span class="info-value">${rncData['Responsável pela abertura da RNC'] || 'N/A'}</span></div>
-          <div class="info-row"><span class="info-label">Cliente:</span> <span class="info-value">${rncData['Nome do Cliente'] || 'N/A'}</span></div>
-          <div class="info-row"><span class="info-label">Tipo:</span> <span class="info-value">${rncData['Tipo RNC'] || 'N/A'}</span></div>
-          <div class="info-row"><span class="info-label">Data de Abertura:</span> <span class="info-value">${rncData['Data de Abertura'] || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Responsável pela Abertura:</span> <span class="info-value">${rncData['Responsável pela abertura da RNC'] || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Data da Abertura:</span> <span class="info-value">${rncData['Data de Abertura'] || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Tipo da RNC:</span> <span class="info-value">${rncData['Tipo RNC'] || 'N/A'}</span></div>
+          ${linkAnexos ? `<div class="info-row"><span class="info-label">Link dos Anexos:</span> <span class="info-value"><a href="${linkAnexos}" style="color: #009688; text-decoration: underline;" target="_blank">Acessar Anexos</a></span></div>` : ''}
         </div>
 
         ${rncData['Descrição Detalhada da RNC/Reclamação'] ? `
         <div class="info-box alert-info">
-          <h3>📝 Descrição</h3>
+          <h3>📝 Descrição da RNC</h3>
           <p style="margin: 0; white-space: pre-wrap;">${rncData['Descrição Detalhada da RNC/Reclamação']}</p>
         </div>
         ` : ''}
