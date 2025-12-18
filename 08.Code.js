@@ -1334,17 +1334,7 @@ function getKanbanDataFiltered(tipoSetor, setor) {
     // Filtrar RNCs pelo setor (mesma lógica do Dashboard)
     var filteredRncs = allRncs.filter(function(rnc) {
       var rncSetor = rnc[campoSetor] || rnc[campoSetor.replace('\n', '')] || '';
-      var match = rncSetor.trim() === setor.trim();
-
-      // Deploy 72.2: Log de debug
-      Logger.log('DEBUG Kanban Filter - RNC: ' + rnc['Nº RNC'] +
-                 ', tipoSetor: ' + tipoSetor +
-                 ', campoSetor: "' + campoSetor + '"' +
-                 ', rncSetor: "' + rncSetor + '"' +
-                 ', filtroSetor: "' + setor + '"' +
-                 ', match: ' + match);
-
-      return match;
+      return rncSetor.trim() === setor.trim();
     });
 
     Logger.logDebug('getKanbanDataFiltered', {

@@ -1358,7 +1358,7 @@ textarea.form-control,
             color: #92400E;
         }
         
-        /* === KANBAN CORRIGIDO DEPLOY 30 - COM FINALIZADAS === */
+        /* === KANBAN CORRIGIDO Deploy 72.3 - COM FINALIZADAS === */
         .kanban-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -1703,7 +1703,7 @@ textarea.form-control,
             margin: 0 auto;
         }
         
-        /* === CONFIG STYLES RESTAURADAS COM ABAS (DEPLOY 30) === */
+        /* === CONFIG STYLES RESTAURADAS COM ABAS (Deploy 72.3) === */
         .config-tabs {
             display: flex;
             background: var(--surface);
@@ -3070,7 +3070,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
         
         // === SISTEMA DE COMUNICAÇÃO COM BACKEND ===
         async function apiCall(funcName, params = [], maxRetries = 1, timeout = 90000) {
-            debugLog('info', `📡 API Call DEPLOY 30: ${funcName}`, { params, maxRetries });
+            debugLog('info', `📡 API Call Deploy 72.3: ${funcName}`, { params, maxRetries });
             
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
@@ -3250,7 +3250,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
 
 // ADICIONE ESTA NOVA FUNÇÃO
 function continueInitialization() {
-    debugLog('success', '✅ Contexto carregado DEPLOY 30', {
+    debugLog('success', '✅ Contexto carregado Deploy 72.3', {
         email: appContext.email || 'não definido',
         role: appContext.role || 'não definido',
         fieldsCount: appContext.fieldsConfig ? Object.keys(appContext.fieldsConfig).length : 0,
@@ -3285,7 +3285,7 @@ if (typeof appContext !== 'undefined' && appContext && appContext.email) {
     // Carregar RNCs disponíveis para edição
     loadAvailableRncs().then(() => {
         hideLoading();
-        debugLog('success', '🎉 Aplicação inicializada DEPLOY 30');
+        debugLog('success', '🎉 Aplicação inicializada Deploy 72.3');
     });
 }
         
@@ -3375,7 +3375,7 @@ function renderAberturaForm() {
     }
 }
         
-        // === RENDERIZAÇÃO DE CAMPOS CORRIGIDA (DEPLOY 30) ===
+        // === RENDERIZAÇÃO DE CAMPOS CORRIGIDA (Deploy 72.3) ===
         /**
  * Renderiza campo individual COM PERMISSÕES
  * Deploy 32 - Sistema de Permissões
@@ -3656,7 +3656,7 @@ function renderField(field, value, secao, isEditContext = false) {
         }
         
         function handleFiles(files, isEdit = false) {
-            debugLog('info', '📂 Processando arquivos DEPLOY 30', { count: files.length, isEdit });
+            debugLog('info', '📂 Processando arquivos Deploy 72.3', { count: files.length, isEdit });
 
             // MÉDIA-11: Obter limite de tamanho do contexto (configurável)
             const maxFileSize = (appContext && appContext.systemConfig && appContext.systemConfig.maxFileSize)
@@ -3723,7 +3723,7 @@ function renderField(field, value, secao, isEditContext = false) {
                     selectedFiles.push(fileData);
                     updateFileList(isEdit);
 
-                    debugLog('success', `✅ Arquivo carregado DEPLOY 30: ${file.name}`, {
+                    debugLog('success', `✅ Arquivo carregado Deploy 72.3: ${file.name}`, {
                         size: formatFileSize(file.size)
                     });
                 };
@@ -5903,7 +5903,7 @@ console.log('🔍 RESULTADO DA COMPARAÇÃO:', {
     }
 }
         
-        // === KANBAN CORRIGIDO COM FINALIZADAS (DEPLOY 30) ===
+        // === KANBAN CORRIGIDO COM FINALIZADAS (Deploy 72.3) ===
         async function loadKanban() {
     try {
         debugLog('info', '📋 Carregando Kanban');
@@ -6042,12 +6042,12 @@ async function refreshKanban() {
             try {
                 const container = document.getElementById('kanban-container');
                 
-                // === TODAS AS COLUNAS INCLUINDO FINALIZADAS (DEPLOY 30) ===
+                // === TODAS AS COLUNAS INCLUINDO FINALIZADAS (Deploy 72.3) ===
                 const columns = ['Abertura RNC', 'Análise Qualidade', 'Análise do problema e Ação Corretiva', 'Finalizada'];
                 const columnClasses = ['abertura', 'analise-qualidade', 'analise-acao', 'finalizada'];
                 const columnTitles = ['📝 Abertura RNC', '🔍 Análise Qualidade', '⚡ Análise e Ação', '✅ Finalizadas'];
                 
-                debugLog('info', '🎨 Renderizando Kanban DEPLOY 30 COM FINALIZADAS', {
+                debugLog('info', '🎨 Renderizando Kanban Deploy 72.3 COM FINALIZADAS', {
                     columns: columns,
                     itemCounts: columns.map(col => kanbanData[col] ? kanbanData[col].length : 0)
                 });
@@ -6107,18 +6107,18 @@ async function refreshKanban() {
                 kanbanHtml += '</div>';
                 container.innerHTML = kanbanHtml;
                 
-                debugLog('success', '✅ Kanban renderizado DEPLOY 30 COM FINALIZADAS', {
+                debugLog('success', '✅ Kanban renderizado Deploy 72.3 COM FINALIZADAS', {
                     totalItems: columns.reduce((sum, col) => sum + (kanbanData[col] ? kanbanData[col].length : 0), 0)
                 });
                 
             } catch (error) {
-                debugLog('error', '❌ Erro ao renderizar kanban DEPLOY 30', { error: error.message });
+                debugLog('error', '❌ Erro ao renderizar kanban Deploy 72.3', { error: error.message });
                 showError('Erro ao renderizar kanban: ' + error.message);
             }
         }
         
         function editRncFromKanban(rncNumber) {
-            debugLog('info', '🎯 Editando RNC do kanban DEPLOY 30', { rncNumber });
+            debugLog('info', '🎯 Editando RNC do kanban Deploy 72.3', { rncNumber });
             switchTab('editar');
             document.getElementById('rncSelect').value = rncNumber;
             loadRncForEdit(rncNumber);
@@ -8385,10 +8385,10 @@ function clearFilters() {
             document.getElementById('exportPdf').disabled = true;
             reportData = null;
 
-            debugLog('info', '🧹 Filtros limpos DEPLOY 30');
+            debugLog('info', '🧹 Filtros limpos Deploy 72.3');
         }
         
-        // === CONFIGURAÇÕES RESTAURADAS COM ABAS (DEPLOY 30) ===
+        // === CONFIGURAÇÕES RESTAURADAS COM ABAS (Deploy 72.3) ===
         async function loadConfigurations() {
     try {
         debugLog('info', '⚙️ Carregando configurações Deploy 32');
@@ -8415,7 +8415,7 @@ function clearFilters() {
         
         async function saveSystemConfig() {
             try {
-                debugLog('info', '💾 Salvando configurações do sistema DEPLOY 30');
+                debugLog('info', '💾 Salvando configurações do sistema Deploy 72.3');
                 
                 const pastaGID = document.getElementById('pastaGID').value;
                 const renomearArquivos = document.getElementById('renomearArquivos').value;
@@ -8428,10 +8428,10 @@ function clearFilters() {
                 showSuccess('Configurações salvas com sucesso!');
                 hideLoading();
                 
-                debugLog('success', '✅ Configurações do sistema salvas DEPLOY 30');
+                debugLog('success', '✅ Configurações do sistema salvas Deploy 72.3');
                 
             } catch (error) {
-                debugLog('error', '❌ Erro ao salvar configurações DEPLOY 30', { error: error.message });
+                debugLog('error', '❌ Erro ao salvar configurações Deploy 72.3', { error: error.message });
                 showError('Erro ao salvar configurações: ' + error.message);
                 hideLoading();
             }
@@ -8462,7 +8462,7 @@ function clearFilters() {
                 container.innerHTML = listsHtml;
                 
             } catch (error) {
-                debugLog('error', '❌ Erro ao carregar listas DEPLOY 30', { error: error.message });
+                debugLog('error', '❌ Erro ao carregar listas Deploy 72.3', { error: error.message });
             }
         }
         
@@ -8490,7 +8490,7 @@ function clearFilters() {
                 container.innerHTML = sectionsHtml;
                 
             } catch (error) {
-                debugLog('error', '❌ Erro ao carregar seções DEPLOY 30', { error: error.message });
+                debugLog('error', '❌ Erro ao carregar seções Deploy 72.3', { error: error.message });
             }
         }
         
@@ -8518,7 +8518,7 @@ function clearFilters() {
                 container.innerHTML = fieldsHtml;
                 
             } catch (error) {
-                debugLog('error', '❌ Erro ao carregar campos DEPLOY 30', { error: error.message });
+                debugLog('error', '❌ Erro ao carregar campos Deploy 72.3', { error: error.message });
             }
         }
         
@@ -9776,7 +9776,7 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
 
 
         
-        // === NAVEGAÇÃO DAS ABAS DE CONFIGURAÇÃO (DEPLOY 30) ===
+        // === NAVEGAÇÃO DAS ABAS DE CONFIGURAÇÃO (Deploy 72.3) ===
         function switchConfigTab(configTabName) {
             // Remover classe ativa de todas as abas de config
             document.querySelectorAll('.config-tab').forEach(tab => {
@@ -9790,12 +9790,12 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
             document.querySelector(`[data-config-tab="${configTabName}"]`).classList.add('active');
             document.getElementById(`config-tab-${configTabName}`).classList.add('active');
             
-            debugLog('info', '🔧 Mudando para aba de config DEPLOY 30', { configTab: configTabName });
+            debugLog('info', '🔧 Mudando para aba de config Deploy 72.3', { configTab: configTabName });
         }
         
         // === EVENT LISTENERS ===
         document.addEventListener('DOMContentLoaded', function() {
-            debugLog('info', '🚀 DOM carregado, inicializando aplicação DEPLOY 30');
+            debugLog('info', '🚀 DOM carregado, inicializando aplicação Deploy 72.3');
             
             // === BARRA DE ABAS STICKY COM EFEITO AO ROLAR ===
             const tabsElement = document.querySelector('.tabs');
@@ -9823,7 +9823,7 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
                 });
             });
             
-            // === NAVEGAÇÃO DAS ABAS DE CONFIGURAÇÃO (DEPLOY 30) ===
+            // === NAVEGAÇÃO DAS ABAS DE CONFIGURAÇÃO (Deploy 72.3) ===
             document.querySelectorAll('.config-tab').forEach(tab => {
                 tab.addEventListener('click', function() {
                     const configTabName = this.dataset.configTab;
@@ -9906,7 +9906,7 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
             // Limpar filtros
             document.getElementById('clearFilters').addEventListener('click', clearFilters);
             
-            // === CONFIGURAÇÕES (DEPLOY 30) ===
+            // === CONFIGURAÇÕES (Deploy 72.3) ===
             document.getElementById('saveSystemConfig').addEventListener('click', saveSystemConfig);
             
             // Debug toggle
@@ -9940,7 +9940,7 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
             };
         };
         
-        console.log('🚀 Sistema RNC DEPLOY 30 carregado com TODAS as correções!');
+        console.log('🚀 Sistema RNC Deploy 72.3 carregado com TODAS as correções!');
         console.log('✅ Correções implementadas:');
         console.log('  - Campo "Setor onde foi feita abertura" corrigido com \\n');
         console.log('  - Seção "Informações da RNC" removida da edição');
@@ -10082,7 +10082,7 @@ function clearCache(key) {
     }
 }
 
-// === FUNÇÕES DE RECARGA FORÇADA (DEPLOY 30) ===
+// === FUNÇÕES DE RECARGA FORÇADA (Deploy 72.3) ===
 async function forceReloadKanban() {
     debugLog('info', '🔄 Recarga forçada do Kanban');
     clearCache('kanban');
@@ -10797,7 +10797,7 @@ async function deleteUser(email) {
 
 /**
  * Recarrega contexto e atualiza formulários
- * DEPLOY 30 - VERSÃO CORRIGIDA FINAL
+ * Deploy 72.3 - VERSÃO CORRIGIDA FINAL
  */
 function reloadContextAndForms() {
   try {
