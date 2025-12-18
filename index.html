@@ -3021,20 +3021,54 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
 
 
         // === SISTEMA DE DEBUG E LOGGING ===
+
+        /**
+         * Sanitiza dados sensíveis antes de logar
+         * @param {Object} data - Dados a serem sanitizados
+         * @returns {Object} Dados sanitizados
+         */
+        function sanitizeLogData(data) {
+            if (!data || typeof data !== 'object') return data;
+
+            const sanitized = {};
+            const sensitiveKeys = ['password', 'token', 'apikey', 'email', 'cpf', 'cnpj', 'csrf'];
+
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    const lowerKey = key.toLowerCase();
+
+                    // Se é chave sensível, mascarar
+                    if (sensitiveKeys.some(sk => lowerKey.includes(sk))) {
+                        sanitized[key] = '***REDACTED***';
+                    } else if (typeof data[key] === 'object' && data[key] !== null) {
+                        sanitized[key] = sanitizeLogData(data[key]); // Recursivo
+                    } else {
+                        sanitized[key] = data[key];
+                    }
+                }
+            }
+
+            return sanitized;
+        }
+
         function debugLog(level, message, data = {}) {
             const timestamp = new Date().toLocaleTimeString();
+
+            // SEGURANÇA: Sanitizar dados antes de logar
+            const sanitizedData = sanitizeLogData(data);
+
             const logEntry = {
                 timestamp,
                 level,
                 message,
-                data: data
+                data: sanitizedData
             };
-            
+
             debugLogs.unshift(logEntry);
             if (debugLogs.length > 100) debugLogs.pop();
-            
-            console.log(`[${timestamp}] [${level.toUpperCase()}] ${message}`, data);
-            
+
+            console.log(`[${timestamp}] [${level.toUpperCase()}] ${message}`, sanitizedData);
+
             updateDebugPanel();
         }
         
