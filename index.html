@@ -3048,9 +3048,9 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
                 };
                 
                 const logsHtml = debugLogs.slice(0, 15).map(log => {
-                    return `<div style="color: ${levelColors[log.level] || '#10B981'}; margin-bottom: 0.25rem; font-size: 0.6875rem;">[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}</div>`;
+                    return `<div style="color: ${levelColors[log.level] || '#10B981'}; margin-bottom: 0.25rem; font-size: 0.6875rem;">[${log.timestamp}] [${log.level.toUpperCase()}] ${sanitizeHTML(log.message)}</div>`;
                 }).join('');
-                
+
                 document.getElementById('debugLogs').innerHTML = logsHtml;
             } catch(e) {
                 console.error('Erro ao atualizar debug panel:', e);
