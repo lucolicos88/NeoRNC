@@ -35,7 +35,8 @@
       "Bash(ls:*)",
       "Bash(git mv:*)",
       "Bash(git rm:*)",
-      "Bash(del oauth-client.json)"
+      "Bash(del oauth-client.json)",
+      "Bash(git tag:*)"
     ],
     "deny": [],
     "ask": []
