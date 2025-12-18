@@ -313,8 +313,10 @@ var RateLimiter = (function() {
 
     } catch (error) {
       Logger.logError('RateLimiter.checkLimit', error, { user: user, type: type });
-      // Em caso de erro, permitir a requisição (fail-open)
-      return { allowed: true, remaining: 999, resetIn: 0 };
+      // TASK-009: Fail-safe CONSERVADOR - bloquear em caso de erro do rate limiter
+      // Isso previne abuso se o sistema de cache falhar
+      Logger.logWarning('RateLimiter_FAIL_CLOSED', { user: user, type: type });
+      return { allowed: false, remaining: 0, resetIn: 60 };
     }
   }
 
@@ -347,12 +349,19 @@ function doGet(e) {
   try {
     // ✨ NOVA LÓGICA: Forçar autenticação ANTES de tudo
     var user = Session.getActiveUser().getEmail();
-    
+
     // Método alternativo se o primeiro falhar
     if (!user || user === '' || user === 'anonymous') {
       user = Session.getEffectiveUser().getEmail();
     }
-    
+
+    // TASK-010: Validação rigorosa de email
+    var emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    if (!user || user === '' || user === 'anonymous' || !emailRegex.test(user)) {
+      Logger.logWarning('doGet_INVALID_EMAIL', { user: user });
+      return HtmlService.createHtmlOutput('<h1>❌ Acesso Negado</h1><p>Email inválido ou não autenticado.</p>');
+    }
+
     // TASK-002: Log sanitizado - não expõe email completo
     console.log('🔍 [doGet] Usuário autenticado: ' + (user ? '***@' + user.split('@')[1] : 'nenhum'));
 
@@ -590,8 +599,12 @@ function doGet(e) {
   } catch (error) {
     console.log('❌ [doGet] ERRO: ' + error.toString());
     Logger.logCritical('APP_ACCESS_ERROR', error);
-    
-    // Página de erro detalhada
+
+    // TASK-011: Gerar ID único do erro (timestamp + hash simples)
+    var errorId = 'ERR-' + new Date().getTime();
+
+    // TASK-011: NÃO expor stack trace para o usuário - mensagem genérica
+    // O erro completo fica apenas nos logs do servidor
     return HtmlService.createHtmlOutput(`
       <!DOCTYPE html>
       <html>
@@ -622,8 +635,13 @@ function doGet(e) {
             border-radius: 8px;
             border-left: 4px solid #F44336;
             margin-bottom: 20px;
+            font-size: 14px;
+          }
+          .error-id {
             font-family: monospace;
-            font-size: 13px;
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
           }
           .btn {
             background: #009688;
@@ -641,11 +659,15 @@ function doGet(e) {
         <div class="error-container">
           <h1>⚠️ Erro no Sistema</h1>
           <p>Ocorreu um erro ao carregar o sistema RNC.</p>
-          <div class="error-message">${error.toString()}</div>
+          <div class="error-message">
+            Não foi possível inicializar o sistema. Por favor, tente novamente.
+            <div class="error-id">ID do erro: ${errorId}</div>
+          </div>
           <button class="btn" onclick="location.reload()">🔄 Tentar Novamente</button>
           <p style="margin-top: 20px; font-size: 13px; color: #999;">
             Se o problema persistir, entre em contato com:<br>
-            <strong>producao.neoformula@gmail.com</strong>
+            <strong>producao.neoformula@gmail.com</strong><br>
+            Informe o ID do erro acima.
           </p>
         </div>
       </body>
