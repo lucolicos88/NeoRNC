@@ -300,6 +300,7 @@ var NotificationManager = (function() {
         <div class="info-box">
           <h3>📋 Dados da Abertura</h3>
           <div class="info-row"><span class="info-label">Número:</span> <span class="info-value" style="font-size: 18px; font-weight: bold; color: #009688;">${rncNumber}</span></div>
+          <div class="info-row"><span class="info-label">Status:</span> <span class="info-value">${rncData['Status Geral'] || 'Abertura RNC'}</span></div>
           <div class="info-row"><span class="info-label">Setor de Abertura:</span> <span class="info-value">${setorAbertura}</span></div>
           <div class="info-row"><span class="info-label">Responsável pela Abertura:</span> <span class="info-value">${rncData['Responsável pela abertura da RNC'] || 'N/A'}</span></div>
           <div class="info-row"><span class="info-label">Data da Abertura:</span> <span class="info-value">${rncData['Data de Abertura'] || 'N/A'}</span></div>
