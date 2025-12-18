@@ -1445,7 +1445,17 @@ function addUserRole(email, role) { return PermissionsManager.addUserRole(email,
 function removeUserRole(email, role) { return PermissionsManager.removeUserRole(email, role); }
 function getAllUsers() { return PermissionsManager.getAllUsers(); }
 
-
+// ===== NOTIFICATIONS (Deploy 72.5) =====
+/**
+ * Reenvio manual de notificação
+ * @param {string} rncNumber - Número da RNC
+ * @param {string} type - Tipo: 'created', 'updated', 'statusChanged'
+ * @param {Array} additionalEmails - Emails adicionais (opcional)
+ * @return {Object} Resultado do envio
+ */
+function manualSendNotification(rncNumber, type, additionalEmails) {
+  return NotificationManager.manualNotify(rncNumber, type, additionalEmails || []);
+}
 
 /**
  * Forçar criação de permissão

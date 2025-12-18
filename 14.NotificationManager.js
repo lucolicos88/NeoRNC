@@ -82,13 +82,15 @@ var NotificationManager = (function() {
 
   /**
    * Monta o link para visualizar uma RNC específica
+   * Deploy 72.5: Link corrigido - abre sistema e navega para RNC
    * @param {string} rncNumber - Número da RNC
    * @return {string} URL completa para a RNC
    */
   function getRncLink(rncNumber) {
     try {
       var scriptUrl = ScriptApp.getService().getUrl();
-      return scriptUrl + '?rnc=' + encodeURIComponent(rncNumber);
+      // Link abre o sistema diretamente na RNC específica
+      return scriptUrl + '#rnc=' + encodeURIComponent(rncNumber);
     } catch (error) {
       Logger.logError('getRncLink_ERROR', error);
       return 'Link indisponível';
@@ -96,13 +98,76 @@ var NotificationManager = (function() {
   }
 
   /**
+   * Cria template HTML base para emails
+   * Deploy 72.5: Email profissional com logo
+   * @param {string} title - Título do email
+   * @param {string} content - Conteúdo HTML
+   * @return {string} HTML completo do email
+   */
+  function createEmailTemplate(title, content) {
+    var logoUrl = 'https://neoformula.com.br/wp-content/uploads/2023/01/logo-neoformula.png';
+
+    return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #009688 0%, #00796B 100%); color: white; padding: 30px; text-align: center; }
+        .header img { max-width: 200px; height: auto; margin-bottom: 15px; background: white; padding: 10px; border-radius: 8px; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+        .content { padding: 30px; }
+        .info-box { background: #f8f9fa; border-left: 4px solid #009688; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .info-box h3 { margin-top: 0; color: #009688; font-size: 16px; }
+        .info-row { margin: 8px 0; }
+        .info-label { font-weight: bold; color: #555; }
+        .info-value { color: #333; }
+        .btn { display: inline-block; background: #009688; color: white !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: 500; }
+        .btn:hover { background: #00796B; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #e0e0e0; }
+        .alert-success { background: #e8f5e9; border-left-color: #4CAF50; }
+        .alert-warning { background: #fff8e1; border-left-color: #FFC107; }
+        .alert-info { background: #e3f2fd; border-left-color: #2196F3; }
+        .change-item { background: white; border: 1px solid #e0e0e0; padding: 12px; margin: 10px 0; border-radius: 4px; }
+        .change-field { font-weight: bold; color: #009688; margin-bottom: 5px; }
+        .change-old { color: #F44336; text-decoration: line-through; }
+        .change-new { color: #4CAF50; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="${logoUrl}" alt="Neoformula Logo">
+            <h1>${title}</h1>
+        </div>
+        <div class="content">
+            ${content}
+        </div>
+        <div class="footer">
+            <p><strong>Sistema RNC Neoformula</strong> - v${CONFIG.VERSION}</p>
+            <p>Esta é uma mensagem automática. Não responda este email.</p>
+            <p style="margin-top: 10px; color: #999;">© ${new Date().getFullYear()} Neoformula. Todos os direitos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>
+    `.trim();
+  }
+
+  /**
    * Envia email de notificação
+   * Deploy 72.5: Usa nome "Sistema de RNC" e HTML
    * @param {Array} recipients - Lista de emails destinatários
    * @param {string} subject - Assunto do email
-   * @param {string} body - Corpo do email
+   * @param {string} htmlBody - Corpo do email em HTML
+   * @param {string} rncNumber - Número da RNC (para histórico)
    * @private
    */
-  function sendEmail(recipients, subject, body) {
+  function sendEmail(recipients, subject, htmlBody, rncNumber) {
     try {
       if (!recipients || recipients.length === 0) {
         Logger.logWarning('sendEmail_NO_RECIPIENTS', { subject: subject });
@@ -111,22 +176,27 @@ var NotificationManager = (function() {
 
       Logger.logInfo('sendEmail_START', {
         recipientsCount: recipients.length,
-        subject: subject
+        subject: subject,
+        rncNumber: rncNumber
       });
 
       // Enviar email para cada destinatário
       var successCount = 0;
       var failCount = 0;
+      var sentTo = [];
 
       for (var i = 0; i < recipients.length; i++) {
         try {
+          // Deploy 72.5: Usar nome personalizado "Sistema de RNC"
           MailApp.sendEmail({
             to: recipients[i],
             subject: subject,
-            body: body,
+            htmlBody: htmlBody,
+            name: 'Sistema de RNC',
             noReply: true
           });
           successCount++;
+          sentTo.push(recipients[i]);
         } catch (emailError) {
           Logger.logError('sendEmail_INDIVIDUAL_ERROR', emailError, {
             recipient: recipients[i]
@@ -135,15 +205,38 @@ var NotificationManager = (function() {
         }
       }
 
+      // Deploy 72.5: Registrar no histórico da RNC
+      if (rncNumber && successCount > 0) {
+        try {
+          HistoricoManager.registrarEvento(
+            rncNumber,
+            'Email enviado',
+            'Sistema',
+            {
+              assunto: subject,
+              destinatarios: sentTo.length,
+              emails: sentTo.join(', ')
+            }
+          );
+        } catch (histError) {
+          Logger.logError('sendEmail_HISTORICO_ERROR', histError, {
+            rncNumber: rncNumber
+          });
+          // Não falhar o envio se histórico falhar
+        }
+      }
+
       Logger.logInfo('sendEmail_SUCCESS', {
         successCount: successCount,
-        failCount: failCount
+        failCount: failCount,
+        rncNumber: rncNumber
       });
 
       return {
         success: true,
         successCount: successCount,
-        failCount: failCount
+        failCount: failCount,
+        sentTo: sentTo
       };
 
     } catch (error) {
@@ -193,31 +286,46 @@ var NotificationManager = (function() {
         return { success: false, message: 'Nenhum usuário no setor' };
       }
 
-      // Montar email
+      // Deploy 72.5: Montar email HTML profissional
       var subject = '[RNC] Nova RNC Criada - ' + rncNumber;
       var link = getRncLink(rncNumber);
-
       var setorNaoConformidade = rncData['Setor onde ocorreu a não conformidade'] || 'N/A';
 
-      var body = 'Uma nova RNC foi criada e necessita de atenção.\n\n';
-      body += '=== DADOS DA RNC ===\n';
-      body += 'Número: ' + rncNumber + '\n';
-      body += 'Setor de Abertura: ' + setorAbertura + '\n';
-      body += 'Setor da Não Conformidade: ' + setorNaoConformidade + '\n';
-      body += 'Status: ' + (rncData['Status Geral'] || 'Abertura RNC') + '\n';
-      body += 'Responsável: ' + (rncData['Responsável pela abertura da RNC'] || 'N/A') + '\n';
-      body += 'Cliente: ' + (rncData['Nome do Cliente'] || 'N/A') + '\n';
-      body += 'Tipo: ' + (rncData['Tipo RNC'] || 'N/A') + '\n';
-      body += 'Data de Abertura: ' + (rncData['Data de Abertura'] || 'N/A') + '\n\n';
-      body += 'Descrição:\n' + (rncData['Descrição Detalhada da RNC/Reclamação'] || 'N/A') + '\n\n';
-      body += '=== ACESSO ===\n';
-      body += 'Visualizar RNC: ' + link + '\n\n';
-      body += '---\n';
-      body += 'Sistema RNC Neoformula v' + CONFIG.VERSION + '\n';
-      body += 'Esta é uma mensagem automática. Não responda este email.';
+      var content = `
+        <p style="font-size: 16px; color: #555;">Uma nova RNC foi criada e necessita de atenção.</p>
 
-      // Enviar email
-      var result = sendEmail(recipients, subject, body);
+        <div class="info-box">
+          <h3>📋 Dados da RNC</h3>
+          <div class="info-row"><span class="info-label">Número:</span> <span class="info-value" style="font-size: 18px; font-weight: bold; color: #009688;">${rncNumber}</span></div>
+          <div class="info-row"><span class="info-label">Setor de Abertura:</span> <span class="info-value">${setorAbertura}</span></div>
+          <div class="info-row"><span class="info-label">Setor da Não Conformidade:</span> <span class="info-value">${setorNaoConformidade}</span></div>
+          <div class="info-row"><span class="info-label">Status:</span> <span class="info-value">${rncData['Status Geral'] || 'Abertura RNC'}</span></div>
+          <div class="info-row"><span class="info-label">Responsável:</span> <span class="info-value">${rncData['Responsável pela abertura da RNC'] || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Cliente:</span> <span class="info-value">${rncData['Nome do Cliente'] || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Tipo:</span> <span class="info-value">${rncData['Tipo RNC'] || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Data de Abertura:</span> <span class="info-value">${rncData['Data de Abertura'] || 'N/A'}</span></div>
+        </div>
+
+        ${rncData['Descrição Detalhada da RNC/Reclamação'] ? `
+        <div class="info-box alert-info">
+          <h3>📝 Descrição</h3>
+          <p style="margin: 0; white-space: pre-wrap;">${rncData['Descrição Detalhada da RNC/Reclamação']}</p>
+        </div>
+        ` : ''}
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${link}" class="btn">🔍 Visualizar RNC no Sistema</a>
+        </div>
+
+        <p style="font-size: 13px; color: #999; text-align: center; margin-top: 20px;">
+          Clique no botão acima para acessar o sistema e visualizar todos os detalhes da RNC.
+        </p>
+      `;
+
+      var htmlBody = createEmailTemplate('📋 Nova RNC Criada', content);
+
+      // Deploy 72.5: Enviar email HTML com registro no histórico
+      var result = sendEmail(recipients, subject, htmlBody, rncNumber);
 
       Logger.logInfo('notifyRncCreated_SUCCESS', {
         rncNumber: rncNumber,
@@ -287,37 +395,58 @@ var NotificationManager = (function() {
         return { success: false, message: 'Nenhum outro usuário para notificar' };
       }
 
-      // Montar email
+      // Deploy 72.5: Montar email HTML profissional
       var subject = '[RNC] Atualização - ' + rncNumber;
       var link = getRncLink(rncNumber);
 
-      var body = 'A RNC ' + rncNumber + ' foi atualizada.\n\n';
-      body += '=== DADOS DA RNC ===\n';
-      body += 'Número: ' + rncNumber + '\n';
-      body += 'Setor: ' + setor + '\n';
-      body += 'Status Atual: ' + (rnc['Status Geral'] || 'N/A') + '\n';
-      body += 'Alterado por: ' + userEmail + '\n\n';
-
-      body += '=== ALTERAÇÕES REALIZADAS ===\n';
+      // Montar lista de alterações em HTML
+      var changesHtml = '';
       var changeCount = 0;
       for (var field in changes) {
         if (changes.hasOwnProperty(field)) {
           var change = changes[field];
-          body += '• ' + field + ':\n';
-          body += '  Anterior: ' + (change.old || '(vazio)') + '\n';
-          body += '  Novo: ' + (change.new || '(vazio)') + '\n';
+          changesHtml += `
+            <div class="change-item">
+              <div class="change-field">📌 ${field}</div>
+              <div style="margin-top: 8px;">
+                <div class="change-old">Anterior: ${change.old || '(vazio)'}</div>
+                <div class="change-new">✓ Novo: ${change.new || '(vazio)'}</div>
+              </div>
+            </div>
+          `;
           changeCount++;
         }
       }
 
-      body += '\n=== ACESSO ===\n';
-      body += 'Visualizar RNC: ' + link + '\n\n';
-      body += '---\n';
-      body += 'Sistema RNC Neoformula v' + CONFIG.VERSION + '\n';
-      body += 'Esta é uma mensagem automática. Não responda este email.';
+      var content = `
+        <p style="font-size: 16px; color: #555;">A RNC <strong>${rncNumber}</strong> foi atualizada.</p>
 
-      // Enviar email
-      var result = sendEmail(recipients, subject, body);
+        <div class="info-box">
+          <h3>📋 Dados da RNC</h3>
+          <div class="info-row"><span class="info-label">Número:</span> <span class="info-value" style="font-size: 18px; font-weight: bold; color: #009688;">${rncNumber}</span></div>
+          <div class="info-row"><span class="info-label">Setor:</span> <span class="info-value">${setor}</span></div>
+          <div class="info-row"><span class="info-label">Status Atual:</span> <span class="info-value">${rnc['Status Geral'] || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Alterado por:</span> <span class="info-value">${userEmail}</span></div>
+        </div>
+
+        <div class="info-box alert-info">
+          <h3>✏️ Alterações Realizadas (${changeCount})</h3>
+          ${changesHtml}
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${link}" class="btn">🔍 Visualizar RNC no Sistema</a>
+        </div>
+
+        <p style="font-size: 13px; color: #999; text-align: center; margin-top: 20px;">
+          Clique no botão acima para acessar o sistema e visualizar todos os detalhes da RNC.
+        </p>
+      `;
+
+      var htmlBody = createEmailTemplate('✏️ RNC Atualizada', content);
+
+      // Deploy 72.5: Enviar email HTML com registro no histórico
+      var result = sendEmail(recipients, subject, htmlBody, rncNumber);
 
       Logger.logInfo('notifyRncUpdated_SUCCESS', {
         rncNumber: rncNumber,
@@ -406,40 +535,66 @@ var NotificationManager = (function() {
         return { success: false, message: 'Nenhum outro usuário para notificar' };
       }
 
-      // Montar email
+      // Deploy 72.5: Montar email HTML profissional
       var subject = '[RNC] Mudança de Status - ' + rncNumber + ' → ' + newStatus;
       var link = getRncLink(rncNumber);
 
-      var body = 'O status da RNC ' + rncNumber + ' foi alterado.\n\n';
-      body += '=== MUDANÇA DE STATUS ===\n';
-      body += 'Status Anterior: ' + oldStatus + '\n';
-      body += 'Novo Status: ' + newStatus + '\n';
-      body += 'Alterado por: ' + userEmail + '\n\n';
+      // Determinar classe de alerta e mensagem baseado no status
+      var statusAlert = '';
+      var statusClass = 'alert-info';
+      var statusIcon = '🔄';
 
-      body += '=== DADOS DA RNC ===\n';
-      body += 'Número: ' + rncNumber + '\n';
-      body += 'Setor de Abertura: ' + (setorAbertura || 'N/A') + '\n';
-      body += 'Setor da Não Conformidade: ' + (setorNaoConformidade || 'N/A') + '\n';
-      body += 'Cliente: ' + (rnc['Nome do Cliente'] || 'N/A') + '\n';
-      body += 'Tipo: ' + (rnc['Tipo RNC'] || 'N/A') + '\n\n';
-
-      // Adicionar informações específicas do novo status
       if (newStatus === 'Finalizada') {
-        body += '✅ Esta RNC foi FINALIZADA.\n\n';
+        statusClass = 'alert-success';
+        statusIcon = '✅';
+        statusAlert = '<p style="font-size: 15px; font-weight: 500; color: #4CAF50; margin: 15px 0;">Esta RNC foi FINALIZADA com sucesso!</p>';
       } else if (newStatus === 'Análise Qualidade') {
-        body += '⚠️ Esta RNC está aguardando ANÁLISE DE QUALIDADE.\n\n';
+        statusClass = 'alert-warning';
+        statusIcon = '⚠️';
+        statusAlert = '<p style="font-size: 15px; font-weight: 500; color: #FF9800; margin: 15px 0;">Esta RNC está aguardando ANÁLISE DE QUALIDADE.</p>';
       } else if (newStatus === 'Análise do problema e Ação Corretiva') {
-        body += '🔧 Esta RNC está aguardando AÇÃO CORRETIVA.\n\n';
+        statusClass = 'alert-info';
+        statusIcon = '🔧';
+        statusAlert = '<p style="font-size: 15px; font-weight: 500; color: #2196F3; margin: 15px 0;">Esta RNC está aguardando AÇÃO CORRETIVA.</p>';
       }
 
-      body += '=== ACESSO ===\n';
-      body += 'Visualizar RNC: ' + link + '\n\n';
-      body += '---\n';
-      body += 'Sistema RNC Neoformula v' + CONFIG.VERSION + '\n';
-      body += 'Esta é uma mensagem automática. Não responda este email.';
+      var content = `
+        <p style="font-size: 16px; color: #555;">O status da RNC <strong>${rncNumber}</strong> foi alterado.</p>
 
-      // Enviar email
-      var result = sendEmail(recipients, subject, body);
+        <div class="info-box ${statusClass}">
+          <h3>${statusIcon} Mudança de Status</h3>
+          <div class="change-item" style="background: white;">
+            <div class="change-old">Status Anterior: ${oldStatus}</div>
+            <div class="change-new" style="font-size: 16px; margin-top: 10px;">✓ Novo Status: ${newStatus}</div>
+          </div>
+          <div style="margin-top: 15px; font-size: 13px; color: #666;">
+            <strong>Alterado por:</strong> ${userEmail}
+          </div>
+          ${statusAlert}
+        </div>
+
+        <div class="info-box">
+          <h3>📋 Dados da RNC</h3>
+          <div class="info-row"><span class="info-label">Número:</span> <span class="info-value" style="font-size: 18px; font-weight: bold; color: #009688;">${rncNumber}</span></div>
+          <div class="info-row"><span class="info-label">Setor de Abertura:</span> <span class="info-value">${setorAbertura || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Setor da Não Conformidade:</span> <span class="info-value">${setorNaoConformidade || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Cliente:</span> <span class="info-value">${rnc['Nome do Cliente'] || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Tipo:</span> <span class="info-value">${rnc['Tipo RNC'] || 'N/A'}</span></div>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${link}" class="btn">🔍 Visualizar RNC no Sistema</a>
+        </div>
+
+        <p style="font-size: 13px; color: #999; text-align: center; margin-top: 20px;">
+          Clique no botão acima para acessar o sistema e visualizar todos os detalhes da RNC.
+        </p>
+      `;
+
+      var htmlBody = createEmailTemplate('🔄 Status Alterado', content);
+
+      // Deploy 72.5: Enviar email HTML com registro no histórico
+      var result = sendEmail(recipients, subject, htmlBody, rncNumber);
 
       Logger.logInfo('notifyStatusChanged_SUCCESS', {
         rncNumber: rncNumber,
@@ -462,6 +617,107 @@ var NotificationManager = (function() {
     }
   }
 
+  /**
+   * Reenvio manual de notificação para uma RNC
+   * Deploy 72.5: Permite reenvio manual em caso de falha
+   * @param {string} rncNumber - Número da RNC
+   * @param {string} notificationType - Tipo: 'created', 'updated', 'statusChanged'
+   * @param {Array} additionalRecipients - Emails adicionais (opcional)
+   * @return {Object} Resultado do envio
+   */
+  function manualNotify(rncNumber, notificationType, additionalRecipients) {
+    try {
+      Logger.logInfo('manualNotify_START', {
+        rncNumber: rncNumber,
+        type: notificationType
+      });
+
+      // Buscar RNC
+      var rnc = RncOperations.getRncByNumber(rncNumber);
+      if (!rnc) {
+        return {
+          success: false,
+          message: 'RNC não encontrada: ' + rncNumber
+        };
+      }
+
+      var result;
+
+      switch (notificationType) {
+        case 'created':
+          result = notifyRncCreated(rncNumber, rnc);
+          break;
+
+        case 'statusChanged':
+          // Para status changed, usar status atual
+          result = notifyStatusChanged(
+            rncNumber,
+            'Status anterior',
+            rnc['Status Geral'] || 'Abertura RNC',
+            'Sistema (envio manual)'
+          );
+          break;
+
+        case 'updated':
+          // Para updated, criar um resumo genérico
+          result = notifyRncUpdated(
+            rncNumber,
+            { 'Informação': { old: '', new: 'Notificação manual reenviada' } },
+            'Sistema (envio manual)'
+          );
+          break;
+
+        default:
+          return {
+            success: false,
+            message: 'Tipo de notificação inválido: ' + notificationType
+          };
+      }
+
+      // Se forneceu emails adicionais, enviar também para eles
+      if (additionalRecipients && additionalRecipients.length > 0) {
+        var subject = '[RNC] Notificação Manual - ' + rncNumber;
+        var link = getRncLink(rncNumber);
+
+        var content = `
+          <p style="font-size: 16px; color: #555;">Você recebeu uma notificação manual sobre a RNC <strong>${rncNumber}</strong>.</p>
+
+          <div class="info-box">
+            <h3>📋 Dados da RNC</h3>
+            <div class="info-row"><span class="info-label">Número:</span> <span class="info-value" style="font-size: 18px; font-weight: bold; color: #009688;">${rncNumber}</span></div>
+            <div class="info-row"><span class="info-label">Status:</span> <span class="info-value">${rnc['Status Geral'] || 'Abertura RNC'}</span></div>
+            <div class="info-row"><span class="info-label">Cliente:</span> <span class="info-value">${rnc['Nome do Cliente'] || 'N/A'}</span></div>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${link}" class="btn">🔍 Visualizar RNC no Sistema</a>
+          </div>
+        `;
+
+        var htmlBody = createEmailTemplate('📧 Notificação Manual', content);
+        sendEmail(additionalRecipients, subject, htmlBody, rncNumber);
+      }
+
+      Logger.logInfo('manualNotify_SUCCESS', {
+        rncNumber: rncNumber,
+        type: notificationType,
+        emailsSent: result.successCount
+      });
+
+      return result;
+
+    } catch (error) {
+      Logger.logError('manualNotify_ERROR', error, {
+        rncNumber: rncNumber,
+        type: notificationType
+      });
+      return {
+        success: false,
+        error: error.toString()
+      };
+    }
+  }
+
   // API Pública
   return {
     getUsersBySetor: getUsersBySetor,
@@ -469,6 +725,7 @@ var NotificationManager = (function() {
     getRncLink: getRncLink,
     notifyRncCreated: notifyRncCreated,
     notifyRncUpdated: notifyRncUpdated,
-    notifyStatusChanged: notifyStatusChanged
+    notifyStatusChanged: notifyStatusChanged,
+    manualNotify: manualNotify
   };
 })();
