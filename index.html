@@ -3185,7 +3185,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
         var userSetorEl = document.getElementById('userSetor');
         if (userSetorEl) {
             var setorText = appContext.setor || 'Sem setor';
-            userSetorEl.innerHTML = '<span>🏢</span><span>' + setorText + '</span>';
+            userSetorEl.innerHTML = '<span>🏢</span><span>' + sanitizeHTML(setorText) + '</span>';
         }
 
         // Deploy 69: Mostrar abas apenas para admins (usando classes CSS)
