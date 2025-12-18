@@ -21,12 +21,16 @@ var Reports = (function() {
    * @param {boolean} forceRefresh - Força atualização ignorando cache
    * @return {Object} Estatísticas do dashboard
    */
-  function getDashboardData(forceRefresh) {
+  function getDashboardData(forceRefresh, filteredRncs) {
     var startTime = new Date().getTime();
 
     try {
+      // ✅ DEPLOY 72.4: Se receber RNCs filtradas, não usar cache
+      var isFiltered = filteredRncs && Array.isArray(filteredRncs);
+
       // ✅ DEPLOY 32: Tentar obter do cache primeiro (agora 15 min)
-      if (!forceRefresh) {
+      // NOTA: Só usa cache se NÃO for dados filtrados
+      if (!forceRefresh && !isFiltered) {
         var cached = getDashboardFromCache();
         if (cached) {
           Logger.logInfo('getDashboardData_CACHE_HIT', {
@@ -38,11 +42,14 @@ var Reports = (function() {
       }
 
       Logger.logInfo('getDashboardData_START', {
-        forceRefresh: forceRefresh || false
+        forceRefresh: forceRefresh || false,
+        isFiltered: isFiltered,
+        filteredCount: isFiltered ? filteredRncs.length : 0
       });
 
       // ✅ Deploy 34: Buscar RNCs otimizado
-      var rncs = RncOperations.getAllRncs();
+      // ✅ DEPLOY 72.4: Usar RNCs filtradas se fornecidas
+      var rncs = isFiltered ? filteredRncs : RncOperations.getAllRncs();
     
     // ============================================
     // ESTRUTURA DE DADOS DOS KPIs
@@ -448,7 +455,10 @@ var Reports = (function() {
     });
 
     // ✅ DEPLOY 32: Salvar no cache (5 minutos)
-    saveDashboardToCache(stats);
+    // ✅ DEPLOY 72.4: NÃO cachear dados filtrados
+    if (!isFiltered) {
+      saveDashboardToCache(stats);
+    }
 
     return stats;
 

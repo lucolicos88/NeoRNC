@@ -1405,95 +1405,39 @@ function getKanbanDataFiltered(tipoSetor, setor) {
  */
 function getDashboardDataFiltered(tipoSetor, setor) {
   try {
-    var allRncs = RncOperations.getAllRncs();
-    
+    // ✅ DEPLOY 72.4: Se não houver filtro, retornar dados completos
     if (!setor || setor === 'Todos') {
       return Reports.getDashboardData();
     }
-    
+
+    var allRncs = RncOperations.getAllRncs();
+
     var campoSetor = tipoSetor === 'abertura'
       ? 'Setor onde foi feita abertura\n'
       : 'Setor onde ocorreu a não conformidade';
-    
-    // Filtrar RNCs
+
+    // Filtrar RNCs pelo setor selecionado
     var filteredRncs = allRncs.filter(function(rnc) {
       var rncSetor = rnc[campoSetor] || rnc[campoSetor.replace('\n', '')] || '';
       return rncSetor.trim() === setor.trim();
     });
-    
+
     Logger.logDebug('getDashboardDataFiltered', {
       tipoSetor: tipoSetor,
       setor: setor,
       totalRncs: filteredRncs.length
     });
-    
-    // Calcular estatísticas apenas das RNCs filtradas
-    return calculateDashboardStats(filteredRncs);
-    
+
+    // ✅ DEPLOY 72.4: Usar a função completa do Reports passando RNCs filtradas
+    // Isso garante que TODOS os gráficos sejam calculados corretamente
+    return Reports.getDashboardData(false, filteredRncs);
+
   } catch (error) {
     Logger.logError('getDashboardDataFiltered', error);
     return Reports.getDashboardData();
   }
 }
 
-/**
- * Calcula estatísticas para o dashboard
- * @private
- */
-function calculateDashboardStats(rncs) {
-  var stats = {
-    total: rncs.length,
-    aberturaRnc: 0,
-    analiseQualidade: 0,
-    analiseAcao: 0,
-    finalizadas: 0,
-    esteMes: 0,
-    esteAno: 0,
-    porMes: {},
-    porStatus: {},
-    porSetor: {},
-    porTipo: {},
-    porRisco: {},
-    tempoMedioResolucao: 0,
-    rncsCriticas: 0
-  };
-  
-  var thisMonth = new Date().getMonth();
-  var thisYear = new Date().getFullYear();
-  var temposResolucao = [];
-  
-  rncs.forEach(function(rnc) {
-    var status = rnc['Status Geral'] || CONFIG.STATUS_PIPELINE.ABERTURA;
-    
-    if (status === CONFIG.STATUS_PIPELINE.ABERTURA) stats.aberturaRnc++;
-    else if (status === CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE) stats.analiseQualidade++;
-    else if (status === CONFIG.STATUS_PIPELINE.ANALISE_ACAO) stats.analiseAcao++;
-    else if (status === CONFIG.STATUS_PIPELINE.FINALIZADA) stats.finalizadas++;
-    
-    if (!stats.porStatus[status]) stats.porStatus[status] = 0;
-    stats.porStatus[status]++;
-    
-    var risco = rnc['Risco'] || '';
-    if (risco === 'Alto' || risco === 'Crítico') {
-      stats.rncsCriticas++;
-    }
-    
-    var dataCriacao = rnc['Data Criação'];
-    if (dataCriacao) {
-      var dataObj = new Date(dataCriacao);
-      if (!isNaN(dataObj.getTime())) {
-        if (dataObj.getMonth() === thisMonth && dataObj.getFullYear() === thisYear) {
-          stats.esteMes++;
-        }
-        if (dataObj.getFullYear() === thisYear) {
-          stats.esteAno++;
-        }
-      }
-    }
-  });
-  
-  return stats;
-}
 // ===== PERMISSIONS (NOVO) =====
 function getUserPermissions() { return PermissionsManager.getUserPermissions(Session.getActiveUser().getEmail()); }
 function checkPermissionToSave(secao) { return PermissionsManager.checkPermissionToSave(Session.getActiveUser().getEmail(), secao); }
