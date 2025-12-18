@@ -4,8 +4,22 @@ echo   DEPLOY DESENVOLVIMENTO - RNC NEOFORMULA
 echo ========================================
 echo.
 
+if "%CLASP_USER%"=="" set "CLASP_USER=default"
+
+echo [0/4] Verificando autenticacao do clasp...
+call clasp -u %CLASP_USER% deployments >nul 2>&1
+if errorlevel 1 (
+    echo ERRO: Falha de autenticacao no Google (clasp).
+    echo Veja: TROUBLESHOOTING-CLASP.md
+    echo Dica: este projeto foi criado por outra conta; tente set CLASP_USER=producao e faca login nela.
+    pause
+    exit /b 1
+)
+echo OK!
+echo.
+
 echo [1/4] Enviando codigo para Google Apps Script...
-call clasp push --force
+call clasp -u %CLASP_USER% push --force
 if errorlevel 1 (
     echo ERRO: Falha no push
     pause
@@ -15,7 +29,7 @@ echo OK!
 echo.
 
 echo [2/4] Criando nova versao de desenvolvimento...
-call clasp deploy --deploymentId AKfycbxciMQecCXltv_SY_E_NdEsXOxVz2zxm5XRN88cXEMXFwnWDxYeYsUdec2OnhtNVIT5bg --description "Desenvolvimento - %date% %time%"
+call clasp -u %CLASP_USER% deploy --deploymentId AKfycbxciMQecCXltv_SY_E_NdEsXOxVz2zxm5XRN88cXEMXFwnWDxYeYsUdec2OnhtNVIT5bg --description "Desenvolvimento - %date% %time%"
 if errorlevel 1 (
     echo ERRO: Falha no deploy
     pause

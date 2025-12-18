@@ -1,3 +1,6 @@
 # Arquivos de backup gerados automaticamente
 archives/*
 !archives/README.md
+
+# Credenciais OAuth (clasp)
+oauth-client.json

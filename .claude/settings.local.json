@@ -30,7 +30,12 @@
       "Bash(node download-logo.js:*)",
       "Bash(xargs cat:*)",
       "Bash(find:*)",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(git mv:*)",
+      "Bash(git rm:*)",
+      "Bash(del oauth-client.json)"
     ],
     "deny": [],
     "ask": []
