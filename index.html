@@ -2672,19 +2672,13 @@ function sanitizeHTML(html) {
 }
 
 /**
- * Define conteúdo HTML de forma segura
+ * Define conteúdo HTML de forma segura, sempre sanitizando
  * @param {HTMLElement} element - Elemento DOM
- * @param {string} html - Conteúdo HTML
- * @param {boolean} sanitize - Se deve sanitizar (padrão: true)
+ * @param {string} html - Conteúdo HTML a ser sanitizado
  */
-function safeSetHTML(element, html, sanitize = true) {
+function safeSetHTML(element, html) {
     if (!element) return;
-
-    if (sanitize) {
-        element.innerHTML = sanitizeHTML(html);
-    } else {
-        element.innerHTML = html;
-    }
+    element.innerHTML = sanitizeHTML(html);
 }
 
 // ==========================================
