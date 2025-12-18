@@ -552,8 +552,31 @@ function doGet(e) {
     console.log('  - Email: ' + context.email);
     console.log('  - Roles: ' + (context.roles ? context.roles.join(', ') : 'NENHUMA'));
     console.log('  - HasPermissions: ' + context.hasPermissions);
-    
-    template.contextData = JSON.stringify(context);
+
+    // SEGURANÇA: Filtrar dados sensíveis antes de enviar ao cliente
+    var safeContext = {
+      email: context.email,
+      role: context.role,
+      roles: context.roles,
+      permissions: context.permissions,
+      isAdmin: context.isAdmin,
+      canConfig: context.canConfig,
+      setor: context.setor,
+      hasPermissions: context.hasPermissions,
+      fieldsConfig: context.fieldsConfig,
+      lists: context.lists,
+      listNames: context.listNames,
+      sections: context.sections,
+      fieldTypes: context.fieldTypes,
+      fieldMapping: context.fieldMapping,
+      systemConfig: context.systemConfig,
+      statusPipeline: context.statusPipeline,
+      version: context.version,
+      theme: context.theme
+      // NÃO INCLUIR: csrfToken (linha 874)
+    };
+
+    template.contextData = JSON.stringify(safeContext);
     
     // Retornar HTML
     var output = template.evaluate()
