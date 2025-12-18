@@ -10174,7 +10174,7 @@ async function loadSetoresFilterKanban() {
         }
         
         setorFilter.addEventListener('change', function() {
-            refreshKanban(this.value);
+            refreshKanban();
         });
         
     } catch (error) {
@@ -10182,53 +10182,6 @@ async function loadSetoresFilterKanban() {
     }
 }
 
-async function refreshKanban(setor) {
-    try {
-        const setorFilter = document.getElementById('setorFilterKanban');
-        const countSpan = document.getElementById('rncCountKanban');
-        const setorAtual = setor || (setorFilter ? setorFilter.value : 'Todos');
-        
-        showLoading('Carregando Kanban...');
-        
-        const data = await apiCall('getKanbanData', []);
-        
-        if (!data) {
-            throw new Error('Nenhum dado retornado');
-        }
-        
-        // Filtrar dados por setor
-        let filteredData = {};
-        
-        if (setorAtual && setorAtual !== 'Todos') {
-            Object.keys(data).forEach(status => {
-                filteredData[status] = data[status].filter(card => {
-                    const cardSetor = card.setor || '';
-                    return cardSetor.trim() === setorAtual.trim();
-                });
-            });
-        } else {
-            filteredData = data;
-        }
-        
-        renderKanban(filteredData);
-        
-        if (countSpan) {
-            let total = 0;
-            Object.keys(filteredData).forEach(status => {
-                total += filteredData[status].length;
-            });
-            countSpan.textContent = `${total} RNC(s) exibida(s)`;
-            countSpan.style.color = total > 0 ? '#4CAF50' : '#999';
-        }
-        
-        hideLoading();
-        
-    } catch (error) {
-        debugLog('error', 'Erro ao atualizar Kanban');
-        showError('Erro ao carregar Kanban');
-        hideLoading();
-    }
-}
 /**
  * Renderiza badges de roles do usuário
  * Deploy 32 - Sistema de Permissões
