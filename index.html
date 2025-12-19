@@ -2673,6 +2673,30 @@ function sanitizeHTML(html) {
     return sanitized;
 }
 
+// ==========================================
+// FASE 2.6: FUNÇÃO DE DEBOUNCE
+// PERFORMANCE: Reduz chamadas excessivas em filtros/busca
+// ==========================================
+
+/**
+ * Cria uma função com debounce (atraso)
+ * FASE 2.6: Previne execução excessiva de funções em eventos rápidos
+ * @param {Function} func - Função a ser executada
+ * @param {number} wait - Tempo de espera em ms
+ * @returns {Function} Função com debounce aplicado
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 /**
  * Define conteúdo HTML de forma segura, sempre sanitizando
  * @param {HTMLElement} element - Elemento DOM
