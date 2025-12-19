@@ -4541,11 +4541,22 @@ function updateRncSelect() {
 async function loadRncForEdit(rncNumber) {
     try {
         debugLog('info', '🔍 Carregando RNC para edição', { rncNumber });
-        
+
         showLoading('Carregando dados da RNC...');
-        
+
         const rncData = await apiCall('getRncByNumber', [rncNumber]);
-        
+
+        // 🔍 DEBUG: Ver EXATAMENTE o que foi retornado
+        debugLog('info', '🔍 DADOS RECEBIDOS', {
+            rncData: rncData,
+            type: typeof rncData,
+            isNull: rncData === null,
+            isUndefined: rncData === undefined,
+            isFalsy: !rncData,
+            keys: rncData ? Object.keys(rncData).length : 0,
+            firstKeys: rncData ? Object.keys(rncData).slice(0, 5) : []
+        });
+
         if (!rncData) {
             showError(`RNC ${rncNumber} não encontrada`);
             debugLog('error', '❌ RNC não encontrada', { rncNumber });

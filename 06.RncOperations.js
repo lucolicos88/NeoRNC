@@ -621,10 +621,35 @@ function getRncByNumber(rncNumber) {
     // Buscar anexos
     rnc._anexos = FileManager.getAnexosRnc(rncNumber);
 
+    // ✅ CRITICAL FIX: Garantir que TODAS as datas sejam strings (não Date objects)
+    // Google Apps Script falha ao serializar Date objects para JSON
+    for (var key in rnc) {
+      if (rnc[key] instanceof Date) {
+        Logger.logWarning('getRncByNumber_DATE_NOT_CONVERTED', {
+          field: key,
+          value: rnc[key]
+        });
+        rnc[key] = formatDateBR(rnc[key]);
+      }
+    }
+
+    // 🔍 DEBUG: Log antes do return para confirmar execução
+    Logger.logInfo('getRncByNumber_BEFORE_RETURN', {
+      rncNumber: rncNumber,
+      hasRnc: !!rnc,
+      fieldsCount: Object.keys(rnc).length,
+      hasAnexos: !!rnc._anexos,
+      anexosCount: rnc._anexos ? rnc._anexos.length : 0
+    });
+
     // ✅ CORRIGIDO Deploy 31: Apenas UM return (eram 3 antes - Problema #1)
     return rnc;
   } catch (error) {
-    Logger.logError('getRncByNumber', error, { rncNumber: rncNumber });
+    Logger.logError('getRncByNumber_ERROR', error, {
+      rncNumber: rncNumber,
+      errorMessage: error.message,
+      errorStack: error.stack
+    });
     return null;
   }
 }
