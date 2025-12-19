@@ -1374,6 +1374,7 @@ function determineNewStatus(currentRnc, updates) {
   /**
  * Busca RNCs por setor
  * Deploy 66: Usa campo "Setor onde ocorreu a não conformidade"
+ * Deploy 74.5: Filtra por "contém" para considerar setores múltiplos
  */
 function getRncsBySetor(setor) {
     try {
@@ -1381,22 +1382,35 @@ function getRncsBySetor(setor) {
             return getAllRncs();
         }
 
-        // Deploy 66: Usar campo correto de setor
-        var filters = {};
-        filters['Setor onde ocorreu a não conformidade'] = setor;
+        // Deploy 74.5: Buscar todas as RNCs e filtrar manualmente por "contém"
+        var allRncs = getAllRncs();
+        var rncs = [];
 
-        var rncs = Database.findData(CONFIG.SHEETS.RNC, filters, {
-            orderBy: 'Data Criação',
-            orderDesc: true
-        });
+        for (var i = 0; i < allRncs.length; i++) {
+            var setorOcorreu = allRncs[i]['Setor onde ocorreu a não conformidade'] || '';
 
-        for (var i = 0; i < rncs.length; i++) {
-            for (var key in rncs[i]) {
-                if (rncs[i][key] instanceof Date) {
-                    rncs[i][key] = rncs[i][key].toISOString();
+            // Separar setores múltiplos e verificar se o setor buscado está entre eles
+            var setoresSeparados = splitSetores(setorOcorreu);
+            var encontrado = false;
+
+            for (var j = 0; j < setoresSeparados.length; j++) {
+                if (setoresSeparados[j] === setor) {
+                    encontrado = true;
+                    break;
                 }
             }
+
+            if (encontrado) {
+                rncs.push(allRncs[i]);
+            }
         }
+
+        // Ordenar por Data Criação (mais recentes primeiro)
+        rncs.sort(function(a, b) {
+            var dateA = a['Data Criação'] ? new Date(a['Data Criação']) : new Date(0);
+            var dateB = b['Data Criação'] ? new Date(b['Data Criação']) : new Date(0);
+            return dateB - dateA;
+        });
 
         Logger.logInfo('getRncsBySetor', { setor: setor, count: rncs.length });
         return rncs;
@@ -1455,24 +1469,45 @@ function getRncsByUserSetor(email) {
 }
 
 /**
+ * Helper: Separa setores que estão salvos com vírgula
+ * @param {string} setorString - String com setores separados por vírgula
+ * @return {Array} Array de setores individuais
+ */
+function splitSetores(setorString) {
+    if (!setorString || typeof setorString !== 'string') {
+        return [];
+    }
+
+    return setorString
+        .split(',')
+        .map(function(s) { return s.trim(); })
+        .filter(function(s) { return s !== ''; });
+}
+
+/**
  * Lista setores únicos
+ * Deploy 74.5: Considera setores múltiplos separados por vírgula
  */
 function getSetoresUnicos() {
     try {
         var rncs = getAllRncs();
         var setoresSet = {};
-        
+
         for (var i = 0; i < rncs.length; i++) {
             var setor = rncs[i]['Setor onde foi feita abertura\n'] || '';
             if (setor && setor.trim() !== '') {
-                setoresSet[setor.trim()] = true;
+                // Deploy 74.5: Separar setores múltiplos por vírgula
+                var setoresSeparados = splitSetores(setor);
+                for (var j = 0; j < setoresSeparados.length; j++) {
+                    setoresSet[setoresSeparados[j]] = true;
+                }
             }
         }
-        
+
         var setores = Object.keys(setoresSet).sort();
         Logger.logInfo('getSetoresUnicos', { count: setores.length });
         return setores;
-        
+
     } catch (error) {
         Logger.logError('getSetoresUnicos', error);
         return [];

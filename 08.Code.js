@@ -1069,34 +1069,56 @@ function getHistoricoRnc(rncNumber) {
 //function getRncNumbersBySetor(setor) { return RncOperations.getRncNumbersBySetor(setor); }
 
 /**
+ * Helper: Separa setores que estão salvos com vírgula
+ * Deploy 74.5: Função auxiliar para split de setores múltiplos
+ * @param {string} setorString - String com setores separados por vírgula
+ * @return {Array} Array de setores individuais
+ */
+function splitSetores(setorString) {
+  if (!setorString || typeof setorString !== 'string') {
+    return [];
+  }
+
+  return setorString
+    .split(',')
+    .map(function(s) { return s.trim(); })
+    .filter(function(s) { return s !== ''; });
+}
+
+/**
  * Obtém lista única de setores das RNCs
+ * Deploy 74.5: Considera setores múltiplos separados por vírgula
  * @return {Array} Lista de setores únicos
  */
 function getSetoresUnicos() {
   try {
     var rncs = RncOperations.getAllRncs();
     var setoresSet = {};
-    
+
     rncs.forEach(function(rnc) {
       // Buscar em ambos os campos de setor
-      var setor = rnc['Setor onde ocorreu a não conformidade'] || 
+      var setor = rnc['Setor onde ocorreu a não conformidade'] ||
                  rnc['Setor onde foi feita abertura\n'] ||
                  rnc['Setor onde foi feita abertura'];
-      
+
       if (setor && setor.trim()) {
-        setoresSet[setor.trim()] = true;
+        // Deploy 74.5: Separar setores múltiplos por vírgula
+        var setoresSeparados = splitSetores(setor);
+        setoresSeparados.forEach(function(s) {
+          setoresSet[s] = true;
+        });
       }
     });
-    
+
     var setores = Object.keys(setoresSet).sort();
-    
-    Logger.logDebug('getSetoresUnicos', { 
+
+    Logger.logDebug('getSetoresUnicos', {
       totalSetores: setores.length,
       setores: setores
     });
-    
+
     return setores;
-    
+
   } catch (error) {
     Logger.logError('getSetoresUnicos', error);
     return [];
@@ -1377,6 +1399,9 @@ function getSetoresDuplos() {
  * @param {string} setor - Nome do setor
  * @return {Object} Dados do kanban filtrados
  */
+/**
+ * Deploy 74.5: Considera setores múltiplos separados por vírgula
+ */
 function getKanbanDataFiltered(tipoSetor, setor) {
   try {
     // Deploy 72.2: Filtrar RNCs ANTES de criar Kanban (mesma lógica do Dashboard)
@@ -1395,10 +1420,18 @@ function getKanbanDataFiltered(tipoSetor, setor) {
       campoSetor = 'Setor onde ocorreu a não conformidade';
     }
 
-    // Filtrar RNCs pelo setor (mesma lógica do Dashboard)
+    // Deploy 74.5: Filtrar RNCs pelo setor (considerando setores múltiplos)
     var filteredRncs = allRncs.filter(function(rnc) {
       var rncSetor = rnc[campoSetor] || rnc[campoSetor.replace('\n', '')] || '';
-      return rncSetor.trim() === setor.trim();
+
+      // Separar setores múltiplos e verificar se o setor buscado está entre eles
+      var setoresSeparados = splitSetores(rncSetor);
+      for (var i = 0; i < setoresSeparados.length; i++) {
+        if (setoresSeparados[i] === setor.trim()) {
+          return true;
+        }
+      }
+      return false;
     });
 
     Logger.logDebug('getKanbanDataFiltered', {
@@ -1418,6 +1451,7 @@ function getKanbanDataFiltered(tipoSetor, setor) {
 
 /**
  * Obtém dados do Dashboard filtrados por setor
+ * Deploy 74.5: Considera setores múltiplos separados por vírgula
  * @param {string} tipoSetor - 'abertura' ou 'qualidade'
  * @param {string} setor - Nome do setor
  * @return {Object} Estatísticas filtradas
@@ -1435,10 +1469,18 @@ function getDashboardDataFiltered(tipoSetor, setor) {
       ? 'Setor onde foi feita abertura\n'
       : 'Setor onde ocorreu a não conformidade';
 
-    // Filtrar RNCs pelo setor selecionado
+    // Deploy 74.5: Filtrar RNCs pelo setor selecionado (considerando setores múltiplos)
     var filteredRncs = allRncs.filter(function(rnc) {
       var rncSetor = rnc[campoSetor] || rnc[campoSetor.replace('\n', '')] || '';
-      return rncSetor.trim() === setor.trim();
+
+      // Separar setores múltiplos e verificar se o setor buscado está entre eles
+      var setoresSeparados = splitSetores(rncSetor);
+      for (var i = 0; i < setoresSeparados.length; i++) {
+        if (setoresSeparados[i] === setor.trim()) {
+          return true;
+        }
+      }
+      return false;
     });
 
     Logger.logDebug('getDashboardDataFiltered', {
