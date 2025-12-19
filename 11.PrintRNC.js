@@ -316,7 +316,8 @@ var PrintManager = (function() {
           .addItem('📋 Limpar Aba de Logs', 'menuLimparLogs')
           .addSeparator()
           .addItem('🗺️ Mapear Colunas da Aba RNC', 'menuMapearColunas')
-          .addItem('🎨 Pintar Colunas por Seção', 'menuPintarColunas'))
+          .addItem('🎨 Pintar Colunas por Seção', 'menuPintarColunas')
+          .addItem('📐 Formatar Aba RNC', 'menuFormatarAbaRNC'))
 
         // Diagnóstico
         .addSubMenu(ui.createMenu('🔍 Diagnóstico')
@@ -618,6 +619,61 @@ function menuPintarColunas() {
       ui.alert('🎨 Pintura Completa', msg, ui.ButtonSet.OK);
     } else {
       ui.alert('❌ Erro', 'Erro ao pintar headers:\n' + resultado.error, ui.ButtonSet.OK);
+    }
+
+  } catch (error) {
+    SpreadsheetApp.getUi().alert('❌ Erro', error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+/**
+ * Menu: Formatar Aba RNC
+ * Deploy 75.2: Formatação profissional da planilha
+ */
+function menuFormatarAbaRNC() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+
+    var response = ui.alert(
+      '📐 Formatar Aba RNC',
+      'Esta função irá formatar TODA a aba RNC:\n\n' +
+      '📋 CABEÇALHO (linha 1):\n' +
+      '  • Alinhamento: Centro (H e V)\n' +
+      '  • Quebra de texto: Ativada\n' +
+      '  • Bordas: Todas (preto)\n' +
+      '  • Altura: 60px\n' +
+      '  • Congelado\n\n' +
+      '📊 DADOS (linhas 2+):\n' +
+      '  • Alinhamento: Esquerda (H) + Centro (V)\n' +
+      '  • Quebra de texto: Ativada\n' +
+      '  • Bordas: Todas (cinza)\n' +
+      '  • Altura: 30px\n\n' +
+      '📏 COLUNAS:\n' +
+      '  • Largura: Auto-ajustada (100-400px)\n\n' +
+      '⚠️ Esta operação pode demorar alguns segundos.\n\n' +
+      'Deseja continuar?',
+      ui.ButtonSet.YES_NO
+    );
+
+    if (response !== ui.Button.YES) {
+      return;
+    }
+
+    ui.alert('⏳ Processando...', 'Formatando aba RNC. Aguarde...', ui.ButtonSet.OK);
+
+    var resultado = formatarAbaRNC();
+
+    if (resultado.success) {
+      var msg = '✅ Formatação Concluída!\n\n' +
+        '📊 Total de linhas: ' + resultado.linhas + '\n' +
+        '📋 Total de colunas: ' + resultado.colunas + '\n' +
+        '✅ Linhas de dados formatadas: ' + resultado.linhasFormatadas + '\n' +
+        '📏 Colunas redimensionadas: ' + resultado.colunasRedimensionadas + '\n\n' +
+        '💡 A aba RNC agora está formatada profissionalmente!';
+
+      ui.alert('📐 Formatação Completa', msg, ui.ButtonSet.OK);
+    } else {
+      ui.alert('❌ Erro', 'Erro ao formatar aba RNC:\n' + resultado.error, ui.ButtonSet.OK);
     }
 
   } catch (error) {

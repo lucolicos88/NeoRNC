@@ -1852,6 +1852,114 @@ function pintarColunasPorSecao() {
   }
 }
 
+/**
+ * Formata a aba RNC completamente
+ * Deploy 75.2: Formatação profissional da planilha
+ */
+function formatarAbaRNC() {
+  try {
+    Logger.logInfo('FORMATAR_ABA_RNC_START');
+
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    var rncSheet = ss.getSheetByName(CONFIG.SHEETS.RNC);
+
+    if (!rncSheet) {
+      throw new Error('Aba RNC não encontrada');
+    }
+
+    var lastRow = rncSheet.getLastRow();
+    var lastColumn = rncSheet.getLastColumn();
+
+    if (lastRow === 0 || lastColumn === 0) {
+      throw new Error('Aba RNC está vazia');
+    }
+
+    Logger.logInfo('DIMENSOES_ABA_RNC', { linhas: lastRow, colunas: lastColumn });
+
+    // 1. FORMATAR CABEÇALHO (Linha 1)
+    var headerRange = rncSheet.getRange(1, 1, 1, lastColumn);
+
+    headerRange
+      .setHorizontalAlignment('center')      // Centralizado horizontal
+      .setVerticalAlignment('middle')        // Centralizado vertical
+      .setWrap(true)                         // Quebra de texto
+      .setBorder(true, true, true, true, true, true, 'black', SpreadsheetApp.BorderStyle.SOLID); // Todas as bordas
+
+    Logger.logInfo('HEADER_FORMATADO');
+
+    // 2. FORMATAR DADOS (Linhas 2 em diante)
+    if (lastRow > 1) {
+      var dataRange = rncSheet.getRange(2, 1, lastRow - 1, lastColumn);
+
+      dataRange
+        .setHorizontalAlignment('left')        // Esquerda horizontal
+        .setVerticalAlignment('middle')        // Centralizado vertical
+        .setWrap(true)                         // Quebra de texto
+        .setBorder(true, true, true, true, true, true, '#cccccc', SpreadsheetApp.BorderStyle.SOLID); // Bordas cinza
+
+      Logger.logInfo('DADOS_FORMATADOS', { linhas: lastRow - 1 });
+    }
+
+    // 3. AJUSTAR LARGURA DAS COLUNAS (auto-resize)
+    for (var col = 1; col <= lastColumn; col++) {
+      try {
+        rncSheet.autoResizeColumn(col);
+
+        // Limitar largura máxima para evitar colunas muito largas
+        var currentWidth = rncSheet.getColumnWidth(col);
+        if (currentWidth > 400) {
+          rncSheet.setColumnWidth(col, 400);
+        }
+
+        // Largura mínima para evitar colunas muito estreitas
+        if (currentWidth < 100) {
+          rncSheet.setColumnWidth(col, 100);
+        }
+      } catch (e) {
+        Logger.logWarning('ERRO_AUTO_RESIZE_COLUNA', { coluna: col, erro: e.toString() });
+      }
+    }
+
+    Logger.logInfo('COLUNAS_REDIMENSIONADAS');
+
+    // 4. AJUSTAR ALTURA DAS LINHAS
+    // Header um pouco mais alto
+    rncSheet.setRowHeight(1, 60);
+
+    // Demais linhas com altura padrão maior para acomodar quebra de texto
+    if (lastRow > 1) {
+      for (var row = 2; row <= lastRow; row++) {
+        rncSheet.setRowHeight(row, 30);
+      }
+    }
+
+    Logger.logInfo('LINHAS_REDIMENSIONADAS');
+
+    // 5. CONGELAR CABEÇALHO
+    rncSheet.setFrozenRows(1);
+
+    Logger.logInfo('HEADER_CONGELADO');
+
+    var resultado = {
+      success: true,
+      linhas: lastRow,
+      colunas: lastColumn,
+      linhasFormatadas: lastRow - 1,
+      colunasRedimensionadas: lastColumn
+    };
+
+    Logger.logInfo('FORMATAR_ABA_RNC_COMPLETE', resultado);
+    return resultado;
+
+  } catch (error) {
+    Logger.logError('FORMATAR_ABA_RNC_ERROR', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
 // ===== NOTIFICATIONS (Deploy 72.5) =====
 /**
  * Reenvio manual de notificação
