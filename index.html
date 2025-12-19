@@ -2277,6 +2277,10 @@ textarea.form-control,
                 <span>⚙️</span>
                 <span>Configurações</span>
             </button>
+            <button class="tab" data-tab="ajuda">
+                <span>📖</span>
+                <span>Ajuda</span>
+            </button>
         </div>
     </div>
 
@@ -2685,6 +2689,362 @@ textarea.form-control,
                 </div>
             </div>
         </div>
+
+        <!-- Ajuda -->
+        <div class="tab-content" id="tab-ajuda">
+            <div class="page-title">
+                <span>📖</span>
+                <span>Manual de Ajuda</span>
+            </div>
+
+            <div style="max-width: 1000px; margin: 0 auto;">
+
+                <!-- Introdução -->
+                <div class="config-section">
+                    <div class="config-header">
+                        <div class="config-title">
+                            <span>👋</span>
+                            <span>Bem-vindo ao Sistema RNC Neoformula</span>
+                        </div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <p style="font-size: 1.1rem; line-height: 1.6; color: #555;">
+                            O <strong>Sistema RNC (Registro de Não Conformidade)</strong> é uma ferramenta completa para
+                            gerenciar não conformidades, acompanhar ações corretivas e gerar relatórios analíticos.
+                        </p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+                            <div style="padding: 1rem; background: #E3F2FD; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 2rem;">📝</div>
+                                <div style="font-weight: 600; margin-top: 0.5rem;">Registrar RNCs</div>
+                            </div>
+                            <div style="padding: 1rem; background: #E8F5E9; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 2rem;">📋</div>
+                                <div style="font-weight: 600; margin-top: 0.5rem;">Kanban Visual</div>
+                            </div>
+                            <div style="padding: 1rem; background: #FFF3E0; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 2rem;">📊</div>
+                                <div style="font-weight: 600; margin-top: 0.5rem;">Dashboards</div>
+                            </div>
+                            <div style="padding: 1rem; background: #F3E5F5; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 2rem;">📈</div>
+                                <div style="font-weight: 600; margin-top: 0.5rem;">Relatórios</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Primeiros Passos -->
+                <div class="config-section">
+                    <div class="config-header">
+                        <div class="config-title">
+                            <span>🚀</span>
+                            <span>Primeiros Passos</span>
+                        </div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+                            <div style="display: flex; gap: 1rem; align-items: start;">
+                                <div style="min-width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">1</div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0 0 0.5rem 0; color: var(--primary);">Navegação</h3>
+                                    <p style="margin: 0; line-height: 1.6;">Use o menu superior para navegar entre as abas:
+                                        <strong>Abrir RNC</strong>, <strong>Editar RNC</strong>, <strong>Kanban</strong>,
+                                        <strong>Dashboard</strong>, <strong>Relatórios</strong> e <strong>Configurações</strong>.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem; align-items: start;">
+                                <div style="min-width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">2</div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0 0 0.5rem 0; color: var(--primary);">Criar sua primeira RNC</h3>
+                                    <p style="margin: 0; line-height: 1.6;">Vá em <strong>Abrir RNC</strong>, preencha os campos obrigatórios
+                                    (marcados com asterisco *), anexe evidências se necessário e clique em <strong>Salvar RNC</strong>.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem; align-items: start;">
+                                <div style="min-width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">3</div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0 0 0.5rem 0; color: var(--primary);">Acompanhar RNCs</h3>
+                                    <p style="margin: 0; line-height: 1.6;">Use o <strong>Kanban</strong> para visualizar o status de todas as RNCs
+                                    e o <strong>Dashboard</strong> para análises estatísticas.
+                                    </p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Funcionalidades Principais -->
+                <div class="config-section">
+                    <div class="config-header">
+                        <div class="config-title">
+                            <span>⚡</span>
+                            <span>Funcionalidades Principais</span>
+                        </div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+
+                        <!-- Abrir RNC -->
+                        <details style="margin-bottom: 1rem; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: var(--primary); font-size: 1.1rem;">
+                                📝 Abrir RNC - Como criar uma nova não conformidade
+                            </summary>
+                            <div style="margin-top: 1rem; padding-left: 1rem;">
+                                <ol style="line-height: 1.8;">
+                                    <li>Clique na aba <strong>Abrir RNC</strong></li>
+                                    <li>Preencha os campos de <strong>Abertura</strong> (setor, data, descrição)</li>
+                                    <li>Preencha os campos de <strong>Qualidade</strong> (classificação, origem, tipo)</li>
+                                    <li>Se necessário, anexe <strong>evidências</strong> (fotos, documentos)</li>
+                                    <li>Clique em <strong>📋 Salvar RNC</strong></li>
+                                    <li>Um número de RNC será gerado automaticamente (ex: 0001/2025)</li>
+                                </ol>
+                                <div class="alert alert-info" style="margin-top: 1rem;">
+                                    <strong>💡 Dica:</strong> Campos marcados com <strong style="color: red;">*</strong> são obrigatórios.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- Editar RNC -->
+                        <details style="margin-bottom: 1rem; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: var(--primary); font-size: 1.1rem;">
+                                ✏️ Editar RNC - Como modificar uma RNC existente
+                            </summary>
+                            <div style="margin-top: 1rem; padding-left: 1rem;">
+                                <ol style="line-height: 1.8;">
+                                    <li>Vá na aba <strong>Editar RNC</strong></li>
+                                    <li>Use os filtros para encontrar a RNC:
+                                        <ul>
+                                            <li><strong>Tipo de Setor:</strong> Setor de Abertura ou Setor de Não Conformidade</li>
+                                            <li><strong>Setor:</strong> Filtre por setor específico</li>
+                                        </ul>
+                                    </li>
+                                    <li>Selecione a RNC desejada no dropdown</li>
+                                    <li>Modifique os campos necessários</li>
+                                    <li>Clique em <strong>💾 Salvar Alterações</strong></li>
+                                </ol>
+                                <div class="alert alert-warning" style="margin-top: 1rem;">
+                                    <strong>⚠️ Atenção:</strong> Todas as alterações são registradas no histórico da RNC.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- Kanban -->
+                        <details style="margin-bottom: 1rem; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: var(--primary); font-size: 1.1rem;">
+                                📋 Kanban - Visualização por status
+                            </summary>
+                            <div style="margin-top: 1rem; padding-left: 1rem;">
+                                <p style="line-height: 1.6;">O Kanban organiza as RNCs em colunas por status:</p>
+                                <ul style="line-height: 1.8;">
+                                    <li><strong style="color: #2196F3;">🔵 Abertura RNC:</strong> RNCs recém criadas</li>
+                                    <li><strong style="color: #FF9800;">🟠 Análise e Ação:</strong> Em investigação</li>
+                                    <li><strong style="color: #4CAF50;">🟢 Finalizadas:</strong> RNCs concluídas</li>
+                                </ul>
+                                <p style="line-height: 1.6; margin-top: 1rem;">
+                                    <strong>Filtros disponíveis:</strong> Por tipo de setor e por setor específico.
+                                </p>
+                                <div class="alert alert-info" style="margin-top: 1rem;">
+                                    <strong>💡 Dica:</strong> Clique em <strong>🔄 Atualizar</strong> para recarregar os dados.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- Dashboard -->
+                        <details style="margin-bottom: 1rem; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: var(--primary); font-size: 1.1rem;">
+                                📊 Dashboard - Análises e métricas
+                            </summary>
+                            <div style="margin-top: 1rem; padding-left: 1rem;">
+                                <p style="line-height: 1.6;">O Dashboard apresenta:</p>
+                                <ul style="line-height: 1.8;">
+                                    <li><strong>Cards de métricas:</strong> Total de RNCs, abertas, fechadas, etc.</li>
+                                    <li><strong>Gráficos:</strong> Por status, por setor, por tipo, evolução temporal</li>
+                                    <li><strong>Filtros:</strong> Por período, setor e status</li>
+                                </ul>
+                                <div class="alert alert-success" style="margin-top: 1rem;">
+                                    <strong>✅ Recursos:</strong> Exportar gráficos, filtros dinâmicos, atualização em tempo real.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- Relatórios -->
+                        <details style="margin-bottom: 1rem; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: var(--primary); font-size: 1.1rem;">
+                                📈 Relatórios - Geração de relatórios personalizados
+                            </summary>
+                            <div style="margin-top: 1rem; padding-left: 1rem;">
+                                <ol style="line-height: 1.8;">
+                                    <li>Selecione os <strong>filtros</strong> desejados (período, setor, status, tipo)</li>
+                                    <li>Clique em <strong>🔍 Gerar Relatório</strong></li>
+                                    <li>Visualize os resultados na tabela</li>
+                                    <li>Use <strong>📥 Exportar CSV</strong> para baixar os dados</li>
+                                </ol>
+                                <div class="alert alert-info" style="margin-top: 1rem;">
+                                    <strong>💡 Dica:</strong> Utilize filtros combinados para análises mais específicas.
+                                </div>
+                            </div>
+                        </details>
+
+                        <!-- Configurações -->
+                        <details style="margin-bottom: 1rem; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: var(--primary); font-size: 1.1rem;">
+                                ⚙️ Configurações - Personalização do sistema (Admin)
+                            </summary>
+                            <div style="margin-top: 1rem; padding-left: 1rem;">
+                                <p style="line-height: 1.6;"><strong>Apenas administradores</strong> têm acesso a:</p>
+                                <ul style="line-height: 1.8;">
+                                    <li><strong>Gerenciar Listas:</strong> Criar/editar opções de campos select</li>
+                                    <li><strong>Gerenciar Campos:</strong> Adicionar campos personalizados ao formulário</li>
+                                    <li><strong>Gerenciar Seções:</strong> Organizar campos em seções</li>
+                                    <li><strong>Gerenciar Usuários:</strong> Adicionar/remover usuários e definir permissões</li>
+                                    <li><strong>Limpar Cache:</strong> Forçar atualização dos dados</li>
+                                    <li><strong>Limpar Logs:</strong> Remover registros antigos</li>
+                                </ul>
+                            </div>
+                        </details>
+
+                    </div>
+                </div>
+
+                <!-- FAQ -->
+                <div class="config-section">
+                    <div class="config-header">
+                        <div class="config-title">
+                            <span>❓</span>
+                            <span>Perguntas Frequentes (FAQ)</span>
+                        </div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+
+                        <details style="margin-bottom: 1rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: #555;">
+                                Como alterar o status de uma RNC?
+                            </summary>
+                            <div style="margin-top: 0.5rem; padding-left: 1rem; color: #666;">
+                                O status é atualizado automaticamente conforme você preenche os campos de cada seção
+                                (Abertura, Análise, Ação Corretiva, Encerramento).
+                            </div>
+                        </details>
+
+                        <details style="margin-bottom: 1rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: #555;">
+                                Como anexar arquivos a uma RNC?
+                            </summary>
+                            <div style="margin-top: 0.5rem; padding-left: 1rem; color: #666;">
+                                Em qualquer seção do formulário, clique no botão <strong>📎 Anexar Arquivo</strong>,
+                                selecione o arquivo desejado e clique em <strong>Upload</strong>.
+                            </div>
+                        </details>
+
+                        <details style="margin-bottom: 1rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: #555;">
+                                O que fazer se os dados não aparecem ou estão desatualizados?
+                            </summary>
+                            <div style="margin-top: 0.5rem; padding-left: 1rem; color: #666;">
+                                Vá em <strong>Configurações</strong> → <strong>Gerenciamento de Cache</strong> →
+                                <strong>Limpar Todo o Cache do Sistema</strong>. Depois atualize a página (F5).
+                            </div>
+                        </details>
+
+                        <details style="margin-bottom: 1rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: #555;">
+                                Como imprimir uma RNC?
+                            </summary>
+                            <div style="margin-top: 0.5rem; padding-left: 1rem; color: #666;">
+                                Abra a planilha Google Sheets, vá no menu <strong>📋 RNC</strong> →
+                                <strong>🖨️ Imprimir RNC</strong> e selecione o número da RNC desejada.
+                            </div>
+                        </details>
+
+                        <details style="margin-bottom: 1rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: #555;">
+                                Quais são os diferentes níveis de permissão?
+                            </summary>
+                            <div style="margin-top: 0.5rem; padding-left: 1rem; color: #666;">
+                                <ul style="margin: 0.5rem 0;">
+                                    <li><strong>Admin:</strong> Acesso total ao sistema</li>
+                                    <li><strong>Qualidade:</strong> Edita seções de Qualidade e Análise</li>
+                                    <li><strong>Liderança:</strong> Edita seção de Liderança</li>
+                                    <li><strong>Espectador:</strong> Apenas visualiza</li>
+                                </ul>
+                            </div>
+                        </details>
+
+                    </div>
+                </div>
+
+                <!-- Dicas e Truques -->
+                <div class="config-section">
+                    <div class="config-header">
+                        <div class="config-title">
+                            <span>💡</span>
+                            <span>Dicas e Truques</span>
+                        </div>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div style="display: grid; gap: 1rem;">
+
+                            <div style="display: flex; gap: 1rem; padding: 1rem; background: #E8F5E9; border-radius: 8px;">
+                                <div style="font-size: 1.5rem;">⌨️</div>
+                                <div>
+                                    <strong>Atalhos:</strong> Use <kbd style="padding: 2px 6px; background: white; border: 1px solid #ccc; border-radius: 3px;">F5</kbd>
+                                    para recarregar a página e atualizar dados.
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem; padding: 1rem; background: #E3F2FD; border-radius: 8px;">
+                                <div style="font-size: 1.5rem;">🔍</div>
+                                <div>
+                                    <strong>Filtros:</strong> Use filtros combinados (setor + período + status) para análises mais precisas.
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem; padding: 1rem; background: #FFF3E0; border-radius: 8px;">
+                                <div style="font-size: 1.5rem;">📊</div>
+                                <div>
+                                    <strong>Performance:</strong> Se o sistema estiver lento, limpe o cache em Configurações.
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem; padding: 1rem; background: #F3E5F5; border-radius: 8px;">
+                                <div style="font-size: 1.5rem;">📋</div>
+                                <div>
+                                    <strong>Organização:</strong> Use campos descritivos ao criar RNCs para facilitar buscas futuras.
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contato/Suporte -->
+                <div class="config-section">
+                    <div class="config-header">
+                        <div class="config-title">
+                            <span>📞</span>
+                            <span>Suporte</span>
+                        </div>
+                    </div>
+                    <div style="padding: 1.5rem; text-align: center;">
+                        <p style="font-size: 1.1rem; line-height: 1.6; color: #555;">
+                            Em caso de dúvidas, problemas técnicos ou sugestões, entre em contato com:
+                        </p>
+                        <div style="margin-top: 1.5rem; padding: 1.5rem; background: #E8F5E9; border-radius: 8px; display: inline-block;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">💻</div>
+                            <div style="font-weight: 600; font-size: 1.2rem; color: var(--primary);">TI Neoformula</div>
+                            <div style="margin-top: 0.5rem; color: #666;">Equipe de Tecnologia da Informação</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 
     <!-- Loading Overlay -->
