@@ -148,7 +148,7 @@ var NotificationManager = (function() {
             ${content}
         </div>
         <div class="footer">
-            <p><strong>Sistema RNC Neoformula</strong> - v${CONFIG.VERSION}</p>
+            <p><strong>Sistema RNC Neoformula</strong> - Elaborado por: TI Neoformula</p>
             <p>Esta é uma mensagem automática. Não responda este email.</p>
             <p style="margin-top: 10px; color: #999;">© ${new Date().getFullYear()} Neoformula. Todos os direitos reservados.</p>
         </div>
@@ -156,6 +156,29 @@ var NotificationManager = (function() {
 </body>
 </html>
     `.trim();
+  }
+
+  /**
+   * Formata valor para exibição no email (datas em DD/MM/YYYY)
+   * Deploy 72.8: Formatar datas automaticamente
+   * @param {*} value - Valor a formatar
+   * @return {string} Valor formatado
+   */
+  function formatValueForEmail(value) {
+    if (!value || value === '(vazio)') return value || '(vazio)';
+
+    var strValue = String(value);
+
+    // Detectar e formatar datas no formato YYYY-MM-DD ou ISO
+    if (strValue.match(/^\d{4}-\d{2}-\d{2}/)) {
+      try {
+        return formatDateBR(value);
+      } catch (e) {
+        return strValue;
+      }
+    }
+
+    return strValue;
   }
 
   /**
@@ -187,13 +210,12 @@ var NotificationManager = (function() {
 
       for (var i = 0; i < recipients.length; i++) {
         try {
-          // Deploy 72.5: Usar nome personalizado "Sistema de RNC"
+          // Deploy 72.7.3: Usar nome personalizado "Sistema de RNC"
           MailApp.sendEmail({
             to: recipients[i],
             subject: subject,
             htmlBody: htmlBody,
-            name: 'Sistema de RNC',
-            noReply: true
+            name: 'Sistema de RNC'
           });
           successCount++;
           sentTo.push(recipients[i]);
@@ -205,18 +227,16 @@ var NotificationManager = (function() {
         }
       }
 
-      // Deploy 72.5: Registrar no histórico da RNC
+      // Deploy 72.7.5: Registrar no histórico da RNC com todos os destinatários
       if (rncNumber && successCount > 0) {
         try {
-          HistoricoManager.registrarEvento(
+          HistoricoManager.registrarAlteracao(
             rncNumber,
-            'Email enviado',
-            'Sistema',
-            {
-              assunto: subject,
-              destinatarios: sentTo.length,
-              emails: sentTo.join(', ')
-            }
+            'Email enviado para ' + sentTo.join(', '),
+            '',
+            subject,
+            'Notificações',
+            'Sistema'
           );
         } catch (histError) {
           Logger.logError('sendEmail_HISTORICO_ERROR', histError, {
@@ -225,6 +245,15 @@ var NotificationManager = (function() {
           // Não falhar o envio se histórico falhar
         }
       }
+
+      // Deploy 72.7.4: Log completo com todos os destinatários
+      Logger.logInfo('sendEmail_RECIPIENTS_LOG', {
+        rncNumber: rncNumber,
+        assunto: subject,
+        totalDestinatarios: sentTo.length,
+        destinatarios: sentTo,
+        timestamp: new Date().toISOString()
+      });
 
       Logger.logInfo('sendEmail_SUCCESS', {
         successCount: successCount,
@@ -294,6 +323,15 @@ var NotificationManager = (function() {
       // Obter link de anexos se existir
       var linkAnexos = rncData['Anexo de Documentos'] || rncData['Link Anexos'] || '';
 
+      // Deploy 72.7.3: Debug - Log campos de data disponíveis
+      Logger.logInfo('notifyRncCreated_DATA_DEBUG', {
+        rncNumber: rncNumber,
+        'Data de Abertura': rncData['Data de Abertura'],
+        'Data': rncData['Data'],
+        'Data Criação': rncData['Data Criação'],
+        'Todas as chaves': Object.keys(rncData).filter(function(k) { return k.toLowerCase().includes('data'); })
+      });
+
       var content = `
         <p style="font-size: 16px; color: #555;">Uma nova RNC foi criada e necessita de atenção.</p>
 
@@ -303,8 +341,8 @@ var NotificationManager = (function() {
           <div class="info-row"><span class="info-label">Status:</span> <span class="info-value">${rncData['Status Geral'] || 'Abertura RNC'}</span></div>
           <div class="info-row"><span class="info-label">Setor de Abertura:</span> <span class="info-value">${setorAbertura}</span></div>
           <div class="info-row"><span class="info-label">Responsável pela Abertura:</span> <span class="info-value">${rncData['Responsável pela abertura da RNC'] || 'N/A'}</span></div>
-          <div class="info-row"><span class="info-label">Data da Abertura:</span> <span class="info-value">${rncData['Data de Abertura'] || 'N/A'}</span></div>
-          <div class="info-row"><span class="info-label">Tipo da RNC:</span> <span class="info-value">${rncData['Tipo RNC'] || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Data da Abertura:</span> <span class="info-value">${rncData['Data de Abertura'] || rncData['Data'] || rncData['Data Criação'] || formatDateBR(new Date()) || 'N/A'}</span></div>
+          <div class="info-row"><span class="info-label">Tipo da RNC:</span> <span class="info-value">${rncData['Tipo da RNC'] || 'N/A'}</span></div>
           ${linkAnexos ? `<div class="info-row"><span class="info-label">Link dos Anexos:</span> <span class="info-value"><a href="${linkAnexos}" style="color: #009688; text-decoration: underline;" target="_blank">Acessar Anexos</a></span></div>` : ''}
         </div>
 
@@ -397,22 +435,25 @@ var NotificationManager = (function() {
         return { success: false, message: 'Nenhum outro usuário para notificar' };
       }
 
-      // Deploy 72.5: Montar email HTML profissional
+      // Deploy 72.8: Montar email HTML profissional com datas formatadas
       var subject = '[RNC] Atualização - ' + rncNumber;
       var link = getRncLink(rncNumber);
 
-      // Montar lista de alterações em HTML
+      // Montar lista de alterações em HTML com datas formatadas
       var changesHtml = '';
       var changeCount = 0;
       for (var field in changes) {
         if (changes.hasOwnProperty(field)) {
           var change = changes[field];
+          var oldValueFormatted = formatValueForEmail(change.old);
+          var newValueFormatted = formatValueForEmail(change.new);
+
           changesHtml += `
             <div class="change-item">
               <div class="change-field">📌 ${field}</div>
               <div style="margin-top: 8px;">
-                <div class="change-old">Anterior: ${change.old || '(vazio)'}</div>
-                <div class="change-new">✓ Novo: ${change.new || '(vazio)'}</div>
+                <div class="change-old">Anterior: ${oldValueFormatted}</div>
+                <div class="change-new">✓ Novo: ${newValueFormatted}</div>
               </div>
             </div>
           `;
@@ -426,9 +467,7 @@ var NotificationManager = (function() {
         <div class="info-box">
           <h3>📋 Dados da RNC</h3>
           <div class="info-row"><span class="info-label">Número:</span> <span class="info-value" style="font-size: 18px; font-weight: bold; color: #009688;">${rncNumber}</span></div>
-          <div class="info-row"><span class="info-label">Setor:</span> <span class="info-value">${setor}</span></div>
-          <div class="info-row"><span class="info-label">Status Atual:</span> <span class="info-value">${rnc['Status Geral'] || 'N/A'}</span></div>
-          <div class="info-row"><span class="info-label">Alterado por:</span> <span class="info-value">${userEmail}</span></div>
+          <div class="info-row"><span class="info-label">Status:</span> <span class="info-value">${rnc['Status Geral'] || 'N/A'}</span></div>
         </div>
 
         <div class="info-box alert-info">
