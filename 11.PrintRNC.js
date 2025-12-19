@@ -313,7 +313,10 @@ var PrintManager = (function() {
         // Manutenção
         .addSubMenu(ui.createMenu('🔧 Manutenção')
           .addItem('🗑️ Limpar Cache do Sistema', 'menuLimparCache')
-          .addItem('📋 Limpar Aba de Logs', 'menuLimparLogs'))
+          .addItem('📋 Limpar Aba de Logs', 'menuLimparLogs')
+          .addSeparator()
+          .addItem('🗺️ Mapear Colunas da Aba RNC', 'menuMapearColunas')
+          .addItem('🎨 Pintar Colunas por Seção', 'menuPintarColunas'))
 
         // Diagnóstico
         .addSubMenu(ui.createMenu('🔍 Diagnóstico')
@@ -513,6 +516,98 @@ function menuDebugSetores() {
       '💡 Veja a aba Logs para mais detalhes';
 
     ui.alert('🔍 Debug de Setores', msg, ui.ButtonSet.OK);
+
+  } catch (error) {
+    SpreadsheetApp.getUi().alert('❌ Erro', error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+/**
+ * Menu: Mapear Colunas da Aba RNC
+ * Deploy 75: Organização da base de dados
+ */
+function menuMapearColunas() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+
+    var response = ui.alert(
+      '🗺️ Mapear Colunas da Aba RNC',
+      'Esta função irá:\n\n' +
+      '1. Ler todas as colunas da aba RNC\n' +
+      '2. Para cada campo em ConfigCampos, encontrar sua posição na aba RNC\n' +
+      '3. Preencher a coluna OrdemRNC com o número da coluna\n\n' +
+      'Deseja continuar?',
+      ui.ButtonSet.YES_NO
+    );
+
+    if (response !== ui.Button.YES) {
+      return;
+    }
+
+    ui.alert('⏳ Processando...', 'Mapeando colunas. Aguarde...', ui.ButtonSet.OK);
+
+    var resultado = mapearColunasRNC();
+
+    if (resultado.success) {
+      var msg = '✅ Mapeamento Concluído!\n\n' +
+        '📊 Total de colunas na aba RNC: ' + resultado.totalHeaders + '\n' +
+        '✅ Campos mapeados: ' + resultado.mapeamentos + '\n';
+
+      if (resultado.naoEncontrados.length > 0) {
+        msg += '\n⚠️ Campos não encontrados (' + resultado.naoEncontrados.length + '):\n' +
+          resultado.naoEncontrados.slice(0, 5).join(', ');
+        if (resultado.naoEncontrados.length > 5) {
+          msg += '...';
+        }
+      }
+
+      ui.alert('🗺️ Mapeamento Completo', msg, ui.ButtonSet.OK);
+    } else {
+      ui.alert('❌ Erro', 'Erro ao mapear colunas:\n' + resultado.error, ui.ButtonSet.OK);
+    }
+
+  } catch (error) {
+    SpreadsheetApp.getUi().alert('❌ Erro', error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+/**
+ * Menu: Pintar Colunas por Seção
+ * Deploy 75: Organização da base de dados
+ */
+function menuPintarColunas() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+
+    var response = ui.alert(
+      '🎨 Pintar Colunas por Seção',
+      'Esta função irá:\n\n' +
+      '1. Ler as cores de cada seção (ConfigSecoes)\n' +
+      '2. Para cada campo, pintar sua coluna na aba RNC com a cor da seção\n' +
+      '3. Deixar os headers em negrito\n\n' +
+      '⚠️ IMPORTANTE: Execute "Mapear Colunas" antes!\n\n' +
+      'Deseja continuar?',
+      ui.ButtonSet.YES_NO
+    );
+
+    if (response !== ui.Button.YES) {
+      return;
+    }
+
+    ui.alert('⏳ Processando...', 'Pintando colunas. Aguarde...', ui.ButtonSet.OK);
+
+    var resultado = pintarColunasPorSecao();
+
+    if (resultado.success) {
+      var msg = '✅ Pintura Concluída!\n\n' +
+        '🎨 Colunas pintadas: ' + resultado.colunasPintadas + '\n' +
+        '📋 Seções processadas: ' + resultado.secoes.length + '\n\n' +
+        '💡 Agora a aba RNC está organizada por cores!';
+
+      ui.alert('🎨 Pintura Completa', msg, ui.ButtonSet.OK);
+    } else {
+      ui.alert('❌ Erro', 'Erro ao pintar colunas:\n' + resultado.error, ui.ButtonSet.OK);
+    }
 
   } catch (error) {
     SpreadsheetApp.getUi().alert('❌ Erro', error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);

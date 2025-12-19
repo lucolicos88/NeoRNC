@@ -1686,6 +1686,174 @@ function debugSetores() {
   }
 }
 
+// ===== ORGANIZAÇÃO ABA RNC (Deploy 75) =====
+/**
+ * Mapeia colunas da aba RNC e preenche a coluna OrdemRNC
+ * Deploy 75: Organização da base de dados
+ */
+function mapearColunasRNC() {
+  try {
+    Logger.logInfo('MAPEAR_COLUNAS_RNC_START');
+
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    var rncSheet = ss.getSheetByName(CONFIG.SHEETS.RNC);
+    var configSheet = ss.getSheetByName(CONFIG.SHEETS.CONFIG_CAMPOS);
+
+    if (!rncSheet || !configSheet) {
+      throw new Error('Aba RNC ou ConfigCampos não encontrada');
+    }
+
+    // 1. Ler headers da aba RNC (primeira linha)
+    var lastColumn = rncSheet.getLastColumn();
+    var headers = rncSheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+
+    Logger.logInfo('HEADERS_RNC_LIDOS', { total: headers.length });
+
+    // 2. Ler dados da aba ConfigCampos
+    var configData = configSheet.getDataRange().getValues();
+    var configHeaders = configData[0];
+
+    // Encontrar índices das colunas
+    var campoIdx = configHeaders.indexOf('Campo');
+    var ordemRncIdx = configHeaders.indexOf('OrdemRNC');
+
+    if (campoIdx === -1 || ordemRncIdx === -1) {
+      throw new Error('Colunas "Campo" ou "OrdemRNC" não encontradas em ConfigCampos');
+    }
+
+    var mapeamentos = 0;
+    var naoEncontrados = [];
+
+    // 3. Para cada campo em ConfigCampos, encontrar sua coluna na aba RNC
+    for (var i = 1; i < configData.length; i++) {
+      var nomeCampo = configData[i][campoIdx];
+
+      if (!nomeCampo || nomeCampo.trim() === '') continue;
+
+      // Buscar índice da coluna na aba RNC
+      var colIndex = headers.indexOf(nomeCampo);
+
+      if (colIndex !== -1) {
+        // Coluna encontrada! Salvar índice (1-based)
+        configSheet.getRange(i + 1, ordemRncIdx + 1).setValue(colIndex + 1);
+        mapeamentos++;
+      } else {
+        // Campo não encontrado na aba RNC
+        naoEncontrados.push(nomeCampo);
+        configSheet.getRange(i + 1, ordemRncIdx + 1).setValue('');
+      }
+    }
+
+    var resultado = {
+      success: true,
+      totalHeaders: headers.length,
+      mapeamentos: mapeamentos,
+      naoEncontrados: naoEncontrados
+    };
+
+    Logger.logInfo('MAPEAR_COLUNAS_RNC_COMPLETE', resultado);
+    return resultado;
+
+  } catch (error) {
+    Logger.logError('MAPEAR_COLUNAS_RNC_ERROR', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Pinta colunas da aba RNC com cores baseadas na seção
+ * Deploy 75: Organização da base de dados
+ */
+function pintarColunasPorSecao() {
+  try {
+    Logger.logInfo('PINTAR_COLUNAS_START');
+
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    var rncSheet = ss.getSheetByName(CONFIG.SHEETS.RNC);
+    var configCamposSheet = ss.getSheetByName(CONFIG.SHEETS.CONFIG_CAMPOS);
+    var configSecoesSheet = ss.getSheetByName(CONFIG.SHEETS.CONFIG_SECOES);
+
+    if (!rncSheet || !configCamposSheet || !configSecoesSheet) {
+      throw new Error('Uma ou mais abas não encontradas');
+    }
+
+    // 1. Ler cores das seções
+    var secoesData = configSecoesSheet.getDataRange().getValues();
+    var secoesHeaders = secoesData[0];
+    var secaoNomeIdx = secoesHeaders.indexOf('Seção');
+    var secaoCorIdx = secoesHeaders.indexOf('Cor');
+
+    var coresSecoes = {};
+    for (var i = 1; i < secoesData.length; i++) {
+      var nomeSecao = secoesData[i][secaoNomeIdx];
+      var cor = secoesData[i][secaoCorIdx];
+      if (nomeSecao && cor) {
+        coresSecoes[nomeSecao] = cor;
+      }
+    }
+
+    Logger.logInfo('CORES_SECOES_CARREGADAS', { total: Object.keys(coresSecoes).length });
+
+    // 2. Ler campos com suas seções e colunas OrdemRNC
+    var camposData = configCamposSheet.getDataRange().getValues();
+    var camposHeaders = camposData[0];
+    var campoSecaoIdx = camposHeaders.indexOf('Seção');
+    var campoOrdemRncIdx = camposHeaders.indexOf('OrdemRNC');
+
+    if (campoSecaoIdx === -1 || campoOrdemRncIdx === -1) {
+      throw new Error('Colunas "Seção" ou "OrdemRNC" não encontradas em ConfigCampos');
+    }
+
+    var colunasPintadas = 0;
+    var lastRow = rncSheet.getLastRow();
+
+    // 3. Para cada campo, pintar a coluna correspondente
+    for (var i = 1; i < camposData.length; i++) {
+      var secao = camposData[i][campoSecaoIdx];
+      var ordemRnc = camposData[i][campoOrdemRncIdx];
+
+      if (!secao || !ordemRnc || ordemRnc === '') continue;
+
+      var cor = coresSecoes[secao];
+      if (!cor) {
+        Logger.logWarning('COR_SECAO_NAO_ENCONTRADA', { secao: secao });
+        continue;
+      }
+
+      // Pintar a coluna inteira (header + dados)
+      var colNumber = parseInt(ordemRnc);
+      var range = rncSheet.getRange(1, colNumber, lastRow, 1);
+
+      // Aplicar cor de fundo
+      range.setBackground(cor);
+
+      // Header em negrito
+      rncSheet.getRange(1, colNumber).setFontWeight('bold');
+
+      colunasPintadas++;
+    }
+
+    var resultado = {
+      success: true,
+      colunasPintadas: colunasPintadas,
+      secoes: Object.keys(coresSecoes)
+    };
+
+    Logger.logInfo('PINTAR_COLUNAS_COMPLETE', resultado);
+    return resultado;
+
+  } catch (error) {
+    Logger.logError('PINTAR_COLUNAS_ERROR', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
 // ===== NOTIFICATIONS (Deploy 72.5) =====
 /**
  * Reenvio manual de notificação

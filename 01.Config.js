@@ -20,7 +20,7 @@ const CONFIG = {
   DRIVE_FOLDER_ID: '1Bo5yU-rJtyz-1KVUTIQHlZRv7mFLZ_p6a9TClx0r2w060',
 
   // Versão do Sistema
-  VERSION: 'Sistema RNC v2.2 - Deploy 74.7.3 (FIX: Editar RNC split)',
+  VERSION: 'Sistema RNC v2.2 - Deploy 75 (Organização Aba RNC)',
   BUILD_DATE: '2025-12-19',
 
   // Modo de Operação
