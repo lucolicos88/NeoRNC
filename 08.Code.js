@@ -1361,16 +1361,24 @@ function getSetoresDuplos() {
       var setorAbertura = rnc['Setor onde foi feita abertura\n'] ||
                          rnc['Setor onde foi feita abertura'] ||
                          rnc['Setor de Abertura'];
-      
+
       if (setorAbertura && setorAbertura.trim()) {
-        setoresAberturaSet[setorAbertura.trim()] = true;
+        // Deploy 74.7.2: Separar setores múltiplos
+        var setoresSeparados = splitSetores(setorAbertura);
+        setoresSeparados.forEach(function(s) {
+          setoresAberturaSet[s] = true;
+        });
       }
-      
+
       // Setor de QUALIDADE (não conformidade)
       var setorQualidade = rnc['Setor onde ocorreu a não conformidade'];
-      
+
       if (setorQualidade && setorQualidade.trim()) {
-        setoresQualidadeSet[setorQualidade.trim()] = true;
+        // Deploy 74.7.2: Separar setores múltiplos
+        var setoresSeparados = splitSetores(setorQualidade);
+        setoresSeparados.forEach(function(s) {
+          setoresQualidadeSet[s] = true;
+        });
       }
     });
     
