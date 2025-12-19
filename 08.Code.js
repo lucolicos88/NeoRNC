@@ -1506,6 +1506,64 @@ function addUserRole(email, role) { return PermissionsManager.addUserRole(email,
 function removeUserRole(email, role) { return PermissionsManager.removeUserRole(email, role); }
 function getAllUsers() { return PermissionsManager.getAllUsers(); }
 
+// ===== CACHE MANAGEMENT (Deploy 74.5) =====
+/**
+ * Limpa TODOS os caches do sistema
+ * Use após deploy de alterações que afetam dados em cache
+ * @return {Object} Resultado da limpeza
+ */
+function limparTodosCaches() {
+  try {
+    var result = {
+      rncCache: false,
+      dashboardCache: false,
+      scriptCache: false
+    };
+
+    // 1. Limpar cache de RNCs (getAllRncs)
+    try {
+      RncOperations.invalidateRncCache();
+      result.rncCache = true;
+      Logger.logInfo('CACHE_RNC_CLEARED');
+    } catch (e) {
+      Logger.logWarning('CACHE_RNC_CLEAR_FAILED', { error: e.toString() });
+    }
+
+    // 2. Limpar cache do Dashboard
+    try {
+      Reports.clearDashboardCache();
+      result.dashboardCache = true;
+      Logger.logInfo('CACHE_DASHBOARD_CLEARED');
+    } catch (e) {
+      Logger.logWarning('CACHE_DASHBOARD_CLEAR_FAILED', { error: e.toString() });
+    }
+
+    // 3. Limpar CacheService (cache geral do script)
+    try {
+      var cache = CacheService.getScriptCache();
+      cache.removeAll(['dashboard_data_v1', 'rnc_cache']);
+      result.scriptCache = true;
+      Logger.logInfo('CACHE_SCRIPT_CLEARED');
+    } catch (e) {
+      Logger.logWarning('CACHE_SCRIPT_CLEAR_FAILED', { error: e.toString() });
+    }
+
+    Logger.logInfo('TODOS_CACHES_LIMPOS', result);
+    return {
+      success: true,
+      message: 'Todos os caches foram limpos com sucesso',
+      details: result
+    };
+
+  } catch (error) {
+    Logger.logError('LIMPAR_CACHES_ERROR', error);
+    return {
+      success: false,
+      message: 'Erro ao limpar caches: ' + error.toString()
+    };
+  }
+}
+
 // ===== NOTIFICATIONS (Deploy 72.5) =====
 /**
  * Reenvio manual de notificação

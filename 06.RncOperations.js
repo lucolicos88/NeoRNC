@@ -1563,7 +1563,8 @@ return {
     getRncsBySetor: getRncsBySetor,
     getRncsByUserSetor: getRncsByUserSetor, // Deploy 66
     getSetoresUnicos: getSetoresUnicos,
-    getRncNumbersBySetor: getRncNumbersBySetor
+    getRncNumbersBySetor: getRncNumbersBySetor,
+    invalidateRncCache: invalidateRncCache // Deploy 74.5: Expor cache
 };
 })();
 
