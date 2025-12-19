@@ -1764,8 +1764,8 @@ function mapearColunasRNC() {
 }
 
 /**
- * Pinta colunas da aba RNC com cores baseadas na seção
- * Deploy 75: Organização da base de dados
+ * Pinta headers da aba RNC com cores baseadas na seção do campo
+ * Deploy 75.1: Corrigido para usar cores por seção (sem aba ConfigSecoes)
  */
 function pintarColunasPorSecao() {
   try {
@@ -1774,28 +1774,24 @@ function pintarColunasPorSecao() {
     var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     var rncSheet = ss.getSheetByName(CONFIG.SHEETS.RNC);
     var configCamposSheet = ss.getSheetByName(CONFIG.SHEETS.CONFIG_CAMPOS);
-    var configSecoesSheet = ss.getSheetByName(CONFIG.SHEETS.CONFIG_SECOES);
 
-    if (!rncSheet || !configCamposSheet || !configSecoesSheet) {
-      throw new Error('Uma ou mais abas não encontradas');
+    if (!rncSheet || !configCamposSheet) {
+      throw new Error('Aba RNC ou ConfigCampos não encontrada');
     }
 
-    // 1. Ler cores das seções
-    var secoesData = configSecoesSheet.getDataRange().getValues();
-    var secoesHeaders = secoesData[0];
-    var secaoNomeIdx = secoesHeaders.indexOf('Seção');
-    var secaoCorIdx = secoesHeaders.indexOf('Cor');
+    // 1. Definir cores por seção (hardcoded - cores pastéis)
+    var coresSecoes = {
+      'Abertura': '#E3F2FD',           // Azul claro
+      'Qualidade': '#E8F5E9',          // Verde claro
+      'Liderança': '#FFF3E0',          // Laranja claro
+      'Análise': '#F3E5F5',            // Roxo claro
+      'Ação Imediata': '#FFEBEE',      // Vermelho claro
+      'Ação Corretiva': '#FFF8E1',     // Amarelo claro
+      'Encerramento': '#E0F2F1',       // Teal claro
+      'Geral': '#F5F5F5'               // Cinza claro (padrão)
+    };
 
-    var coresSecoes = {};
-    for (var i = 1; i < secoesData.length; i++) {
-      var nomeSecao = secoesData[i][secaoNomeIdx];
-      var cor = secoesData[i][secaoCorIdx];
-      if (nomeSecao && cor) {
-        coresSecoes[nomeSecao] = cor;
-      }
-    }
-
-    Logger.logInfo('CORES_SECOES_CARREGADAS', { total: Object.keys(coresSecoes).length });
+    Logger.logInfo('CORES_SECOES_DEFINIDAS', { total: Object.keys(coresSecoes).length });
 
     // 2. Ler campos com suas seções e colunas OrdemRNC
     var camposData = configCamposSheet.getDataRange().getValues();
@@ -1807,38 +1803,40 @@ function pintarColunasPorSecao() {
       throw new Error('Colunas "Seção" ou "OrdemRNC" não encontradas em ConfigCampos');
     }
 
-    var colunasPintadas = 0;
-    var lastRow = rncSheet.getLastRow();
+    var headersPintados = 0;
+    var secoesUsadas = {};
 
-    // 3. Para cada campo, pintar a coluna correspondente
+    // 3. Para cada campo, pintar o HEADER da coluna correspondente
     for (var i = 1; i < camposData.length; i++) {
       var secao = camposData[i][campoSecaoIdx];
       var ordemRnc = camposData[i][campoOrdemRncIdx];
 
       if (!secao || !ordemRnc || ordemRnc === '') continue;
 
-      var cor = coresSecoes[secao];
-      if (!cor) {
-        Logger.logWarning('COR_SECAO_NAO_ENCONTRADA', { secao: secao });
-        continue;
+      // Pegar cor da seção (ou usar cor padrão)
+      var cor = coresSecoes[secao] || coresSecoes['Geral'];
+
+      if (!coresSecoes[secao]) {
+        Logger.logWarning('COR_SECAO_NAO_DEFINIDA_USANDO_PADRAO', { secao: secao });
       }
 
-      // Pintar a coluna inteira (header + dados)
+      // Pintar APENAS o header (linha 1)
       var colNumber = parseInt(ordemRnc);
-      var range = rncSheet.getRange(1, colNumber, lastRow, 1);
+      var headerCell = rncSheet.getRange(1, colNumber);
 
-      // Aplicar cor de fundo
-      range.setBackground(cor);
+      // Aplicar cor de fundo e negrito
+      headerCell.setBackground(cor);
+      headerCell.setFontWeight('bold');
+      headerCell.setFontColor('#000000'); // Texto preto para contraste
 
-      // Header em negrito
-      rncSheet.getRange(1, colNumber).setFontWeight('bold');
-
-      colunasPintadas++;
+      secoesUsadas[secao] = (secoesUsadas[secao] || 0) + 1;
+      headersPintados++;
     }
 
     var resultado = {
       success: true,
-      colunasPintadas: colunasPintadas,
+      headersPintados: headersPintados,
+      secoesUsadas: secoesUsadas,
       secoes: Object.keys(coresSecoes)
     };
 

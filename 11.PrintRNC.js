@@ -572,20 +572,25 @@ function menuMapearColunas() {
 }
 
 /**
- * Menu: Pintar Colunas por Seção
- * Deploy 75: Organização da base de dados
+ * Menu: Pintar Headers por Seção
+ * Deploy 75.1: Pinta apenas headers (cabeçalhos) das colunas
  */
 function menuPintarColunas() {
   try {
     var ui = SpreadsheetApp.getUi();
 
     var response = ui.alert(
-      '🎨 Pintar Colunas por Seção',
+      '🎨 Pintar Headers por Seção',
       'Esta função irá:\n\n' +
-      '1. Ler as cores de cada seção (ConfigSecoes)\n' +
-      '2. Para cada campo, pintar sua coluna na aba RNC com a cor da seção\n' +
+      '1. Ler a Seção de cada campo (ConfigCampos)\n' +
+      '2. Pintar o HEADER da coluna na aba RNC com a cor da seção\n' +
       '3. Deixar os headers em negrito\n\n' +
       '⚠️ IMPORTANTE: Execute "Mapear Colunas" antes!\n\n' +
+      '🎨 Cores por seção:\n' +
+      '  • Abertura = Azul claro\n' +
+      '  • Qualidade = Verde claro\n' +
+      '  • Liderança = Laranja claro\n' +
+      '  • Análise = Roxo claro\n\n' +
       'Deseja continuar?',
       ui.ButtonSet.YES_NO
     );
@@ -594,19 +599,25 @@ function menuPintarColunas() {
       return;
     }
 
-    ui.alert('⏳ Processando...', 'Pintando colunas. Aguarde...', ui.ButtonSet.OK);
+    ui.alert('⏳ Processando...', 'Pintando headers. Aguarde...', ui.ButtonSet.OK);
 
     var resultado = pintarColunasPorSecao();
 
     if (resultado.success) {
       var msg = '✅ Pintura Concluída!\n\n' +
-        '🎨 Colunas pintadas: ' + resultado.colunasPintadas + '\n' +
-        '📋 Seções processadas: ' + resultado.secoes.length + '\n\n' +
-        '💡 Agora a aba RNC está organizada por cores!';
+        '🎨 Headers pintados: ' + resultado.headersPintados + '\n' +
+        '📋 Seções usadas:\n';
+
+      // Mostrar contagem por seção
+      for (var secao in resultado.secoesUsadas) {
+        msg += '  • ' + secao + ': ' + resultado.secoesUsadas[secao] + ' campos\n';
+      }
+
+      msg += '\n💡 Agora os headers da aba RNC estão coloridos por seção!';
 
       ui.alert('🎨 Pintura Completa', msg, ui.ButtonSet.OK);
     } else {
-      ui.alert('❌ Erro', 'Erro ao pintar colunas:\n' + resultado.error, ui.ButtonSet.OK);
+      ui.alert('❌ Erro', 'Erro ao pintar headers:\n' + resultado.error, ui.ButtonSet.OK);
     }
 
   } catch (error) {
