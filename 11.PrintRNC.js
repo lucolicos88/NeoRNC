@@ -318,7 +318,8 @@ var PrintManager = (function() {
         // Diagnóstico
         .addSubMenu(ui.createMenu('🔍 Diagnóstico')
           .addItem('✅ Verificar Sistema', 'menuVerificarSistema')
-          .addItem('📊 Mostrar Informações', 'menuMostrarInfo'))
+          .addItem('📊 Mostrar Informações', 'menuMostrarInfo')
+          .addItem('🔍 Debug Setores', 'menuDebugSetores'))
 
         .addToUi();
 
@@ -476,6 +477,42 @@ function menuMostrarInfo() {
       '• Timezone: ' + Session.getScriptTimeZone();
 
     ui.alert('📊 Informações do Sistema', info, ui.ButtonSet.OK);
+
+  } catch (error) {
+    SpreadsheetApp.getUi().alert('❌ Erro', error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+/**
+ * Menu: Debug Setores
+ * Deploy 74.7: Função para debugar separação de setores
+ */
+function menuDebugSetores() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+
+    // Mostrar loading
+    ui.alert('🔍 Executando Debug...', 'Aguarde enquanto coletamos informações sobre os setores...', ui.ButtonSet.OK);
+
+    var resultado = debugSetores();
+
+    if (resultado.error) {
+      ui.alert('❌ Erro no Debug', resultado.error, ui.ButtonSet.OK);
+      return;
+    }
+
+    // Montar mensagem com resultado
+    var msg = '🔍 Debug de Setores:\n\n' +
+      '📋 Total de RNCs: ' + resultado.totalRncs + '\n' +
+      '📊 Setores Únicos (' + resultado.setoresUnicos.length + '):\n' +
+      '   ' + resultado.setoresUnicos.join(', ') + '\n\n' +
+      '🧪 Teste de Split:\n' +
+      '   "Laboratório; Conferência Farmacêutica" → ' + resultado.testeSplit.exemplo1.length + ' setores\n' +
+      '   "Laboratório, Conferência Farmacêutica" → ' + resultado.testeSplit.exemplo2.length + ' setores\n' +
+      '   "TI" → ' + resultado.testeSplit.exemplo3.length + ' setor\n\n' +
+      '💡 Veja a aba Logs para mais detalhes';
+
+    ui.alert('🔍 Debug de Setores', msg, ui.ButtonSet.OK);
 
   } catch (error) {
     SpreadsheetApp.getUi().alert('❌ Erro', error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);

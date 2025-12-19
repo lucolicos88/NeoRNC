@@ -1617,6 +1617,54 @@ function limparTodosCaches() {
   }
 }
 
+// ===== DEBUG (Deploy 74.7) =====
+/**
+ * Função de teste para verificar setores
+ * Deploy 74.7: Debug para verificar se splitSetores está funcionando
+ */
+function debugSetores() {
+  try {
+    var rncs = RncOperations.getAllRncs();
+    var resultado = {
+      totalRncs: rncs.length,
+      exemploSetores: [],
+      setoresUnicos: getSetoresUnicos(),
+      testeSplit: {}
+    };
+
+    // Pegar primeiro 5 RNCs com setores
+    var count = 0;
+    for (var i = 0; i < rncs.length && count < 5; i++) {
+      var setor = rncs[i]['Setor onde ocorreu a não conformidade'] ||
+                 rncs[i]['Setor onde foi feita abertura\n'] ||
+                 rncs[i]['Setor onde foi feita abertura'];
+
+      if (setor) {
+        resultado.exemploSetores.push({
+          rncNumero: rncs[i]['Nº RNC'],
+          setorOriginal: setor,
+          setorSeparado: splitSetores(setor)
+        });
+        count++;
+      }
+    }
+
+    // Testar split de exemplo
+    resultado.testeSplit = {
+      exemplo1: splitSetores('Laboratório; Conferência Farmacêutica'),
+      exemplo2: splitSetores('Laboratório, Conferência Farmacêutica'),
+      exemplo3: splitSetores('TI')
+    };
+
+    Logger.logInfo('DEBUG_SETORES', resultado);
+    return resultado;
+
+  } catch (error) {
+    Logger.logError('DEBUG_SETORES_ERROR', error);
+    return { error: error.toString() };
+  }
+}
+
 // ===== NOTIFICATIONS (Deploy 72.5) =====
 /**
  * Reenvio manual de notificação
