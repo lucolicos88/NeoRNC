@@ -2494,8 +2494,34 @@ textarea.form-control,
                         </button>
                     </div>
                 </div>
+
+                <!-- Deploy 74.5: Gerenciamento de Cache -->
+                <div class="config-section" style="margin-top: 2rem;">
+                    <div class="config-header">
+                        <div class="config-title">
+                            <span>🗑️</span>
+                            <span>Gerenciamento de Cache</span>
+                        </div>
+                    </div>
+
+                    <div style="padding: 1.5rem;">
+                        <div class="alert alert-info" style="margin-bottom: 1rem;">
+                            <strong>ℹ️ Sobre o Cache:</strong>
+                            <p style="margin: 0.5rem 0 0 0;">O sistema usa cache para melhorar a performance. Em algumas situações (após atualizações ou problemas de dados), pode ser necessário limpar o cache para ver as informações mais recentes.</p>
+                        </div>
+
+                        <div class="text-center">
+                            <button class="btn btn-warning" id="btnLimparCache" style="min-width: 250px;">
+                                <span id="btnLimparCacheIcon">🗑️</span>
+                                <span id="btnLimparCacheText">Limpar Todo o Cache do Sistema</span>
+                            </button>
+                        </div>
+
+                        <div id="cacheResultMessage" style="margin-top: 1rem; text-align: center;"></div>
+                    </div>
+                </div>
             </div>
-            
+
             <!-- ABA LISTAS -->
             <div class="config-tab-content" id="config-tab-listas">
                 <div class="config-section">
@@ -9978,7 +10004,96 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
             
             // === CONFIGURAÇÕES (Deploy 72.3) ===
             document.getElementById('saveSystemConfig').addEventListener('click', saveSystemConfig);
-            
+
+            // Deploy 74.5: Botão de limpar cache
+            document.getElementById('btnLimparCache').addEventListener('click', async function() {
+                try {
+                    const btn = this;
+                    const icon = document.getElementById('btnLimparCacheIcon');
+                    const text = document.getElementById('btnLimparCacheText');
+                    const resultDiv = document.getElementById('cacheResultMessage');
+
+                    // Confirmar ação
+                    if (!confirm('Tem certeza que deseja limpar todo o cache do sistema?\n\nIsso vai forçar o recarregamento de todos os dados.')) {
+                        return;
+                    }
+
+                    // Estado de loading
+                    btn.disabled = true;
+                    icon.textContent = '⏳';
+                    text.textContent = 'Limpando cache...';
+                    resultDiv.innerHTML = '';
+
+                    debugLog('info', '🗑️ Limpando cache do sistema...');
+
+                    // Chamar função do backend
+                    const result = await apiCall('limparTodosCaches');
+
+                    if (result && result.success) {
+                        // Sucesso
+                        icon.textContent = '✅';
+                        text.textContent = 'Cache Limpo!';
+
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <strong>✅ Cache limpo com sucesso!</strong>
+                                <p style="margin: 0.5rem 0 0 0;">
+                                    • Cache de RNCs: ${result.details.rncCache ? '✅' : '❌'}<br>
+                                    • Cache do Dashboard: ${result.details.dashboardCache ? '✅' : '❌'}<br>
+                                    • Cache do Script: ${result.details.scriptCache ? '✅' : '❌'}
+                                </p>
+                                <p style="margin-top: 0.5rem; font-weight: bold;">Recarregue a página para ver os dados atualizados.</p>
+                            </div>
+                        `;
+
+                        debugLog('success', '✅ Cache limpo com sucesso', result.details);
+
+                        // Resetar botão após 3 segundos
+                        setTimeout(() => {
+                            icon.textContent = '🗑️';
+                            text.textContent = 'Limpar Todo o Cache do Sistema';
+                            btn.disabled = false;
+                        }, 3000);
+
+                    } else {
+                        // Erro
+                        icon.textContent = '❌';
+                        text.textContent = 'Erro ao Limpar Cache';
+
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                <strong>❌ Erro ao limpar cache</strong>
+                                <p style="margin: 0.5rem 0 0 0;">${result ? result.message : 'Erro desconhecido'}</p>
+                            </div>
+                        `;
+
+                        debugLog('error', '❌ Erro ao limpar cache', result);
+
+                        // Resetar botão após 3 segundos
+                        setTimeout(() => {
+                            icon.textContent = '🗑️';
+                            text.textContent = 'Limpar Todo o Cache do Sistema';
+                            btn.disabled = false;
+                        }, 3000);
+                    }
+
+                } catch (error) {
+                    debugLog('error', '❌ Erro ao limpar cache', { error: error.message });
+
+                    document.getElementById('cacheResultMessage').innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>❌ Erro ao limpar cache</strong>
+                            <p style="margin: 0.5rem 0 0 0;">${error.message}</p>
+                        </div>
+                    `;
+
+                    // Resetar botão
+                    document.getElementById('btnLimparCacheIcon').textContent = '🗑️';
+                    document.getElementById('btnLimparCacheText').textContent = 'Limpar Todo o Cache do Sistema';
+                    this.disabled = false;
+                }
+            });
+
             // Debug toggle
             document.getElementById('debugToggle').addEventListener('click', function() {
                 const panel = document.getElementById('debugPanel');
