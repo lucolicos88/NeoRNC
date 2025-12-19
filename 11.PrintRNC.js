@@ -297,17 +297,35 @@ var PrintManager = (function() {
   }
 }
   
+  /**
+   * Deploy 74.5.2: Menu RNC melhorado
+   * Cria menu completo com opções de impressão, manutenção e diagnóstico
+   */
   function createPrintMenu() {
     try {
       var ui = SpreadsheetApp.getUi();
-      ui.createMenu('🖨️ Impressão RNC')
+
+      ui.createMenu('📋 RNC')
+        // Impressão
         .addItem('🖨️ Imprimir RNC...', 'printCurrentRncFromSheet')
+        .addSeparator()
+
+        // Manutenção
+        .addSubMenu(ui.createMenu('🔧 Manutenção')
+          .addItem('🗑️ Limpar Cache do Sistema', 'menuLimparCache')
+          .addItem('📋 Limpar Aba de Logs', 'menuLimparLogs'))
+
+        // Diagnóstico
+        .addSubMenu(ui.createMenu('🔍 Diagnóstico')
+          .addItem('✅ Verificar Sistema', 'menuVerificarSistema')
+          .addItem('📊 Mostrar Informações', 'menuMostrarInfo'))
+
         .addToUi();
-        
-      Logger.logInfo('PRINT_MENU_CREATED');
-      
+
+      Logger.logInfo('RNC_MENU_CREATED');
+
     } catch (error) {
-      Logger.logError('CREATE_PRINT_MENU_ERROR', error);
+      Logger.logError('CREATE_MENU_ERROR', error);
     }
   }
   
@@ -335,7 +353,134 @@ function onOpen(e) {
   }
 }
 
+// ===== FUNÇÕES DO MENU RNC (Deploy 74.5.2) =====
 
+/**
+ * Menu: Limpar Cache do Sistema
+ */
+function menuLimparCache() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+    var response = ui.alert(
+      '🗑️ Limpar Cache',
+      'Tem certeza que deseja limpar todo o cache do sistema?\n\nIsso vai forçar o recarregamento de todos os dados.',
+      ui.ButtonSet.YES_NO
+    );
+
+    if (response === ui.Button.YES) {
+      var result = limparTodosCaches();
+
+      if (result.success) {
+        ui.alert(
+          '✅ Sucesso',
+          'Cache limpo com sucesso!\n\n' +
+          '• Cache de RNCs: ' + (result.details.rncCache ? '✅' : '❌') + '\n' +
+          '• Cache do Dashboard: ' + (result.details.dashboardCache ? '✅' : '❌') + '\n' +
+          '• Cache do Script: ' + (result.details.scriptCache ? '✅' : '❌'),
+          ui.ButtonSet.OK
+        );
+      } else {
+        ui.alert('❌ Erro', 'Erro ao limpar cache: ' + result.message, ui.ButtonSet.OK);
+      }
+    }
+  } catch (error) {
+    SpreadsheetApp.getUi().alert('❌ Erro', error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+/**
+ * Menu: Limpar Aba de Logs
+ */
+function menuLimparLogs() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+    var response = ui.alert(
+      '⚠️ ATENÇÃO',
+      'Você está prestes a DELETAR TODOS OS LOGS da planilha!\n\nEsta ação NÃO PODE SER DESFEITA!\n\nDeseja continuar?',
+      ui.ButtonSet.YES_NO
+    );
+
+    if (response === ui.Button.YES) {
+      // Segunda confirmação
+      var response2 = ui.alert(
+        '⚠️ Confirmação Final',
+        'Tem certeza ABSOLUTA?\n\nTodos os logs serão permanentemente removidos!',
+        ui.ButtonSet.YES_NO
+      );
+
+      if (response2 === ui.Button.YES) {
+        var result = limparAbaLogs();
+
+        if (result.success) {
+          ui.alert(
+            '✅ Sucesso',
+            'Aba de Logs limpa com sucesso!\n\n' +
+            result.logsRemovidos + ' registro(s) foram removidos.',
+            ui.ButtonSet.OK
+          );
+        } else {
+          ui.alert('❌ Erro', 'Erro ao limpar logs: ' + result.message, ui.ButtonSet.OK);
+        }
+      }
+    }
+  } catch (error) {
+    SpreadsheetApp.getUi().alert('❌ Erro', error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+/**
+ * Menu: Verificar Sistema
+ */
+function menuVerificarSistema() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+
+    // Verificar componentes
+    var checks = {
+      config: typeof CONFIG !== 'undefined',
+      database: typeof Database !== 'undefined',
+      logger: typeof Logger !== 'undefined',
+      rncOps: typeof RncOperations !== 'undefined',
+      reports: typeof Reports !== 'undefined'
+    };
+
+    var allOk = checks.config && checks.database && checks.logger && checks.rncOps && checks.reports;
+
+    var message = '🔍 Verificação do Sistema:\n\n' +
+      '• CONFIG: ' + (checks.config ? '✅' : '❌') + '\n' +
+      '• Database: ' + (checks.database ? '✅' : '❌') + '\n' +
+      '• Logger: ' + (checks.logger ? '✅' : '❌') + '\n' +
+      '• RncOperations: ' + (checks.rncOps ? '✅' : '❌') + '\n' +
+      '• Reports: ' + (checks.reports ? '✅' : '❌') + '\n\n' +
+      (allOk ? '✅ Sistema funcionando normalmente' : '❌ Alguns componentes apresentam problemas');
+
+    ui.alert('🔍 Diagnóstico', message, ui.ButtonSet.OK);
+
+  } catch (error) {
+    SpreadsheetApp.getUi().alert('❌ Erro', error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+/**
+ * Menu: Mostrar Informações
+ */
+function menuMostrarInfo() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+
+    var info = '📊 Informações do Sistema:\n\n' +
+      '• Versão: ' + CONFIG.VERSION + '\n' +
+      '• Data Build: ' + CONFIG.BUILD_DATE + '\n' +
+      '• Planilha ID: ' + CONFIG.SPREADSHEET_ID.substring(0, 20) + '...\n' +
+      '• Usuário: ' + Session.getActiveUser().getEmail() + '\n' +
+      '• Timezone: ' + Session.getScriptTimeZone();
+
+    ui.alert('📊 Informações do Sistema', info, ui.ButtonSet.OK);
+
+  } catch (error) {
+    SpreadsheetApp.getUi().alert('❌ Erro', error.toString(), SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
 
 /**
  * Configura margens e layout da aba Print

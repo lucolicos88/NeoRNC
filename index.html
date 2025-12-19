@@ -2180,6 +2180,41 @@ textarea.form-control,
             }
         }
 
+        /* Deploy 74.5.2: Rodapé */
+        .app-footer {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 1rem 2rem;
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .app-footer .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .app-footer .footer-version {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        @media (max-width: 768px) {
+            .app-footer .footer-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -2520,6 +2555,32 @@ textarea.form-control,
                         <div id="cacheResultMessage" style="margin-top: 1rem; text-align: center;"></div>
                     </div>
                 </div>
+
+                <!-- Deploy 74.5.2: Gerenciamento de Logs -->
+                <div class="config-section" style="margin-top: 2rem;">
+                    <div class="config-header">
+                        <div class="config-title">
+                            <span>📋</span>
+                            <span>Gerenciamento de Logs</span>
+                        </div>
+                    </div>
+
+                    <div style="padding: 1.5rem;">
+                        <div class="alert alert-warning" style="margin-bottom: 1rem;">
+                            <strong>⚠️ Atenção:</strong>
+                            <p style="margin: 0.5rem 0 0 0;">Esta ação irá remover TODOS os logs da planilha, mantendo apenas o cabeçalho. Esta operação não pode ser desfeita!</p>
+                        </div>
+
+                        <div class="text-center">
+                            <button class="btn btn-danger" id="btnLimparLogs" style="min-width: 250px;">
+                                <span id="btnLimparLogsIcon">🗑️</span>
+                                <span id="btnLimparLogsText">Limpar Aba de Logs</span>
+                            </button>
+                        </div>
+
+                        <div id="logsResultMessage" style="margin-top: 1rem; text-align: center;"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- ABA LISTAS -->
@@ -2633,6 +2694,14 @@ textarea.form-control,
             <div id="loadingMessage">Carregando...</div>
         </div>
     </div>
+
+    <!-- Deploy 74.5.2: Rodapé -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <span>Sistema RNC Neoformula - Elaborado por: TI Neoformula</span>
+            <span class="footer-version" id="footerVersion">Versão...</span>
+        </div>
+    </footer>
 
     <!-- Debug Panel -->
     <button class="debug-toggle" id="debugToggle" title="Debug">🐛</button>
@@ -3354,6 +3423,11 @@ if (typeof appContext !== 'undefined' && appContext && appContext.email) {
     }
 }
     document.getElementById('userRole').textContent = appContext.role || 'Usuario';
+
+    // Deploy 74.5.2: Atualizar versão no rodapé
+    if (appContext.version) {
+        document.getElementById('footerVersion').textContent = appContext.version;
+    }
 
     // Deploy 68: Mostrar abas apenas para admins
     if (appContext.canConfig) {
@@ -10090,6 +10164,97 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
                     // Resetar botão
                     document.getElementById('btnLimparCacheIcon').textContent = '🗑️';
                     document.getElementById('btnLimparCacheText').textContent = 'Limpar Todo o Cache do Sistema';
+                    this.disabled = false;
+                }
+            });
+
+            // Deploy 74.5.2: Botão de limpar logs
+            document.getElementById('btnLimparLogs').addEventListener('click', async function() {
+                try {
+                    const btn = this;
+                    const icon = document.getElementById('btnLimparLogsIcon');
+                    const text = document.getElementById('btnLimparLogsText');
+                    const resultDiv = document.getElementById('logsResultMessage');
+
+                    // Confirmar ação com aviso forte
+                    if (!confirm('⚠️ ATENÇÃO! ⚠️\n\nVocê está prestes a DELETAR TODOS OS LOGS da planilha!\n\nEsta ação NÃO PODE SER DESFEITA!\n\nDeseja continuar?')) {
+                        return;
+                    }
+
+                    // Segunda confirmação
+                    if (!confirm('Tem certeza ABSOLUTA?\n\nTodos os logs serão permanentemente removidos!')) {
+                        return;
+                    }
+
+                    // Estado de loading
+                    btn.disabled = true;
+                    icon.textContent = '⏳';
+                    text.textContent = 'Limpando logs...';
+                    resultDiv.innerHTML = '';
+
+                    debugLog('info', '🗑️ Limpando aba de logs...');
+
+                    // Chamar função do backend
+                    const result = await apiCall('limparAbaLogs');
+
+                    if (result && result.success) {
+                        // Sucesso
+                        icon.textContent = '✅';
+                        text.textContent = 'Logs Limpos!';
+
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <strong>✅ Logs limpos com sucesso!</strong>
+                                <p style="margin: 0.5rem 0 0 0;">
+                                    ${result.logsRemovidos} registro(s) foram removidos da planilha.
+                                </p>
+                            </div>
+                        `;
+
+                        debugLog('success', '✅ Logs limpos', { logsRemovidos: result.logsRemovidos });
+
+                        // Resetar botão após 3 segundos
+                        setTimeout(() => {
+                            icon.textContent = '🗑️';
+                            text.textContent = 'Limpar Aba de Logs';
+                            btn.disabled = false;
+                        }, 3000);
+
+                    } else {
+                        // Erro
+                        icon.textContent = '❌';
+                        text.textContent = 'Erro ao Limpar Logs';
+
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                <strong>❌ Erro ao limpar logs</strong>
+                                <p style="margin: 0.5rem 0 0 0;">${result ? result.message : 'Erro desconhecido'}</p>
+                            </div>
+                        `;
+
+                        debugLog('error', '❌ Erro ao limpar logs', result);
+
+                        // Resetar botão após 3 segundos
+                        setTimeout(() => {
+                            icon.textContent = '🗑️';
+                            text.textContent = 'Limpar Aba de Logs';
+                            btn.disabled = false;
+                        }, 3000);
+                    }
+
+                } catch (error) {
+                    debugLog('error', '❌ Erro ao limpar logs', { error: error.message });
+
+                    document.getElementById('logsResultMessage').innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>❌ Erro ao limpar logs</strong>
+                            <p style="margin: 0.5rem 0 0 0;">${error.message}</p>
+                        </div>
+                    `;
+
+                    // Resetar botão
+                    document.getElementById('btnLimparLogsIcon').textContent = '🗑️';
+                    document.getElementById('btnLimparLogsText').textContent = 'Limpar Aba de Logs';
                     this.disabled = false;
                 }
             });

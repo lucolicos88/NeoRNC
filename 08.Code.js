@@ -1508,6 +1508,57 @@ function getAllUsers() { return PermissionsManager.getAllUsers(); }
 
 // ===== CACHE MANAGEMENT (Deploy 74.5) =====
 /**
+ * Limpa a aba de Logs da planilha
+ * Remove todos os logs mantendo apenas o cabeçalho
+ * @return {Object} Resultado da operação
+ */
+function limparAbaLogs() {
+  try {
+    var logSheet = Database.getSheet(CONFIG.SHEETS.LOGS);
+
+    if (!logSheet) {
+      return {
+        success: false,
+        message: 'Aba de Logs não encontrada'
+      };
+    }
+
+    var lastRow = logSheet.getLastRow();
+
+    // Se só tem cabeçalho ou está vazia, não precisa limpar
+    if (lastRow <= 1) {
+      return {
+        success: true,
+        message: 'Aba de Logs já está vazia',
+        logsRemovidos: 0
+      };
+    }
+
+    // Limpar todas as linhas exceto o cabeçalho
+    var logsRemovidos = lastRow - 1;
+    logSheet.deleteRows(2, logsRemovidos);
+
+    Logger.logInfo('LOGS_LIMPOS', {
+      logsRemovidos: logsRemovidos,
+      usuario: Session.getActiveUser().getEmail()
+    });
+
+    return {
+      success: true,
+      message: 'Aba de Logs limpa com sucesso',
+      logsRemovidos: logsRemovidos
+    };
+
+  } catch (error) {
+    Logger.logError('LIMPAR_LOGS_ERROR', error);
+    return {
+      success: false,
+      message: 'Erro ao limpar logs: ' + error.toString()
+    };
+  }
+}
+
+/**
  * Limpa TODOS os caches do sistema
  * Use após deploy de alterações que afetam dados em cache
  * @return {Object} Resultado da limpeza
