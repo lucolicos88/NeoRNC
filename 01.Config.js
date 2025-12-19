@@ -20,7 +20,7 @@ const CONFIG = {
   DRIVE_FOLDER_ID: '1Bo5yU-rJtyz-1KVUTIQHlZRv7mFLZ_p6a9TClx0r2w060',
 
   // Versão do Sistema
-  VERSION: 'Sistema RNC v2.2 - Deploy 72.8',
+  VERSION: 'Sistema RNC v2.2 - Deploy 73 (Fase 2.1: Cache)',
   BUILD_DATE: '2025-12-18',
 
   // Modo de Operação
