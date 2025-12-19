@@ -557,74 +557,72 @@ function getRncByNumber(rncNumber) {
         rnc[field] = '';
       }
     });
-    
-    // ✅ FASE 2.2: Serializar datas (otimizado - usa lista de campos conhecidos)
-    convertDatesToISO(rnc);
-    
-    // Log para debug
-    Logger.logDebug('getRncByNumber_FIELDS', {
-      rncNumber: rncNumber,
-      hasFilial: rnc['Filial de Origem'] !== '',
-      filialValue: rnc['Filial de Origem'],
-      totalFields: Object.keys(rnc).length
-    });
-    
-    // Buscar anexos
+
     // === FORMATAÇÃO DE DATAS PARA INTERFACE - Deploy 37 ===
-var dateFields = [
-  'Data de Abertura',
-  'Data',
-  'Data da Análise',
-  'Data limite para execução',
-  'Data da conclusão da Ação',
-  'Data Criação',
-  'Última Edição'
-];
+    // ✅ FASE 2.5: Converte datas para DD/MM/YYYY para exibição
+    var dateFields = [
+      'Data de Abertura',
+      'Data',
+      'Data da Análise',
+      'Data limite para execução',
+      'Data da conclusão da Ação',
+      'Data Criação',
+      'Última Edição'
+    ];
 
-// ✅ FASE 2.5: Consolidar logging (10-20% ganho - 1 log vs N logs)
-var formattedDates = {};
+    // ✅ FASE 2.5: Consolidar logging (10-20% ganho - 1 log vs N logs)
+    var formattedDates = {};
 
-dateFields.forEach(function(fieldName) {
-  if (rnc[fieldName]) {
-    // Se for objeto Date, converter para DD/MM/YYYY
-    if (rnc[fieldName] instanceof Date) {
-      rnc[fieldName] = formatDateBR(rnc[fieldName]);
-      formattedDates[fieldName] = rnc[fieldName];
+    dateFields.forEach(function(fieldName) {
+      if (rnc[fieldName]) {
+        // Se for objeto Date, converter para DD/MM/YYYY
+        if (rnc[fieldName] instanceof Date) {
+          rnc[fieldName] = formatDateBR(rnc[fieldName]);
+          formattedDates[fieldName] = rnc[fieldName];
+        }
+        // Se for string ISO ou YYYY-MM-DD, converter
+        else if (typeof rnc[fieldName] === 'string') {
+          var converted = formatDateBR(rnc[fieldName]);
+          if (converted) {
+            rnc[fieldName] = converted;
+            formattedDates[fieldName] = converted;
+          }
+        }
+      }
+    });
+
+    // Log consolidado - 1 vez ao invés de N
+    if (Object.keys(formattedDates).length > 0) {
+      Logger.logDebug('getRncByNumber_DATES_FORMATTED', {
+        rncNumber: rncNumber,
+        formattedFields: formattedDates
+      });
     }
-    // Se for string ISO ou YYYY-MM-DD, converter
-    else if (typeof rnc[fieldName] === 'string') {
-      var converted = formatDateBR(rnc[fieldName]);
-      if (converted) {
-        rnc[fieldName] = converted;
-        formattedDates[fieldName] = converted;
+
+    // ✅ Tratar nulls/undefined
+    for (var key in rnc) {
+      if (rnc[key] === null || rnc[key] === undefined) {
+        rnc[key] = '';
       }
     }
-  }
-});
 
-// Log consolidado - 1 vez ao invés de N
-if (Object.keys(formattedDates).length > 0) {
-  Logger.logDebug('getRncByNumber_DATES_FORMATTED', {
-    rncNumber: rncNumber,
-    formattedFields: formattedDates
-  });
-}
+    // === NORMALIZAÇÃO: CONVERTER NÚMEROS EM STRINGS PARA SELECTS ===
+    var selectFields = [
+      'Filial de Origem',
+      'Código do Cliente',
+      'Telefone do Cliente'
+    ];
+    selectFields.forEach(function(fieldName) {
+      if (rnc[fieldName] !== undefined && rnc[fieldName] !== null && typeof rnc[fieldName] === 'number') {
+        rnc[fieldName] = String(rnc[fieldName]);
+      }
+    });
 
-// === NORMALIZAÇÃO: CONVERTER NÚMEROS EM STRINGS PARA SELECTS ===
-var selectFields = [
-  'Filial de Origem',
-  'Código do Cliente',
-  'Telefone do Cliente'
-];
-selectFields.forEach(function(fieldName) {
-  if (rnc[fieldName] !== undefined && rnc[fieldName] !== null && typeof rnc[fieldName] === 'number') {
-    rnc[fieldName] = String(rnc[fieldName]);
-  }
-});
-// Buscar anexos
-rnc._anexos = FileManager.getAnexosRnc(rncNumber);
-// ✅ CORRIGIDO Deploy 31: Apenas UM return (eram 3 antes - Problema #1)
-return rnc;
+    // Buscar anexos
+    rnc._anexos = FileManager.getAnexosRnc(rncNumber);
+
+    // ✅ CORRIGIDO Deploy 31: Apenas UM return (eram 3 antes - Problema #1)
+    return rnc;
   } catch (error) {
     Logger.logError('getRncByNumber', error, { rncNumber: rncNumber });
     return null;
