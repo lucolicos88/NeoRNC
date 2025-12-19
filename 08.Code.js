@@ -1177,9 +1177,22 @@ function getRncNumbersBySetor(tipoSetor, setor) {
     var filtered = [];
     allRncs.forEach(function(rnc) {
       var rncSetor = rnc[campoSetor] || rnc[campoSetor.replace('\n', '')] || '';
-      
-      if (rncSetor.trim() === setor.trim()) {
-        filtered.push(rnc['Nº RNC']);
+
+      // Deploy 74.7.2: Usar splitSetores para verificar se o setor está contido
+      if (rncSetor) {
+        var setoresSeparados = splitSetores(rncSetor);
+        var encontrado = false;
+
+        for (var i = 0; i < setoresSeparados.length; i++) {
+          if (setoresSeparados[i] === setor.trim()) {
+            encontrado = true;
+            break;
+          }
+        }
+
+        if (encontrado) {
+          filtered.push(rnc['Nº RNC']);
+        }
       }
     });
     
