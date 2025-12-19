@@ -1069,9 +1069,9 @@ function getHistoricoRnc(rncNumber) {
 //function getRncNumbersBySetor(setor) { return RncOperations.getRncNumbersBySetor(setor); }
 
 /**
- * Helper: Separa setores que estão salvos com vírgula
- * Deploy 74.5: Função auxiliar para split de setores múltiplos
- * @param {string} setorString - String com setores separados por vírgula
+ * Helper: Separa setores que estão salvos com vírgula ou ponto-e-vírgula
+ * Deploy 74.7: Aceita tanto vírgula (,) quanto ponto-e-vírgula (;)
+ * @param {string} setorString - String com setores separados por vírgula ou ponto-e-vírgula
  * @return {Array} Array de setores individuais
  */
 function splitSetores(setorString) {
@@ -1079,7 +1079,9 @@ function splitSetores(setorString) {
     return [];
   }
 
+  // Substituir ponto-e-vírgula por vírgula e depois fazer split
   return setorString
+    .replace(/;/g, ',')  // Substitui ; por ,
     .split(',')
     .map(function(s) { return s.trim(); })
     .filter(function(s) { return s !== ''; });

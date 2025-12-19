@@ -10087,8 +10087,13 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
                     const text = document.getElementById('btnLimparCacheText');
                     const resultDiv = document.getElementById('cacheResultMessage');
 
-                    // Confirmar ação
-                    if (!confirm('Tem certeza que deseja limpar todo o cache do sistema?\n\nIsso vai forçar o recarregamento de todos os dados.')) {
+                    // Deploy 74.7: Usar modal customizado
+                    const confirmed = await showConfirmModal(
+                        '🗑️ Limpar Cache',
+                        'Tem certeza que deseja limpar todo o cache do sistema?\n\nIsso vai forçar o recarregamento de todos os dados.'
+                    );
+
+                    if (!confirmed) {
                         return;
                     }
 
@@ -10176,13 +10181,23 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
                     const text = document.getElementById('btnLimparLogsText');
                     const resultDiv = document.getElementById('logsResultMessage');
 
-                    // Confirmar ação com aviso forte
-                    if (!confirm('⚠️ ATENÇÃO! ⚠️\n\nVocê está prestes a DELETAR TODOS OS LOGS da planilha!\n\nEsta ação NÃO PODE SER DESFEITA!\n\nDeseja continuar?')) {
+                    // Deploy 74.7: Usar modal customizado - primeira confirmação
+                    const confirmed1 = await showConfirmModal(
+                        '⚠️ ATENÇÃO',
+                        'Você está prestes a DELETAR TODOS OS LOGS da planilha!\n\nEsta ação NÃO PODE SER DESFEITA!\n\nDeseja continuar?'
+                    );
+
+                    if (!confirmed1) {
                         return;
                     }
 
                     // Segunda confirmação
-                    if (!confirm('Tem certeza ABSOLUTA?\n\nTodos os logs serão permanentemente removidos!')) {
+                    const confirmed2 = await showConfirmModal(
+                        '⚠️ Confirmação Final',
+                        'Tem certeza ABSOLUTA?\n\nTodos os logs serão permanentemente removidos!'
+                    );
+
+                    if (!confirmed2) {
                         return;
                     }
 
