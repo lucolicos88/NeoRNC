@@ -20,7 +20,7 @@ const CONFIG = {
   DRIVE_FOLDER_ID: '1Bo5yU-rJtyz-1KVUTIQHlZRv7mFLZ_p6a9TClx0r2w060',
 
   // Versão do Sistema
-  VERSION: 'Sistema RNC v2.2 - Deploy 77 (Sistema de Backup Completo)',
+  VERSION: 'Sistema RNC v2.2 - Deploy 77.1 (Manual + Sistema de Backup)',
   BUILD_DATE: '2025-12-22',
 
   // Modo de Operação
