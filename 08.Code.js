@@ -2652,13 +2652,21 @@ var BackupManager = (function() {
         };
       }
 
+      // Limpar o ID (remover espaços e quebras de linha)
+      folderId = folderId.trim();
+
       // Verificar se a pasta existe
       try {
-        DriveApp.getFolderById(folderId);
+        var folder = DriveApp.getFolderById(folderId);
+        Logger.logInfo('FOLDER_VALIDATION_SUCCESS', {
+          folderId: folderId,
+          folderName: folder.getName()
+        });
       } catch (e) {
+        Logger.logError('FOLDER_VALIDATION_ERROR', e, { folderId: folderId });
         return {
           success: false,
-          error: 'Pasta não encontrada ou sem permissão de acesso'
+          error: 'Pasta não encontrada ou sem permissão de acesso. Verifique se: 1) O ID está correto, 2) A pasta existe, 3) Você tem permissão de acesso. Erro: ' + e.message
         };
       }
 

@@ -12087,8 +12087,9 @@ function initializeHelpSection() {
 
         // 3. Preencher informações de versão
         const helpVersionInfo = document.getElementById('helpVersionInfo');
-        if (helpVersionInfo && CONFIG) {
-            helpVersionInfo.textContent = CONFIG.VERSION || 'Carregando...';
+        if (helpVersionInfo) {
+            // Usar versão do appContext ou string padrão
+            helpVersionInfo.textContent = 'Sistema RNC v2.2 - Deploy 77.1';
         }
 
         debugLog('info', '📖 Seção de ajuda inicializada', {
