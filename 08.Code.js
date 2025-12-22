@@ -2593,3 +2593,427 @@ function reloadUserContext() {
 function fillPrintTemplateAndGetUrl(rncNumber) {
   return PrintManager.fillPrintTemplateAndGetUrl(rncNumber);
 }
+
+// ==========================================
+// SISTEMA DE BACKUP - Deploy 76
+// ==========================================
+
+/**
+ * Módulo de Backup de Dados
+ * Permite exportar todas as tabelas da planilha para backup
+ * e posterior integração com banco de dados externo
+ */
+var BackupManager = (function() {
+
+  /**
+   * Obtém o ID da pasta de backup configurada
+   * @private
+   */
+  function getBackupFolderId() {
+    try {
+      var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+      var configSheet = ss.getSheetByName('ConfigSistema');
+
+      if (!configSheet) {
+        Logger.logWarning('CONFIG_SISTEMA_NOT_FOUND', 'Aba ConfigSistema não encontrada');
+        return null;
+      }
+
+      var data = configSheet.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (data[i][0] === 'BACKUP_FOLDER_ID') {
+          var folderId = data[i][1];
+          if (folderId && folderId.trim() !== '') {
+            return folderId.trim();
+          }
+        }
+      }
+
+      return null;
+    } catch (error) {
+      Logger.logError('getBackupFolderId_ERROR', error);
+      return null;
+    }
+  }
+
+  /**
+   * Configura o ID da pasta de backup
+   * @param {string} folderId - ID da pasta do Google Drive
+   * @return {Object} Resultado da operação
+   */
+  function setBackupFolderId(folderId) {
+    try {
+      Logger.logInfo('setBackupFolderId_START', { folderId: folderId });
+
+      if (!folderId || folderId.trim() === '') {
+        return {
+          success: false,
+          error: 'ID da pasta não pode estar vazio'
+        };
+      }
+
+      // Verificar se a pasta existe
+      try {
+        DriveApp.getFolderById(folderId);
+      } catch (e) {
+        return {
+          success: false,
+          error: 'Pasta não encontrada ou sem permissão de acesso'
+        };
+      }
+
+      var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+      var configSheet = ss.getSheetByName('ConfigSistema');
+
+      if (!configSheet) {
+        // Criar aba ConfigSistema se não existir
+        configSheet = ss.insertSheet('ConfigSistema');
+        configSheet.getRange(1, 1, 1, 2).setValues([['Chave', 'Valor']]);
+      }
+
+      // Procurar e atualizar ou adicionar BACKUP_FOLDER_ID
+      var data = configSheet.getDataRange().getValues();
+      var found = false;
+
+      for (var i = 1; i < data.length; i++) {
+        if (data[i][0] === 'BACKUP_FOLDER_ID') {
+          configSheet.getRange(i + 1, 2).setValue(folderId);
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        configSheet.appendRow(['BACKUP_FOLDER_ID', folderId]);
+      }
+
+      Logger.logInfo('setBackupFolderId_SUCCESS', { folderId: folderId });
+
+      return {
+        success: true,
+        folderId: folderId
+      };
+
+    } catch (error) {
+      Logger.logError('setBackupFolderId_ERROR', error);
+      return {
+        success: false,
+        error: error.toString()
+      };
+    }
+  }
+
+  /**
+   * Exporta dados de uma aba para formato JSON
+   * @private
+   */
+  function exportSheetData(sheetName) {
+    try {
+      var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+      var sheet = ss.getSheetByName(sheetName);
+
+      if (!sheet) {
+        Logger.logWarning('SHEET_NOT_FOUND', { sheetName: sheetName });
+        return null;
+      }
+
+      var data = sheet.getDataRange().getValues();
+
+      if (data.length === 0) {
+        return {
+          sheetName: sheetName,
+          headers: [],
+          rows: [],
+          totalRows: 0
+        };
+      }
+
+      var headers = data[0];
+      var rows = data.slice(1);
+
+      return {
+        sheetName: sheetName,
+        headers: headers,
+        rows: rows,
+        totalRows: rows.length,
+        exportDate: new Date().toISOString()
+      };
+
+    } catch (error) {
+      Logger.logError('exportSheetData_ERROR', error, { sheetName: sheetName });
+      return null;
+    }
+  }
+
+  /**
+   * Cria um backup completo de todas as tabelas
+   * @return {Object} Resultado da operação com informações do backup
+   */
+  function createBackup() {
+    try {
+      Logger.logInfo('createBackup_START');
+
+      var folderId = getBackupFolderId();
+      if (!folderId) {
+        return {
+          success: false,
+          error: 'Pasta de backup não configurada. Configure em Configurações > Sistema de Backup.'
+        };
+      }
+
+      var folder = DriveApp.getFolderById(folderId);
+
+      // Definir quais abas serão incluídas no backup
+      var sheetsToBackup = [
+        'RNC',
+        'ConfigCampos',
+        'ConfigListas',
+        'ConfigSecoes',
+        'Permissoes',
+        'Logs',
+        'Historico',
+        'ConfigSistema'
+      ];
+
+      // Exportar dados de cada aba
+      var backupData = {
+        metadata: {
+          backupDate: new Date().toISOString(),
+          backupDateBrazil: Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm:ss'),
+          spreadsheetId: CONFIG.SPREADSHEET_ID,
+          version: CONFIG.VERSION,
+          totalSheets: sheetsToBackup.length
+        },
+        sheets: {}
+      };
+
+      var exportedCount = 0;
+      var totalRows = 0;
+
+      for (var i = 0; i < sheetsToBackup.length; i++) {
+        var sheetName = sheetsToBackup[i];
+        var sheetData = exportSheetData(sheetName);
+
+        if (sheetData) {
+          backupData.sheets[sheetName] = sheetData;
+          exportedCount++;
+          totalRows += sheetData.totalRows;
+        }
+      }
+
+      // Gerar nome do arquivo com timestamp
+      var timestamp = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'yyyyMMdd_HHmmss');
+      var fileName = 'Backup_RNC_' + timestamp + '.json';
+
+      // Converter para JSON
+      var jsonContent = JSON.stringify(backupData, null, 2);
+
+      // Criar arquivo no Drive
+      var file = folder.createFile(fileName, jsonContent, MimeType.PLAIN_TEXT);
+
+      Logger.logInfo('createBackup_SUCCESS', {
+        fileName: fileName,
+        fileId: file.getId(),
+        sheetsExported: exportedCount,
+        totalRows: totalRows,
+        fileSize: jsonContent.length
+      });
+
+      return {
+        success: true,
+        backup: {
+          fileName: fileName,
+          fileId: file.getId(),
+          fileUrl: file.getUrl(),
+          backupDate: backupData.metadata.backupDateBrazil,
+          sheetsExported: exportedCount,
+          totalRows: totalRows,
+          fileSize: (jsonContent.length / 1024).toFixed(2) + ' KB'
+        }
+      };
+
+    } catch (error) {
+      Logger.logError('createBackup_ERROR', error);
+      return {
+        success: false,
+        error: error.toString()
+      };
+    }
+  }
+
+  /**
+   * Lista todos os backups disponíveis na pasta configurada
+   * @return {Object} Lista de backups
+   */
+  function listBackups() {
+    try {
+      Logger.logInfo('listBackups_START');
+
+      var folderId = getBackupFolderId();
+      if (!folderId) {
+        return {
+          success: false,
+          error: 'Pasta de backup não configurada'
+        };
+      }
+
+      var folder = DriveApp.getFolderById(folderId);
+      var files = folder.getFilesByType(MimeType.PLAIN_TEXT);
+
+      var backups = [];
+
+      while (files.hasNext()) {
+        var file = files.next();
+        var fileName = file.getName();
+
+        // Filtrar apenas arquivos de backup
+        if (fileName.indexOf('Backup_RNC_') === 0 && fileName.indexOf('.json') > -1) {
+          backups.push({
+            fileId: file.getId(),
+            fileName: fileName,
+            fileUrl: file.getUrl(),
+            createdDate: Utilities.formatDate(file.getDateCreated(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm:ss'),
+            size: (file.getSize() / 1024).toFixed(2) + ' KB',
+            lastModified: Utilities.formatDate(file.getLastUpdated(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm:ss')
+          });
+        }
+      }
+
+      // Ordenar por data de criação (mais recente primeiro)
+      backups.sort(function(a, b) {
+        return b.fileName.localeCompare(a.fileName);
+      });
+
+      Logger.logInfo('listBackups_SUCCESS', { totalBackups: backups.length });
+
+      return {
+        success: true,
+        backups: backups,
+        totalBackups: backups.length,
+        folderUrl: folder.getUrl()
+      };
+
+    } catch (error) {
+      Logger.logError('listBackups_ERROR', error);
+      return {
+        success: false,
+        error: error.toString()
+      };
+    }
+  }
+
+  /**
+   * Deleta um backup específico
+   * @param {string} fileId - ID do arquivo de backup
+   * @return {Object} Resultado da operação
+   */
+  function deleteBackup(fileId) {
+    try {
+      Logger.logInfo('deleteBackup_START', { fileId: fileId });
+
+      if (!fileId) {
+        return {
+          success: false,
+          error: 'ID do arquivo não fornecido'
+        };
+      }
+
+      var file = DriveApp.getFileById(fileId);
+      var fileName = file.getName();
+
+      // Verificar se é um arquivo de backup válido
+      if (fileName.indexOf('Backup_RNC_') !== 0) {
+        return {
+          success: false,
+          error: 'Arquivo não é um backup válido do sistema'
+        };
+      }
+
+      file.setTrashed(true);
+
+      Logger.logInfo('deleteBackup_SUCCESS', { fileName: fileName });
+
+      return {
+        success: true,
+        fileName: fileName
+      };
+
+    } catch (error) {
+      Logger.logError('deleteBackup_ERROR', error, { fileId: fileId });
+      return {
+        success: false,
+        error: error.toString()
+      };
+    }
+  }
+
+  /**
+   * Baixa um backup específico (retorna URL para download)
+   * @param {string} fileId - ID do arquivo de backup
+   * @return {Object} URL de download
+   */
+  function downloadBackup(fileId) {
+    try {
+      Logger.logInfo('downloadBackup_START', { fileId: fileId });
+
+      if (!fileId) {
+        return {
+          success: false,
+          error: 'ID do arquivo não fornecido'
+        };
+      }
+
+      var file = DriveApp.getFileById(fileId);
+
+      return {
+        success: true,
+        fileUrl: file.getUrl(),
+        downloadUrl: file.getDownloadUrl(),
+        fileName: file.getName()
+      };
+
+    } catch (error) {
+      Logger.logError('downloadBackup_ERROR', error, { fileId: fileId });
+      return {
+        success: false,
+        error: error.toString()
+      };
+    }
+  }
+
+  // Retornar API pública
+  return {
+    createBackup: createBackup,
+    listBackups: listBackups,
+    deleteBackup: deleteBackup,
+    downloadBackup: downloadBackup,
+    setBackupFolderId: setBackupFolderId,
+    getBackupFolderId: getBackupFolderId
+  };
+
+})();
+
+// Funções wrapper para acesso direto
+function createSystemBackup() {
+  return BackupManager.createBackup();
+}
+
+function listSystemBackups() {
+  return BackupManager.listBackups();
+}
+
+function deleteSystemBackup(fileId) {
+  return BackupManager.deleteBackup(fileId);
+}
+
+function downloadSystemBackup(fileId) {
+  return BackupManager.downloadBackup(fileId);
+}
+
+function setSystemBackupFolder(folderId) {
+  return BackupManager.setBackupFolderId(folderId);
+}
+
+function getSystemBackupFolder() {
+  return BackupManager.getBackupFolderId();
+}

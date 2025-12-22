@@ -2585,6 +2585,92 @@ textarea.form-control,
                         <div id="logsResultMessage" style="margin-top: 1rem; text-align: center;"></div>
                     </div>
                 </div>
+
+                <!-- Deploy 76: Sistema de Backup -->
+                <div class="config-section" style="margin-top: 2rem;">
+                    <div class="config-header">
+                        <div class="config-title">
+                            <span>💾</span>
+                            <span>Sistema de Backup</span>
+                        </div>
+                    </div>
+
+                    <div style="padding: 1.5rem;">
+                        <!-- Informações sobre Backup -->
+                        <div class="alert alert-info" style="margin-bottom: 1.5rem;">
+                            <strong>📦 Sobre o Sistema de Backup:</strong>
+                            <p style="margin: 0.5rem 0 0 0;">
+                                O sistema de backup exporta todas as tabelas da planilha (RNC, ConfigCampos, ConfigListas, etc.)
+                                para um arquivo JSON com timestamp, armazenado em uma pasta do Google Drive configurada por você.
+                                Esses backups podem ser usados para:
+                            </p>
+                            <ul style="margin: 0.5rem 0 0 1.5rem;">
+                                <li>Manter histórico completo dos dados</li>
+                                <li>Recuperação em caso de problemas</li>
+                                <li>Migração futura para banco de dados externo</li>
+                                <li>Auditoria e compliance</li>
+                            </ul>
+                        </div>
+
+                        <!-- Configuração da Pasta de Backup -->
+                        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                            <h4 style="margin: 0 0 1rem 0; color: var(--primary);">📁 Configurar Pasta de Backup</h4>
+
+                            <div style="margin-bottom: 1rem;">
+                                <label for="backupFolderIdInput" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                                    ID da Pasta do Google Drive:
+                                </label>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <input
+                                        type="text"
+                                        id="backupFolderIdInput"
+                                        placeholder="Cole aqui o ID da pasta (ex: 1ABC...xyz)"
+                                        style="flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
+                                    />
+                                    <button class="btn btn-primary" id="btnSaveBackupFolder" style="min-width: 120px;">
+                                        💾 Salvar
+                                    </button>
+                                </div>
+                                <small style="color: #666; display: block; margin-top: 0.5rem;">
+                                    💡 <strong>Como obter o ID:</strong> Abra a pasta no Google Drive, copie o ID da URL
+                                    (após "/folders/" ou entre "folders/" e "?")
+                                </small>
+                            </div>
+
+                            <div id="backupFolderStatus" style="margin-top: 1rem;"></div>
+                        </div>
+
+                        <!-- Ações de Backup -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                            <button class="btn btn-success" id="btnCreateBackup" style="padding: 1rem;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📦</div>
+                                <div>Criar Backup Agora</div>
+                            </button>
+
+                            <button class="btn btn-primary" id="btnListBackups" style="padding: 1rem;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+                                <div>Listar Backups</div>
+                            </button>
+
+                            <button class="btn btn-secondary" id="btnOpenBackupFolder" style="padding: 1rem;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📂</div>
+                                <div>Abrir Pasta</div>
+                            </button>
+                        </div>
+
+                        <!-- Resultado de Ações -->
+                        <div id="backupActionResult" style="margin-bottom: 1.5rem;"></div>
+
+                        <!-- Lista de Backups -->
+                        <div id="backupListContainer" style="display: none;">
+                            <div class="config-header" style="margin-bottom: 1rem;">
+                                <h4 style="margin: 0; color: var(--primary);">📦 Backups Disponíveis</h4>
+                            </div>
+                            <div id="backupList"></div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- ABA LISTAS -->
@@ -11222,6 +11308,269 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
                     this.disabled = false;
                 }
             });
+
+            // Deploy 76: Sistema de Backup - Event Listeners
+
+            // Salvar pasta de backup
+            document.getElementById('btnSaveBackupFolder').addEventListener('click', async function() {
+                try {
+                    const folderIdInput = document.getElementById('backupFolderIdInput');
+                    const folderId = folderIdInput.value.trim();
+                    const statusDiv = document.getElementById('backupFolderStatus');
+
+                    if (!folderId) {
+                        statusDiv.innerHTML = '<div class="alert alert-warning">⚠️ Por favor, informe o ID da pasta</div>';
+                        return;
+                    }
+
+                    this.disabled = true;
+                    this.innerHTML = '⏳ Salvando...';
+
+                    const result = await apiCall('setSystemBackupFolder', folderId);
+
+                    if (result && result.success) {
+                        statusDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                ✅ Pasta de backup configurada com sucesso!
+                                <br><small>ID: ${result.folderId}</small>
+                            </div>
+                        `;
+                        debugLog('success', '✅ Pasta de backup configurada', { folderId: result.folderId });
+                    } else {
+                        statusDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                ❌ Erro: ${result ? result.error : 'Erro desconhecido'}
+                            </div>
+                        `;
+                        debugLog('error', '❌ Erro ao configurar pasta de backup', result);
+                    }
+
+                } catch (error) {
+                    document.getElementById('backupFolderStatus').innerHTML = `
+                        <div class="alert alert-danger">❌ Erro: ${error.message}</div>
+                    `;
+                    debugLog('error', '❌ Erro ao configurar pasta de backup', { error: error.message });
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = '💾 Salvar';
+                }
+            });
+
+            // Criar backup
+            document.getElementById('btnCreateBackup').addEventListener('click', async function() {
+                try {
+                    const resultDiv = document.getElementById('backupActionResult');
+                    const btn = this;
+
+                    btn.disabled = true;
+                    btn.innerHTML = '<div style="font-size: 2rem;">⏳</div><div>Criando Backup...</div>';
+                    resultDiv.innerHTML = '<div class="alert alert-info">⏳ Exportando dados das tabelas...</div>';
+
+                    debugLog('info', '📦 Criando backup do sistema...');
+
+                    const result = await apiCall('createSystemBackup');
+
+                    if (result && result.success) {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <strong>✅ Backup criado com sucesso!</strong>
+                                <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 4px; text-align: left;">
+                                    <p style="margin: 0.5rem 0;"><strong>📄 Arquivo:</strong> ${result.backup.fileName}</p>
+                                    <p style="margin: 0.5rem 0;"><strong>📅 Data:</strong> ${result.backup.backupDate}</p>
+                                    <p style="margin: 0.5rem 0;"><strong>📊 Tabelas:</strong> ${result.backup.sheetsExported}</p>
+                                    <p style="margin: 0.5rem 0;"><strong>📝 Total de Linhas:</strong> ${result.backup.totalRows}</p>
+                                    <p style="margin: 0.5rem 0;"><strong>💾 Tamanho:</strong> ${result.backup.fileSize}</p>
+                                    <p style="margin: 1rem 0 0.5rem 0;">
+                                        <a href="${result.backup.fileUrl}" target="_blank" class="btn btn-primary" style="display: inline-block;">
+                                            🔗 Abrir Arquivo no Drive
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                        debugLog('success', '✅ Backup criado', result.backup);
+
+                        // Atualizar lista de backups se estiver visível
+                        if (document.getElementById('backupListContainer').style.display !== 'none') {
+                            document.getElementById('btnListBackups').click();
+                        }
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                <strong>❌ Erro ao criar backup</strong>
+                                <p style="margin: 0.5rem 0 0 0;">${result ? result.error : 'Erro desconhecido'}</p>
+                            </div>
+                        `;
+                        debugLog('error', '❌ Erro ao criar backup', result);
+                    }
+
+                } catch (error) {
+                    document.getElementById('backupActionResult').innerHTML = `
+                        <div class="alert alert-danger">❌ Erro: ${error.message}</div>
+                    `;
+                    debugLog('error', '❌ Erro ao criar backup', { error: error.message });
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = '<div style="font-size: 2rem; margin-bottom: 0.5rem;">📦</div><div>Criar Backup Agora</div>';
+                }
+            });
+
+            // Listar backups
+            document.getElementById('btnListBackups').addEventListener('click', async function() {
+                try {
+                    const listContainer = document.getElementById('backupListContainer');
+                    const listDiv = document.getElementById('backupList');
+                    const btn = this;
+
+                    btn.disabled = true;
+                    btn.innerHTML = '<div style="font-size: 2rem;">⏳</div><div>Carregando...</div>';
+
+                    debugLog('info', '📋 Listando backups...');
+
+                    const result = await apiCall('listSystemBackups');
+
+                    if (result && result.success) {
+                        if (result.backups.length === 0) {
+                            listDiv.innerHTML = `
+                                <div class="alert alert-info" style="text-align: center;">
+                                    📦 Nenhum backup encontrado.<br>
+                                    <small>Crie seu primeiro backup clicando no botão "Criar Backup Agora"</small>
+                                </div>
+                            `;
+                        } else {
+                            let html = '<div style="display: grid; gap: 1rem;">';
+
+                            result.backups.forEach(backup => {
+                                html += `
+                                    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 1rem;">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+                                            <div style="flex: 1;">
+                                                <h4 style="margin: 0 0 0.5rem 0; color: var(--primary);">
+                                                    📦 ${backup.fileName}
+                                                </h4>
+                                                <div style="font-size: 0.9rem; color: #666;">
+                                                    <p style="margin: 0.25rem 0;">📅 Criado em: ${backup.createdDate}</p>
+                                                    <p style="margin: 0.25rem 0;">💾 Tamanho: ${backup.size}</p>
+                                                    <p style="margin: 0.25rem 0;">🔄 Modificado: ${backup.lastModified}</p>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+                                                <button class="btn btn-sm btn-primary" onclick="window.open('${backup.fileUrl}', '_blank')" title="Abrir no Drive">
+                                                    🔗 Abrir
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="deleteBackupFile('${backup.fileId}', '${backup.fileName}')" title="Deletar">
+                                                    🗑️ Deletar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+
+                            html += '</div>';
+
+                            html += `
+                                <div style="margin-top: 1rem; text-align: center;">
+                                    <a href="${result.folderUrl}" target="_blank" class="btn btn-secondary">
+                                        📂 Abrir Pasta no Drive
+                                    </a>
+                                </div>
+                            `;
+
+                            listDiv.innerHTML = html;
+                        }
+
+                        listContainer.style.display = 'block';
+                        debugLog('success', '✅ Backups listados', { total: result.backups.length });
+
+                    } else {
+                        listDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                ❌ ${result ? result.error : 'Erro ao listar backups'}
+                            </div>
+                        `;
+                        listContainer.style.display = 'block';
+                        debugLog('error', '❌ Erro ao listar backups', result);
+                    }
+
+                } catch (error) {
+                    document.getElementById('backupList').innerHTML = `
+                        <div class="alert alert-danger">❌ Erro: ${error.message}</div>
+                    `;
+                    document.getElementById('backupListContainer').style.display = 'block';
+                    debugLog('error', '❌ Erro ao listar backups', { error: error.message });
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = '<div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div><div>Listar Backups</div>';
+                }
+            });
+
+            // Abrir pasta de backup
+            document.getElementById('btnOpenBackupFolder').addEventListener('click', async function() {
+                try {
+                    const folderId = await apiCall('getSystemBackupFolder');
+
+                    if (!folderId) {
+                        showError('⚠️ Pasta de backup não configurada. Configure primeiro o ID da pasta.');
+                        return;
+                    }
+
+                    const folderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+                    window.open(folderUrl, '_blank');
+
+                } catch (error) {
+                    showError('❌ Erro ao abrir pasta: ' + error.message);
+                    debugLog('error', '❌ Erro ao abrir pasta de backup', { error: error.message });
+                }
+            });
+
+            // Função global para deletar backup
+            window.deleteBackupFile = async function(fileId, fileName) {
+                try {
+                    const confirmed = await showConfirmModal(
+                        '⚠️ Confirmar Exclusão',
+                        `Deseja realmente deletar o backup:\n\n${fileName}?\n\nEsta ação não pode ser desfeita!`
+                    );
+
+                    if (!confirmed) return;
+
+                    showLoading('Deletando backup...');
+
+                    const result = await apiCall('deleteSystemBackup', fileId);
+
+                    hideLoading();
+
+                    if (result && result.success) {
+                        showSuccess(`✅ Backup "${result.fileName}" deletado com sucesso!`);
+                        // Atualizar lista
+                        document.getElementById('btnListBackups').click();
+                    } else {
+                        showError(`❌ Erro ao deletar backup: ${result ? result.error : 'Erro desconhecido'}`);
+                    }
+
+                } catch (error) {
+                    hideLoading();
+                    showError('❌ Erro ao deletar backup: ' + error.message);
+                    debugLog('error', '❌ Erro ao deletar backup', { error: error.message });
+                }
+            };
+
+            // Carregar pasta de backup configurada ao iniciar
+            setTimeout(async function() {
+                try {
+                    const folderId = await apiCall('getSystemBackupFolder');
+                    if (folderId) {
+                        document.getElementById('backupFolderIdInput').value = folderId;
+                        document.getElementById('backupFolderStatus').innerHTML = `
+                            <div class="alert alert-success">
+                                ✅ Pasta configurada: ${folderId}
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    debugLog('warning', 'Não foi possível carregar configuração de backup', { error: error.message });
+                }
+            }, 2000);
 
             // Debug toggle
             document.getElementById('debugToggle').addEventListener('click', function() {
