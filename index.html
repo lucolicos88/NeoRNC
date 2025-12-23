@@ -2597,19 +2597,36 @@ textarea.form-control,
 
                     <div style="padding: 1.5rem;">
                         <!-- Informações sobre Backup -->
-                        <div class="alert alert-info" style="margin-bottom: 1.5rem;">
-                            <strong>📦 Sobre o Sistema de Backup:</strong>
-                            <p style="margin: 0.5rem 0 0 0;">
+                        <div style="background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); padding: 2rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #bee5eb; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                <div style="font-size: 2.5rem;">📦</div>
+                                <h3 style="margin: 0; font-size: 1.4rem; font-weight: 600; color: #0c5460;">Sobre o Sistema de Backup</h3>
+                            </div>
+
+                            <p style="margin: 0 0 1.5rem 0; line-height: 1.6; font-size: 1rem; color: #0c5460;">
                                 O sistema de backup exporta todas as tabelas da planilha (RNC, ConfigCampos, ConfigListas, etc.)
                                 para um arquivo JSON com timestamp, armazenado em uma pasta do Google Drive configurada por você.
                                 Esses backups podem ser usados para:
                             </p>
-                            <ul style="margin: 0.5rem 0 0 1.5rem;">
-                                <li>Manter histórico completo dos dados</li>
-                                <li>Recuperação em caso de problemas</li>
-                                <li>Migração futura para banco de dados externo</li>
-                                <li>Auditoria e compliance</li>
-                            </ul>
+
+                            <div style="display: grid; gap: 0.75rem; margin-left: 1rem; color: #0c5460;">
+                                <div style="display: flex; align-items: start; gap: 0.75rem;">
+                                    <span style="font-size: 1.2rem; line-height: 1.5; color: #17a2b8;">°</span>
+                                    <span style="line-height: 1.5;">Manter histórico completo dos dados</span>
+                                </div>
+                                <div style="display: flex; align-items: start; gap: 0.75rem;">
+                                    <span style="font-size: 1.2rem; line-height: 1.5; color: #17a2b8;">°</span>
+                                    <span style="line-height: 1.5;">Recuperação em caso de problemas</span>
+                                </div>
+                                <div style="display: flex; align-items: start; gap: 0.75rem;">
+                                    <span style="font-size: 1.2rem; line-height: 1.5; color: #17a2b8;">°</span>
+                                    <span style="line-height: 1.5;">Migração futura para banco de dados externo</span>
+                                </div>
+                                <div style="display: flex; align-items: start; gap: 0.75rem;">
+                                    <span style="font-size: 1.2rem; line-height: 1.5; color: #17a2b8;">°</span>
+                                    <span style="line-height: 1.5;">Auditoria e compliance</span>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Configuração da Pasta de Backup -->
@@ -11482,6 +11499,7 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
             // Deploy 76: Sistema de Backup - Event Listeners
 
             // Salvar pasta de backup
+            // Salvar pasta de backup
             document.getElementById('btnSaveBackupFolder').addEventListener('click', async function() {
                 try {
                     const folderIdInput = document.getElementById('backupFolderIdInput');
@@ -11501,15 +11519,15 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
                     if (result && result.success) {
                         statusDiv.innerHTML = `
                             <div class="alert alert-success">
-                                ✅ Pasta de backup configurada com sucesso!
-                                <br><small>ID: ${result.folderId}</small>
+                                ${result.message || '✅ Pasta de backup configurada com sucesso!'}
+                                <br><small>Pasta: ${result.folderName || folderId}</small>
                             </div>
                         `;
                         debugLog('success', '✅ Pasta de backup configurada', { folderId: result.folderId });
                     } else {
                         statusDiv.innerHTML = `
                             <div class="alert alert-danger">
-                                ❌ Erro: ${result ? result.error : 'Erro desconhecido'}
+                                ❌ ${result ? result.error : 'Erro desconhecido'}
                             </div>
                         `;
                         debugLog('error', '❌ Erro ao configurar pasta de backup', result);
@@ -11543,18 +11561,43 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
                     if (result && result.success) {
                         resultDiv.innerHTML = `
                             <div class="alert alert-success">
-                                <strong>✅ Backup criado com sucesso!</strong>
-                                <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 4px; text-align: left;">
-                                    <p style="margin: 0.5rem 0;"><strong>📄 Arquivo:</strong> ${result.backup.fileName}</p>
-                                    <p style="margin: 0.5rem 0;"><strong>📅 Data:</strong> ${result.backup.backupDate}</p>
-                                    <p style="margin: 0.5rem 0;"><strong>📊 Tabelas:</strong> ${result.backup.sheetsExported}</p>
-                                    <p style="margin: 0.5rem 0;"><strong>📝 Total de Linhas:</strong> ${result.backup.totalRows}</p>
-                                    <p style="margin: 0.5rem 0;"><strong>💾 Tamanho:</strong> ${result.backup.fileSize}</p>
-                                    <p style="margin: 1rem 0 0.5rem 0;">
-                                        <a href="${result.backup.fileUrl}" target="_blank" class="btn btn-primary" style="display: inline-block;">
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="font-size: 3rem;">✅</div>
+                                    <div>
+                                        <strong style="font-size: 1.2rem; color: var(--success);">Backup criado com sucesso!</strong>
+                                        <div style="color: #666; margin-top: 0.25rem;">Arquivo salvo no Google Drive</div>
+                                    </div>
+                                </div>
+
+                                <div style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; border: 1px solid #dee2e6;">
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <tr style="border-bottom: 1px solid #dee2e6;">
+                                            <td style="padding: 0.75rem 1rem; font-weight: 600; color: #495057; width: 40%;">📄 Arquivo</td>
+                                            <td style="padding: 0.75rem 1rem; color: #212529;">${result.backup.fileName}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #dee2e6;">
+                                            <td style="padding: 0.75rem 1rem; font-weight: 600; color: #495057;">📅 Data</td>
+                                            <td style="padding: 0.75rem 1rem; color: #212529;">${result.backup.backupDate}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #dee2e6;">
+                                            <td style="padding: 0.75rem 1rem; font-weight: 600; color: #495057;">📊 Tabelas</td>
+                                            <td style="padding: 0.75rem 1rem; color: #212529;">${result.backup.sheetsExported}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #dee2e6;">
+                                            <td style="padding: 0.75rem 1rem; font-weight: 600; color: #495057;">📝 Total de Linhas</td>
+                                            <td style="padding: 0.75rem 1rem; color: #212529;">${result.backup.totalRows}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 0.75rem 1rem; font-weight: 600; color: #495057;">💾 Tamanho</td>
+                                            <td style="padding: 0.75rem 1rem; color: #212529;">${result.backup.fileSize}</td>
+                                        </tr>
+                                    </table>
+
+                                    <div style="margin-top: 1.5rem; text-align: center;">
+                                        <a href="${result.backup.fileUrl}" target="_blank" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem;">
                                             🔗 Abrir Arquivo no Drive
                                         </a>
-                                    </p>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -11608,31 +11651,42 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
                                 </div>
                             `;
                         } else {
-                            let html = '<div style="display: grid; gap: 1rem;">';
+                            let html = '<div style="display: grid; gap: 1.25rem;">';
 
                             result.backups.forEach(backup => {
                                 html += `
-                                    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 1rem;">
-                                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+                                    <div style="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid #dee2e6;">
+                                            <div style="font-size: 2.5rem;">📦</div>
                                             <div style="flex: 1;">
-                                                <h4 style="margin: 0 0 0.5rem 0; color: var(--primary);">
-                                                    📦 ${backup.fileName}
+                                                <h4 style="margin: 0; color: var(--primary); font-size: 1.1rem; font-weight: 600;">
+                                                    ${backup.fileName}
                                                 </h4>
-                                                <div style="font-size: 0.9rem; color: #666;">
-                                                    <p style="margin: 0.25rem 0;">📅 Criado em: ${backup.createdDate}</p>
-                                                    <p style="margin: 0.25rem 0;">💾 Tamanho: ${backup.size}</p>
-                                                    <p style="margin: 0.25rem 0;">🔄 Modificado: ${backup.lastModified}</p>
-                                                </div>
                                             </div>
-                                            <div style="display: flex; gap: 0.5rem; flex-direction: column;">
-                                                <button class="btn btn-sm btn-primary" onclick="window.open('${backup.fileUrl}', '_blank')" title="Abrir no Drive">
+                                            <div style="display: flex; gap: 0.75rem;">
+                                                <button class="btn btn-sm btn-primary" onclick="window.open('${backup.fileUrl}', '_blank')" title="Abrir no Drive" style="padding: 0.5rem 1rem;">
                                                     🔗 Abrir
                                                 </button>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteBackupFile('${backup.fileId}', '${backup.fileName}')" title="Deletar">
+                                                <button class="btn btn-sm btn-danger" onclick="deleteBackupFile('${backup.fileId}', '${backup.fileName}')" title="Deletar" style="padding: 0.5rem 1rem;">
                                                     🗑️ Deletar
                                                 </button>
                                             </div>
                                         </div>
+
+                                        <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                                            <tr style="border-bottom: 1px solid #dee2e6;">
+                                                <td style="padding: 0.75rem 1rem; font-weight: 600; color: #495057; width: 35%; background: #f8f9fa;">📅 Criado em</td>
+                                                <td style="padding: 0.75rem 1rem; color: #212529;">${backup.createdDate}</td>
+                                            </tr>
+                                            <tr style="border-bottom: 1px solid #dee2e6;">
+                                                <td style="padding: 0.75rem 1rem; font-weight: 600; color: #495057; background: #f8f9fa;">🔄 Última Modificação</td>
+                                                <td style="padding: 0.75rem 1rem; color: #212529;">${backup.lastModified}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 0.75rem 1rem; font-weight: 600; color: #495057; background: #f8f9fa;">💾 Tamanho</td>
+                                                <td style="padding: 0.75rem 1rem; color: #212529;"><strong>${backup.size}</strong></td>
+                                            </tr>
+                                        </table>
                                     </div>
                                 `;
                             });
@@ -12089,7 +12143,7 @@ function initializeHelpSection() {
         const helpVersionInfo = document.getElementById('helpVersionInfo');
         if (helpVersionInfo) {
             // Usar versão do appContext ou string padrão
-            helpVersionInfo.textContent = 'Sistema RNC v2.2 - Deploy 77.1';
+            helpVersionInfo.textContent = 'Sistema RNC v2.2 - Deploy 82';
         }
 
         debugLog('info', '📖 Seção de ajuda inicializada', {

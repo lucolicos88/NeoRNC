@@ -20,12 +20,12 @@ const CONFIG = {
   DRIVE_FOLDER_ID: '1Bo5yU-rJtyz-1KVUTIQHlZRv7mFLZ_p6a9TClx0r2w060',
 
   // Versão do Sistema
-  VERSION: 'Sistema RNC v2.2 - Deploy 77.2 (Fix: Backup e Manual)',
-  BUILD_DATE: '2025-12-22',
+  VERSION: 'Sistema RNC v2.2 - PRODUÇÃO (Sistema de Backup Completo + UI Otimizada)',
+  BUILD_DATE: '2025-12-23',
 
   // Modo de Operação
   DEBUG_MODE: false, // Controle de logs de debug
-  ENVIRONMENT: 'development', // development | production
+  ENVIRONMENT: 'production', // development | production
 
   // Nomes das Planilhas
   SHEETS: {
@@ -482,7 +482,11 @@ function getSystemConfig(key, defaultValue) {
     const data = configSheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === key) {
-        const value = data[i][1];
+        let value = data[i][1];
+        // Remover apóstrofo inicial se existir (adicionado para forçar texto)
+        if (value && typeof value === 'string' && value.charAt(0) === "'") {
+          value = value.substring(1);
+        }
         cache.put(cacheKey, JSON.stringify(value), CONFIG.SYSTEM.CACHE_DURATION);
         return value;
       }
@@ -510,7 +514,13 @@ function setSystemConfig(key, value, description) {
 
     for (let i = 1; i < data.length; i++) {
       if (data[i][0] === key) {
-        configSheet.getRange(i + 1, 2).setValue(value);
+        // SOLUÇÃO COM APÓSTROFO: Método nativo do Sheets para forçar texto
+        const valueRange = configSheet.getRange(i + 1, 2);
+        valueRange.clearContent();
+        SpreadsheetApp.flush();
+        // Adicionar apóstrofo ' para forçar texto (invisível no Sheets)
+        valueRange.setValue("'" + String(value));
+        SpreadsheetApp.flush();
         if (description) {
           configSheet.getRange(i + 1, 3).setValue(description);
         }
@@ -520,7 +530,9 @@ function setSystemConfig(key, value, description) {
     }
 
     if (!found) {
-      configSheet.appendRow([key, value, description || '']);
+      // Nova linha com apóstrofo para forçar texto
+      configSheet.appendRow([key, "'" + String(value), description || '']);
+      SpreadsheetApp.flush();
     }
 
     // Limpar cache

@@ -2607,29 +2607,27 @@ var BackupManager = (function() {
 
   /**
    * Obtém o ID da pasta de backup configurada
+   * Usa getSystemConfig igual aos anexos
    * @private
    */
   function getBackupFolderId() {
     try {
-      var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-      var configSheet = ss.getSheetByName('ConfigSistema');
+      var backupFolderId = getSystemConfig('BACKUP_FOLDER_ID', null);
 
-      if (!configSheet) {
-        Logger.logWarning('CONFIG_SISTEMA_NOT_FOUND', 'Aba ConfigSistema não encontrada');
-        return null;
+      // Remover apóstrofo inicial se existir (adicionado para forçar texto no Sheets)
+      if (backupFolderId && typeof backupFolderId === 'string' && backupFolderId.charAt(0) === "'") {
+        backupFolderId = backupFolderId.substring(1);
       }
 
-      var data = configSheet.getDataRange().getValues();
-      for (var i = 1; i < data.length; i++) {
-        if (data[i][0] === 'BACKUP_FOLDER_ID') {
-          var folderId = data[i][1];
-          if (folderId && folderId.trim() !== '') {
-            return folderId.trim();
-          }
-        }
-      }
+      Logger.logInfo('getBackupFolderId_RESULT', {
+        value: backupFolderId,
+        type: typeof backupFolderId,
+        length: backupFolderId ? backupFolderId.length : 0,
+        firstChar: backupFolderId ? backupFolderId.charAt(0) : null,
+        isString: typeof backupFolderId === 'string'
+      });
 
-      return null;
+      return backupFolderId;
     } catch (error) {
       Logger.logError('getBackupFolderId_ERROR', error);
       return null;
@@ -2652,54 +2650,81 @@ var BackupManager = (function() {
         };
       }
 
-      // Limpar o ID (remover espaços e quebras de linha)
       folderId = folderId.trim();
 
-      // Verificar se a pasta existe
-      try {
-        var folder = DriveApp.getFolderById(folderId);
-        Logger.logInfo('FOLDER_VALIDATION_SUCCESS', {
-          folderId: folderId,
-          folderName: folder.getName()
-        });
-      } catch (e) {
-        Logger.logError('FOLDER_VALIDATION_ERROR', e, { folderId: folderId });
-        return {
-          success: false,
-          error: 'Pasta não encontrada ou sem permissão de acesso. Verifique se: 1) O ID está correto, 2) A pasta existe, 3) Você tem permissão de acesso. Erro: ' + e.message
-        };
-      }
+      Logger.logInfo('SAVING_FOLDER_ID', {
+        value: folderId,
+        length: folderId.length
+      });
 
+      // Salvar diretamente na planilha com controle total
       var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
       var configSheet = ss.getSheetByName('ConfigSistema');
 
       if (!configSheet) {
-        // Criar aba ConfigSistema se não existir
         configSheet = ss.insertSheet('ConfigSistema');
-        configSheet.getRange(1, 1, 1, 2).setValues([['Chave', 'Valor']]);
+        configSheet.getRange(1, 1, 1, 3).setValues([['Chave', 'Valor', 'Descrição']]);
       }
 
-      // Procurar e atualizar ou adicionar BACKUP_FOLDER_ID
       var data = configSheet.getDataRange().getValues();
-      var found = false;
+      var rowIndex = -1;
 
+      // Procurar linha existente
       for (var i = 1; i < data.length; i++) {
         if (data[i][0] === 'BACKUP_FOLDER_ID') {
-          configSheet.getRange(i + 1, 2).setValue(folderId);
-          found = true;
+          rowIndex = i + 1; // +1 porque getRange é 1-indexed
           break;
         }
       }
 
-      if (!found) {
-        configSheet.appendRow(['BACKUP_FOLDER_ID', folderId]);
+      if (rowIndex > 0) {
+        // SOLUÇÃO COM APÓSTROFO: Google Sheets trata 'texto como string pura
+        var targetRange = configSheet.getRange(rowIndex, 2);
+        targetRange.clearContent();
+        SpreadsheetApp.flush();
+        // Adicionar apóstrofo ' antes do ID para forçar texto (método nativo do Sheets)
+        targetRange.setValue("'" + String(folderId));
+        SpreadsheetApp.flush();
+        Logger.logInfo('UPDATED_EXISTING_ROW', { row: rowIndex, value: folderId });
+      } else {
+        // Nova linha com apóstrofo para forçar texto
+        configSheet.appendRow(['BACKUP_FOLDER_ID', "'" + String(folderId), 'ID da pasta do Google Drive para backups']);
+        SpreadsheetApp.flush();
+        Logger.logInfo('ADDED_NEW_ROW', { value: folderId });
       }
 
-      Logger.logInfo('setBackupFolderId_SUCCESS', { folderId: folderId });
+      // Limpar cache
+      try {
+        var cache = CacheService.getScriptCache();
+        cache.remove('config_BACKUP_FOLDER_ID');
+      } catch (e) {
+        Logger.logWarning('CACHE_CLEAR_WARNING', e);
+      }
+
+      // Verificar lendo diretamente da planilha
+      SpreadsheetApp.flush(); // Forçar flush para garantir que foi salvo
+      var verifyData = configSheet.getDataRange().getValues();
+      var verifyValue = null;
+      for (var i = 1; i < verifyData.length; i++) {
+        if (verifyData[i][0] === 'BACKUP_FOLDER_ID') {
+          verifyValue = verifyData[i][1];
+          break;
+        }
+      }
+
+      Logger.logInfo('VERIFY_DIRECT_READ', {
+        original: folderId,
+        readFromSheet: verifyValue,
+        match: folderId === verifyValue
+      });
 
       return {
         success: true,
-        folderId: folderId
+        folderId: folderId,
+        savedValue: verifyValue,
+        message: '✅ Pasta configurada!\n\n' +
+                 'ID salvo: ' + verifyValue + '\n' +
+                 (folderId === verifyValue ? '✓ Verificação OK' : '❌ ATENÇÃO: Valor divergente!')
       };
 
     } catch (error) {
@@ -2761,15 +2786,35 @@ var BackupManager = (function() {
     try {
       Logger.logInfo('createBackup_START');
 
+      // Obter ID da pasta de backup (igual aos anexos)
       var folderId = getBackupFolderId();
+
       if (!folderId) {
         return {
           success: false,
-          error: 'Pasta de backup não configurada. Configure em Configurações > Sistema de Backup.'
+          error: 'Pasta de backup não configurada.\n\n' +
+                 'Configure o ID da pasta em Configurações > Sistema de Backup.'
         };
       }
 
-      var folder = DriveApp.getFolderById(folderId);
+      // Validar acesso à pasta usando Drive API v3
+      try {
+        Drive.Files.get(folderId, {
+          supportsAllDrives: true,
+          fields: 'id,name'
+        });
+      } catch (e) {
+        Logger.logError('BACKUP_FOLDER_ACCESS_ERROR', e);
+        return {
+          success: false,
+          error: 'Não foi possível acessar a pasta de backup.\n\n' +
+                 'Verifique se:\n' +
+                 '• A pasta existe\n' +
+                 '• Você tem permissão de acesso\n' +
+                 '• O ID está correto\n\n' +
+                 'Erro: ' + e.message
+        };
+      }
 
       // Definir quais abas serão incluídas no backup
       var sheetsToBackup = [
@@ -2816,12 +2861,25 @@ var BackupManager = (function() {
       // Converter para JSON
       var jsonContent = JSON.stringify(backupData, null, 2);
 
-      // Criar arquivo no Drive
-      var file = folder.createFile(fileName, jsonContent, MimeType.PLAIN_TEXT);
+      // Criar arquivo no Drive usando Drive API v3
+      var fileMetadata = {
+        name: fileName,
+        mimeType: 'application/json',
+        parents: [folderId]
+      };
+
+      var fileBlob = Utilities.newBlob(jsonContent, 'application/json', fileName);
+
+      // Drive API v3 usa create(), não insert()
+      var file = Drive.Files.create(fileMetadata, fileBlob, {
+        supportsAllDrives: true
+      });
+
+      var fileUrl = 'https://drive.google.com/file/d/' + file.id + '/view';
 
       Logger.logInfo('createBackup_SUCCESS', {
         fileName: fileName,
-        fileId: file.getId(),
+        fileId: file.id,
         sheetsExported: exportedCount,
         totalRows: totalRows,
         fileSize: jsonContent.length
@@ -2831,8 +2889,8 @@ var BackupManager = (function() {
         success: true,
         backup: {
           fileName: fileName,
-          fileId: file.getId(),
-          fileUrl: file.getUrl(),
+          fileId: file.id,
+          fileUrl: fileUrl,
           backupDate: backupData.metadata.backupDateBrazil,
           sheetsExported: exportedCount,
           totalRows: totalRows,
@@ -2857,7 +2915,9 @@ var BackupManager = (function() {
     try {
       Logger.logInfo('listBackups_START');
 
+      // Obter ID da pasta de backup (igual aos anexos)
       var folderId = getBackupFolderId();
+
       if (!folderId) {
         return {
           success: false,
@@ -2865,26 +2925,45 @@ var BackupManager = (function() {
         };
       }
 
-      var folder = DriveApp.getFolderById(folderId);
-      var files = folder.getFilesByType(MimeType.PLAIN_TEXT);
-
+      // Listar arquivos na pasta usando Drive API v3
       var backups = [];
 
-      while (files.hasNext()) {
-        var file = files.next();
-        var fileName = file.getName();
+      try {
+        var searchQuery = "'" + folderId + "' in parents and trashed=false";
 
-        // Filtrar apenas arquivos de backup
-        if (fileName.indexOf('Backup_RNC_') === 0 && fileName.indexOf('.json') > -1) {
-          backups.push({
-            fileId: file.getId(),
-            fileName: fileName,
-            fileUrl: file.getUrl(),
-            createdDate: Utilities.formatDate(file.getDateCreated(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm:ss'),
-            size: (file.getSize() / 1024).toFixed(2) + ' KB',
-            lastModified: Utilities.formatDate(file.getLastUpdated(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm:ss')
-          });
+        // Drive API v3: 'files' ao invés de 'items', 'createdTime' ao invés de 'createdDate'
+        var response = Drive.Files.list({
+          q: searchQuery,
+          supportsAllDrives: true,
+          includeItemsFromAllDrives: true,
+          fields: 'files(id,name,createdTime,modifiedTime,size,webViewLink)',
+          pageSize: 100
+        });
+
+        if (response.files && response.files.length > 0) {
+          for (var i = 0; i < response.files.length; i++) {
+            var file = response.files[i];
+            var fileName = file.name;
+
+            // Filtrar apenas arquivos de backup
+            if (fileName.indexOf('Backup_RNC_') === 0 && fileName.indexOf('.json') > -1) {
+              backups.push({
+                fileId: file.id,
+                fileName: fileName,
+                fileUrl: file.webViewLink || 'https://drive.google.com/file/d/' + file.id + '/view',
+                createdDate: Utilities.formatDate(new Date(file.createdTime), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm:ss'),
+                size: (parseInt(file.size) / 1024).toFixed(2) + ' KB',
+                lastModified: Utilities.formatDate(new Date(file.modifiedTime), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm:ss')
+              });
+            }
+          }
         }
+      } catch (e) {
+        Logger.logError('BACKUP_LIST_ERROR', e);
+        return {
+          success: false,
+          error: 'Erro ao listar backups: ' + e.message
+        };
       }
 
       // Ordenar por data de criação (mais recente primeiro)
@@ -2894,11 +2973,13 @@ var BackupManager = (function() {
 
       Logger.logInfo('listBackups_SUCCESS', { totalBackups: backups.length });
 
+      var folderUrl = 'https://drive.google.com/drive/folders/' + folderId;
+
       return {
         success: true,
         backups: backups,
         totalBackups: backups.length,
-        folderUrl: folder.getUrl()
+        folderUrl: folderUrl
       };
 
     } catch (error) {
