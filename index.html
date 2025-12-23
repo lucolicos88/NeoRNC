@@ -8542,21 +8542,49 @@ function renderLineChart(containerId, data) {
         showLoading('Gerando relatório...');
         
         const result = await apiCall('generateReport', [filters]);
-        
+
         if (!result) {
-            throw new Error('Nenhum dado retornado');
+            throw new Error('Nenhum dado retornado do servidor');
         }
-        
+
+        // Verificar se há mensagem de aviso (nenhum resultado encontrado)
+        if (result.message && result.totalFiltrado === 0) {
+            hideLoading();
+            showWarning(result.message + `<br><br><strong>Total de RNCs no sistema:</strong> ${result.totalOriginal}`);
+            document.getElementById('report-content').innerHTML = `
+                <div class="alert alert-warning" style="text-align: center; padding: 40px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
+                    <h3>Nenhuma RNC encontrada</h3>
+                    <p style="margin-top: 15px; color: #666;">
+                        ${result.message}
+                    </p>
+                    <p style="margin-top: 10px; color: #999; font-size: 14px;">
+                        Total de RNCs no sistema: <strong>${result.totalOriginal}</strong>
+                    </p>
+                    <div style="margin-top: 25px;">
+                        <button class="btn btn-primary" onclick="clearFilters()">
+                            🔄 Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+            `;
+            debugLog('warning', '⚠️ Nenhuma RNC encontrada com os filtros', {
+                totalOriginal: result.totalOriginal,
+                filters: filters
+            });
+            return;
+        }
+
         reportData = result;
         renderReport(result);
 
         document.getElementById('exportPdf').disabled = false;
         hideLoading();
-        
+
         showSuccess(`Relatório gerado: ${result.rncs ? result.rncs.length : 0} RNC(s) encontrada(s)`);
-        
-        debugLog('success', '✅ Relatório gerado', { 
-            totalRncs: result.rncs ? result.rncs.length : 0 
+
+        debugLog('success', '✅ Relatório gerado', {
+            totalRncs: result.rncs ? result.rncs.length : 0
         });
         
     } catch (error) {

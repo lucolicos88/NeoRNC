@@ -904,12 +904,20 @@ var Reports = (function() {
         }
       }
       
-      // Filtro de setor - CORREÇÃO: verificar ambos os campos de setor
+      // Filtro de setor - CORREÇÃO: verificar tipo de setor E setor específico
       if (incluir && filters.setor && filters.setor !== 'Todos') {
-        var setor = rnc['Setor onde ocorreu a não conformidade'] || 
-                   rnc['Setor onde foi feita abertura\n'] || 
-                   rnc['Setor onde foi feita abertura'] || '';
-        
+        var setor = '';
+
+        // Determinar qual campo de setor usar baseado no tipoSetor
+        if (filters.tipoSetor === 'qualidade' || filters.tipoSetor === 'naoConformidade') {
+          // Setor da não conformidade (qualidade)
+          setor = rnc['Setor onde ocorreu a não conformidade'] || '';
+        } else {
+          // Setor de abertura (padrão)
+          setor = rnc['Setor onde foi feita abertura\n'] ||
+                  rnc['Setor onde foi feita abertura'] || '';
+        }
+
         // Limpar e comparar
         setor = String(setor).trim();
         if (setor !== filters.setor) {
@@ -968,7 +976,31 @@ var Reports = (function() {
       filtered: filteredRncs.length,
       filters: filters
     });
-    
+
+    // Se não encontrou nenhuma RNC, retornar mensagem específica
+    if (filteredRncs.length === 0) {
+      Logger.logWarning('generateReport_NO_RESULTS', {
+        totalRncs: allRncs.length,
+        filters: filters
+      });
+
+      return {
+        rncs: [],
+        stats: {
+          total: 0,
+          porStatus: {},
+          porSetor: {},
+          porTipo: {},
+          porRisco: {}
+        },
+        filters: filters,
+        dataGeracao: new Date().toISOString(),
+        totalOriginal: allRncs.length,
+        totalFiltrado: 0,
+        message: 'Nenhuma RNC encontrada com os filtros selecionados. Tente ajustar o período ou os filtros.'
+      };
+    }
+
     // Calcular estatísticas
     var stats = calculateReportStats(filteredRncs);
     
