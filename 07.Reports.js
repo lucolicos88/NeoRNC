@@ -839,68 +839,129 @@ var Reports = (function() {
     var allRncs = RncOperations.getAllRncs();
     var filteredRncs = [];
     
-    // Log para debug
-    Logger.logDebug('generateReport_DEBUG', {
+    // DEBUG: Log detalhado dos filtros e primeira RNC
+    var debugInfo = {
       totalRncs: allRncs.length,
-      filterDateStart: filters.dataInicio,
-      filterDateEnd: filters.dataFim
+      filters: filters
+    };
+
+    if (allRncs.length > 0) {
+      debugInfo.firstRncSample = {
+        numero: allRncs[0]['Nº RNC'],
+        dataCriacao: allRncs[0]['Data Criação'],
+        dataAbertura: allRncs[0]['Data de Abertura'],
+        statusGeral: allRncs[0]['Status Geral'],
+        setor: allRncs[0]['Setor onde ocorreu a não conformidade'] || allRncs[0]['Setor onde foi feita abertura']
+      };
+    }
+
+    Logger.logDebug('generateReport_DEBUG_START', debugInfo);
+
+    // Helper: Converter string de data para objeto Date
+    function parseDate(dateStr) {
+      if (!dateStr) return null;
+
+      // Se já é Date
+      if (dateStr instanceof Date) {
+        return isNaN(dateStr.getTime()) ? null : dateStr;
+      }
+
+      var str = String(dateStr).trim();
+      var date = null;
+
+      // Formato ISO com T (2025-12-23T12:00:00)
+      if (str.includes('T')) {
+        date = new Date(str);
+      }
+      // Formato DD/MM/YYYY
+      else if (str.includes('/') && str.split('/').length === 3) {
+        var parts = str.split('/');
+        // DD/MM/YYYY -> new Date(YYYY, MM-1, DD)
+        date = new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+      }
+      // Formato YYYY-MM-DD
+      else if (str.includes('-') && str.split('-').length === 3) {
+        var parts = str.split('-');
+        // Verificar se é YYYY-MM-DD ou DD-MM-YYYY
+        if (parts[0].length === 4) {
+          // YYYY-MM-DD
+          date = new Date(str + 'T12:00:00');
+        } else {
+          // DD-MM-YYYY
+          date = new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+        }
+      }
+      else {
+        date = new Date(str);
+      }
+
+      return (date && !isNaN(date.getTime())) ? date : null;
+    }
+
+    // Converter datas dos filtros
+    var dataInicioObj = parseDate(filters.dataInicio);
+    var dataFimObj = parseDate(filters.dataFim);
+
+    // Se filtro de data está ativo mas conversão falhou, logar erro
+    if ((filters.dataInicio || filters.dataFim) && (!dataInicioObj || !dataFimObj)) {
+      Logger.logError('generateReport_INVALID_FILTER_DATES', null, {
+        dataInicio: filters.dataInicio,
+        dataFim: filters.dataFim,
+        dataInicioObj: dataInicioObj,
+        dataFimObj: dataFimObj
+      });
+
+      throw new Error('Formato de data inválido nos filtros. Use YYYY-MM-DD.');
+    }
+
+    // Ajustar horários para comparação correta
+    if (dataInicioObj) {
+      dataInicioObj.setHours(0, 0, 0, 0);
+    }
+    if (dataFimObj) {
+      dataFimObj.setHours(23, 59, 59, 999);
+    }
+
+    Logger.logDebug('generateReport_PARSED_DATES', {
+      dataInicio: dataInicioObj ? dataInicioObj.toISOString() : null,
+      dataFim: dataFimObj ? dataFimObj.toISOString() : null
     });
-    
+
     // Aplicar filtros
+    var dateFilterStats = { total: 0, valid: 0, invalid: 0, inRange: 0, outRange: 0 };
+
     for (var i = 0; i < allRncs.length; i++) {
       var rnc = allRncs[i];
       var incluir = true;
-      
-      // CORREÇÃO: Filtro de data mais robusto
-      if (filters.dataInicio && filters.dataFim) {
+
+      // FILTRO DE DATA
+      if (dataInicioObj && dataFimObj) {
+        dateFilterStats.total++;
+
         var dataCriacao = rnc['Data Criação'] || rnc['Data de Abertura'];
-        
-        if (dataCriacao) {
-          var dataObj;
-          
-          // Tratar diferentes formatos de data
-          if (typeof dataCriacao === 'string') {
-            // Se for string ISO
-            if (dataCriacao.includes('T')) {
-              dataObj = new Date(dataCriacao);
-            } 
-            // Se for formato DD/MM/YYYY
-            else if (dataCriacao.includes('/')) {
-              var parts = dataCriacao.split('/');
-              if (parts.length === 3) {
-                dataObj = new Date(parts[2], parts[1] - 1, parts[0]);
-              }
-            }
-            // Se for formato YYYY-MM-DD
-            else if (dataCriacao.includes('-')) {
-              dataObj = new Date(dataCriacao + 'T12:00:00');
-            }
-            else {
-              dataObj = new Date(dataCriacao);
-            }
-          } else if (dataCriacao instanceof Date) {
-            dataObj = dataCriacao;
-          }
-          
-          // Validar se é data válida
-          if (!dataObj || isNaN(dataObj.getTime())) {
-            Logger.logWarning('generateReport_INVALID_DATE', {
-              rncNumber: rnc['Nº RNC'],
-              dataCriacao: dataCriacao
-            });
+        var dataObj = parseDate(dataCriacao);
+
+        if (!dataObj) {
+          dateFilterStats.invalid++;
+          Logger.logWarning('generateReport_INVALID_RNC_DATE', {
+            rncNumber: rnc['Nº RNC'],
+            dataCriacao: dataCriacao,
+            typeof: typeof dataCriacao
+          });
+          incluir = false;
+        } else {
+          dateFilterStats.valid++;
+
+          // Comparar datas (sem horário)
+          var dataObjSemHora = new Date(dataObj);
+          dataObjSemHora.setHours(0, 0, 0, 0);
+
+          if (dataObjSemHora < dataInicioObj || dataObjSemHora > dataFimObj) {
+            dateFilterStats.outRange++;
             incluir = false;
           } else {
-            // Comparar datas
-            var inicio = new Date(filters.dataInicio + 'T00:00:00');
-            var fim = new Date(filters.dataFim + 'T23:59:59');
-            
-            if (dataObj < inicio || dataObj > fim) {
-              incluir = false;
-            }
+            dateFilterStats.inRange++;
           }
-        } else {
-          // Se não tem data, não incluir quando filtro de data está ativo
-          incluir = false;
         }
       }
       
@@ -970,10 +1031,11 @@ var Reports = (function() {
       }
     }
     
-    // Log resultado dos filtros
+    // Log resultado dos filtros com estatísticas detalhadas
     Logger.logDebug('generateReport_FILTERED', {
       original: allRncs.length,
       filtered: filteredRncs.length,
+      dateStats: dateFilterStats,
       filters: filters
     });
 
@@ -981,6 +1043,7 @@ var Reports = (function() {
     if (filteredRncs.length === 0) {
       Logger.logWarning('generateReport_NO_RESULTS', {
         totalRncs: allRncs.length,
+        dateStats: dateFilterStats,
         filters: filters
       });
 
