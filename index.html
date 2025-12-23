@@ -8859,7 +8859,7 @@ function exportToPdf() {
 
         // Helper: Add Section Header
         function addSectionHeader(title, yPosition) {
-            if (yPosition > pageHeight - 40) {
+            if (yPosition > pageHeight - 30) {
                 doc.addPage();
                 yPosition = 20;
             }
@@ -8872,97 +8872,80 @@ function exportToPdf() {
             return yPosition + 15;
         }
 
-        // Helper: Draw Horizontal Bar Chart
-        // Helper: Draw Bar Chart (CORPORATIVO - Alta qualidade)
+        // Helper: Draw Bar Chart (Limpo e Profissional)
         function drawBarChart(data, startY, maxWidth = 120) {
-            const barHeight = 12;
-            const barSpacing = 16;
+            const barHeight = 10;
+            const barSpacing = 14;
             let y = startY;
 
             const maxValue = Math.max(...data.map(d => d.value));
 
-            // Gradiente de cores (do mais forte para mais suave)
+            // Paleta de cores limpa e profissional
             const colors = [
                 [0, 150, 136],   // Teal (brand)
                 [255, 152, 0],   // Orange
                 [76, 175, 80],   // Green
-                [244, 67, 54],   // Red
                 [33, 150, 243],  // Blue
                 [156, 39, 176],  // Purple
                 [255, 193, 7],   // Amber
+                [244, 67, 54],   // Red
                 [96, 125, 139]   // Blue Grey
             ];
 
             data.forEach((item, index) => {
-                if (y > pageHeight - 20) {
+                if (y > pageHeight - 25) {
                     doc.addPage();
                     y = 20;
                 }
 
-                const barWidth = Math.max((item.value / maxValue) * maxWidth, 3);
+                const barWidth = Math.max((item.value / maxValue) * maxWidth, 2);
                 const color = colors[index % colors.length];
 
                 // Background track (trilho cinza claro)
-                doc.setFillColor(240, 240, 240);
+                doc.setFillColor(245, 245, 245);
                 doc.rect(margin + 50, y, maxWidth, barHeight, 'F');
 
-                // Sombra da barra
-                doc.setFillColor(220, 220, 220);
-                doc.rect(margin + 50.5, y + 0.5, barWidth, barHeight, 'F');
-
-                // Barra principal com gradiente simulado
-                // Parte mais escura (base)
-                doc.setFillColor(color[0] * 0.8, color[1] * 0.8, color[2] * 0.8);
-                doc.rect(margin + 50, y + barHeight * 0.6, barWidth, barHeight * 0.4, 'F');
-
-                // Parte mais clara (topo)
+                // Barra colorida simples (sem gradientes ou sombras)
                 doc.setFillColor(color[0], color[1], color[2]);
-                doc.rect(margin + 50, y, barWidth, barHeight * 0.6, 'F');
+                doc.rect(margin + 50, y, barWidth, barHeight, 'F');
 
-                // Highlight no topo (brilho)
-                doc.setFillColor(
-                    Math.min(255, color[0] + 40),
-                    Math.min(255, color[1] + 40),
-                    Math.min(255, color[2] + 40)
-                );
-                doc.rect(margin + 50, y, barWidth, barHeight * 0.2, 'F');
+                // Borda fina e sutil
+                doc.setDrawColor(220, 220, 220);
+                doc.setLineWidth(0.2);
+                doc.rect(margin + 50, y, maxWidth, barHeight, 'S');
 
-                // Borda sutil
-                doc.setDrawColor(color[0] * 0.6, color[1] * 0.6, color[2] * 0.6);
-                doc.setLineWidth(0.3);
-                doc.rect(margin + 50, y, barWidth, barHeight, 'S');
-
-                // Ícone de posição
-                doc.setFillColor(100, 100, 100);
+                // Número de posição
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(9);
-                doc.text(`${index + 1}`, margin + 2, y + 8);
+                doc.setFontSize(8);
+                doc.setTextColor(80, 80, 80);
+                doc.text(`${index + 1}`, margin + 2, y + 7);
 
                 // Label
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(51, 51, 51);
-                const label = item.label.substring(0, 30);
-                doc.text(label, margin + 7, y + 8);
+                const label = item.label.substring(0, 32);
+                doc.text(label, margin + 7, y + 7);
 
-                // Valor dentro da barra se couber, senão fora
+                // Valor no final da barra
                 doc.setFont('helvetica', 'bold');
-                doc.setTextColor(255, 255, 255);
-                if (barWidth > 15) {
-                    // Dentro da barra
-                    doc.text(String(item.value), margin + 51 + barWidth - 8, y + 8);
+                doc.setFontSize(8);
+                if (barWidth > 12) {
+                    // Dentro da barra (branco)
+                    doc.setTextColor(255, 255, 255);
+                    doc.text(String(item.value), margin + 50 + barWidth - 6, y + 7);
                 } else {
-                    // Fora da barra
+                    // Fora da barra (escuro)
                     doc.setTextColor(51, 51, 51);
-                    doc.text(String(item.value), margin + 52 + barWidth, y + 8);
+                    doc.text(String(item.value), margin + 52 + barWidth, y + 7);
                 }
 
-                // Percentual relativo ao máximo
+                // Percentual
                 const pct = ((item.value / maxValue) * 100).toFixed(0);
                 doc.setFontSize(7);
                 doc.setFont('helvetica', 'normal');
-                doc.setTextColor(120, 120, 120);
-                doc.text(`${pct}%`, margin + 50 + maxWidth + 2, y + 8);
+                doc.setTextColor(130, 130, 130);
+                doc.text(`${pct}%`, margin + 50 + maxWidth + 2, y + 7);
 
                 y += barSpacing;
             });
@@ -8970,57 +8953,33 @@ function exportToPdf() {
             return y + 5;
         }
 
-        // Helper: Draw Pie Chart (APRESENTAÇÃO DIRETORIA - Máxima qualidade)
+        // Helper: Draw Pie Chart (Limpo e Moderno - Estilo Donut)
         function drawPieChart(data, centerX, centerY, radius) {
             const total = data.reduce((sum, d) => sum + d.value, 0);
             let startAngle = -Math.PI / 2;
 
-            // Paleta VIBRANTE para apresentações
+            // Paleta de cores profissional
             const colors = [
                 [0, 150, 136],    // Teal (BRAND)
-                [255, 138, 0],    // Laranja FORTE
-                [67, 160, 71],    // Verde INTENSO
-                [229, 57, 53],    // Vermelho VIBRANTE
-                [30, 136, 229],   // Azul ROYAL
-                [142, 36, 170],   // Roxo PROFUNDO
-                [251, 192, 45],   // Amarelo OURO
-                [84, 110, 122]    // Cinza AZULADO
+                [255, 152, 0],    // Orange
+                [76, 175, 80],    // Green
+                [33, 150, 243],   // Blue
+                [156, 39, 176],   // Purple
+                [255, 193, 7],    // Amber
+                [244, 67, 54],    // Red
+                [96, 125, 139]    // Blue Grey
             ];
 
-            // SOMBRA 3D com maior offset
-            doc.setFillColor(180, 180, 180);
-            doc.setDrawColor(180, 180, 180);
-            data.forEach((item, index) => {
-                const sliceAngle = (item.value / total) * 2 * Math.PI;
-                const segments = Math.max(40, Math.ceil(sliceAngle * 60)); // Ultra suave
-
-                for (let i = 0; i < segments; i++) {
-                    const angle1 = startAngle + (i / segments) * sliceAngle;
-                    const angle2 = startAngle + ((i + 1) / segments) * sliceAngle;
-
-                    const x1 = centerX + 2 + radius * Math.cos(angle1);
-                    const y1 = centerY + 2 + radius * Math.sin(angle1);
-                    const x2 = centerX + 2 + radius * Math.cos(angle2);
-                    const y2 = centerY + 2 + radius * Math.sin(angle2);
-
-                    doc.triangle(centerX + 2, centerY + 2, x1, y1, x2, y2, 'F');
-                }
-                startAngle += sliceAngle;
-            });
-
-            // Resetar ângulo
-            startAngle = -Math.PI / 2;
-
-            // FATIAS COLORIDAS com bordas PRETAS GROSSAS
+            // Desenhar fatias coloridas (sem sombra 3D)
             data.forEach((item, index) => {
                 const sliceAngle = (item.value / total) * 2 * Math.PI;
                 const color = colors[index % colors.length];
-                const segments = Math.max(50, Math.ceil(sliceAngle * 80)); // ULTRA suave
+                const segments = Math.max(30, Math.ceil(sliceAngle * 40));
 
-                // Fatia com borda PRETA GROSSA
+                // Fatia com borda fina e limpa
                 doc.setFillColor(color[0], color[1], color[2]);
-                doc.setDrawColor(40, 40, 40); // Borda PRETA (quase preta)
-                doc.setLineWidth(3); // Borda MUITO GROSSA
+                doc.setDrawColor(255, 255, 255); // Borda branca para separação
+                doc.setLineWidth(1);
 
                 for (let i = 0; i < segments; i++) {
                     const angle1 = startAngle + (i / segments) * sliceAngle;
@@ -9037,75 +8996,58 @@ function exportToPdf() {
                 startAngle += sliceAngle;
             });
 
-            // CONTORNO EXTERNO PRETO no gráfico inteiro
-            doc.setDrawColor(30, 30, 30);
-            doc.setLineWidth(2.5);
-            doc.setFillColor(0, 0, 0, 0);
-            // Desenhar círculo externo
-            const circleSegments = 80;
-            for (let i = 0; i < circleSegments; i++) {
-                const angle1 = (i / circleSegments) * 2 * Math.PI;
-                const angle2 = ((i + 1) / circleSegments) * 2 * Math.PI;
-                const x1 = centerX + radius * Math.cos(angle1);
-                const y1 = centerY + radius * Math.sin(angle1);
-                const x2 = centerX + radius * Math.cos(angle2);
-                const y2 = centerY + radius * Math.sin(angle2);
-                doc.line(x1, y1, x2, y2);
-            }
-
-            // CÍRCULO BRANCO CENTRAL (estilo donut)
-            const innerRadius = radius * 0.5;
+            // Círculo branco central (estilo donut)
+            const innerRadius = radius * 0.55;
             doc.setFillColor(255, 255, 255);
-            doc.setDrawColor(255, 255, 255);
+            doc.setDrawColor(240, 240, 240);
+            doc.setLineWidth(0.5);
             for (let angle = 0; angle < 2 * Math.PI; angle += 0.05) {
                 const x1 = centerX + innerRadius * Math.cos(angle);
                 const y1 = centerY + innerRadius * Math.sin(angle);
                 const x2 = centerX + innerRadius * Math.cos(angle + 0.05);
                 const y2 = centerY + innerRadius * Math.sin(angle + 0.05);
-                doc.triangle(centerX, centerY, x1, y1, x2, y2, 'F');
+                doc.triangle(centerX, centerY, x1, y1, x2, y2, 'FD');
             }
 
-            // TOTAL NO CENTRO com destaque
-            doc.setFontSize(16);
+            // Total no centro
+            doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 150, 136); // Teal brand
-            doc.text(String(total), centerX, centerY - 2, { align: 'center' });
-            doc.setFontSize(8);
+            doc.setTextColor(0, 150, 136);
+            doc.text(String(total), centerX, centerY - 1, { align: 'center' });
+            doc.setFontSize(7);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(120, 120, 120);
             doc.text('Total', centerX, centerY + 4, { align: 'center' });
 
-            // LEGENDA PROFISSIONAL com caixas coloridas e bordas
-            let legendY = centerY - radius + 8;
+            // Legenda limpa e organizada
+            let legendY = centerY - radius + 10;
             data.forEach((item, index) => {
                 const color = colors[index % colors.length];
                 const pct = ((item.value / total) * 100).toFixed(1);
 
-                // Caixa colorida com borda
+                // Quadrado colorido
                 doc.setFillColor(color[0], color[1], color[2]);
-                doc.setDrawColor(color[0] * 0.7, color[1] * 0.7, color[2] * 0.7);
-                doc.setLineWidth(0.5);
-                doc.rect(centerX + radius + 10, legendY - 2, 4, 4, 'FD');
+                doc.rect(centerX + radius + 10, legendY - 2, 3.5, 3.5, 'F');
 
-                // Valor em negrito
-                doc.setFontSize(9);
+                // Valor
+                doc.setFontSize(8);
                 doc.setTextColor(51, 51, 51);
                 doc.setFont('helvetica', 'bold');
-                doc.text(`${item.value}`, centerX + radius + 16, legendY + 1.5);
+                doc.text(`${item.value}`, centerX + radius + 15, legendY + 1);
 
                 // Percentual
                 doc.setFont('helvetica', 'normal');
-                doc.setFontSize(8);
-                doc.setTextColor(100, 100, 100);
-                doc.text(`(${pct}%)`, centerX + radius + 23, legendY + 1.5);
-
-                // Label em cinza
                 doc.setFontSize(7);
-                doc.setTextColor(130, 130, 130);
-                const labelTrunc = item.label.substring(0, 22);
-                doc.text(labelTrunc, centerX + radius + 16, legendY + 5);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`(${pct}%)`, centerX + radius + 22, legendY + 1);
 
-                legendY += 11;
+                // Label
+                doc.setFontSize(7);
+                doc.setTextColor(100, 100, 100);
+                const labelTrunc = item.label.substring(0, 24);
+                doc.text(labelTrunc, centerX + radius + 15, legendY + 4.5);
+
+                legendY += 10;
             });
         }
 
@@ -9116,36 +9058,27 @@ function exportToPdf() {
         doc.setFillColor(0, 150, 136);
         doc.rect(0, 0, pageWidth, 90, 'F');
 
-        // LOGO NEOFORMULA - Box destacado com texto grande
-        // Fundo branco com borda dupla
+        // LOGO NEOFORMULA - Design unificado e profissional
+        // Fundo branco com borda única
         doc.setFillColor(255, 255, 255);
-        doc.rect(pageWidth / 2 - 40, 15, 80, 28, 'F');
+        doc.roundedRect(pageWidth / 2 - 45, 15, 90, 30, 3, 3, 'F');
 
-        // Borda externa verde grossa
+        // Borda verde elegante
         doc.setDrawColor(0, 150, 136);
-        doc.setLineWidth(2.5);
-        doc.rect(pageWidth / 2 - 40, 15, 80, 28, 'S');
+        doc.setLineWidth(2);
+        doc.roundedRect(pageWidth / 2 - 45, 15, 90, 30, 3, 3, 'S');
 
-        // Borda interna mais fina
-        doc.setLineWidth(0.8);
-        doc.rect(pageWidth / 2 - 38, 17, 76, 24, 'S');
-
-        // Texto "N" grande em Teal
-        doc.setFillColor(0, 150, 136);
+        // Texto "NEOFORMULA" unificado e grande
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(32);
+        doc.setFontSize(24);
         doc.setTextColor(0, 150, 136);
-        doc.text('N', pageWidth / 2 - 30, 34);
-
-        // Texto "EOFORMULA" em Teal
-        doc.setFontSize(22);
-        doc.text('EOFORMULA', pageWidth / 2 - 20, 34);
+        doc.text('NEOFORMULA', pageWidth / 2, 31, { align: 'center' });
 
         // Subtítulo
-        doc.setFontSize(7);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 100, 100);
-        doc.text('Sistema de Gestão', pageWidth / 2, 39, { align: 'center' });
+        doc.text('Sistema de Gestão de Qualidade', pageWidth / 2, 40, { align: 'center' });
 
         // Titulo principal
         doc.setTextColor(255, 255, 255);
@@ -9302,7 +9235,7 @@ function exportToPdf() {
             yPos = doc.lastAutoTable.finalY + 15;
 
             // Grafico de pizza
-            if (yPos > pageHeight - 70) {
+            if (yPos > pageHeight - 35) {
                 doc.addPage();
                 yPos = 20;
             }
@@ -9320,7 +9253,7 @@ function exportToPdf() {
         // ============================================
         // PAGE 4: DISTRIBUIÇÃO POR RISCO
         // ============================================
-        if (yPos > pageHeight - 80) {
+        if (yPos > pageHeight - 30) {
             doc.addPage();
             yPos = 20;
         }
@@ -9350,7 +9283,7 @@ function exportToPdf() {
             yPos = doc.lastAutoTable.finalY + 15;
 
             // Grafico de pizza
-            if (yPos > pageHeight - 70) {
+            if (yPos > pageHeight - 35) {
                 doc.addPage();
                 yPos = 20;
             }
@@ -9368,8 +9301,11 @@ function exportToPdf() {
         // ============================================
         // PAGE 5: DISTRIBUIÇÃO POR TIPO
         // ============================================
-        doc.addPage();
-        yPos = addSectionHeader('DISTRIBUIÇÃO POR TIPO DE RNC', 20);
+        if (yPos > pageHeight - 30) {
+            doc.addPage();
+            yPos = 20;
+        }
+        yPos = addSectionHeader('DISTRIBUIÇÃO POR TIPO DE RNC', yPos);
 
         const tipoData = Object.entries(stats.porTipo || {})
             .sort((a, b) => b[1] - a[1])
@@ -9396,7 +9332,7 @@ function exportToPdf() {
             yPos = doc.lastAutoTable.finalY + 15;
 
             // Grafico de barras
-            if (yPos > pageHeight - 80) {
+            if (yPos > pageHeight - 35) {
                 doc.addPage();
                 yPos = 20;
             }
@@ -9413,8 +9349,11 @@ function exportToPdf() {
         // ============================================
         // PAGE 6: DISTRIBUIÇÃO POR SETOR
         // ============================================
-        doc.addPage();
-        yPos = addSectionHeader('DISTRIBUIÇÃO POR SETOR', 20);
+        if (yPos > pageHeight - 30) {
+            doc.addPage();
+            yPos = 20;
+        }
+        yPos = addSectionHeader('DISTRIBUIÇÃO POR SETOR', yPos);
 
         const setorData = Object.entries(stats.porSetor || {})
             .sort((a, b) => b[1] - a[1])
@@ -9441,7 +9380,7 @@ function exportToPdf() {
             yPos = doc.lastAutoTable.finalY + 15;
 
             // Grafico de barras
-            if (yPos > pageHeight - 80) {
+            if (yPos > pageHeight - 35) {
                 doc.addPage();
                 yPos = 20;
             }
@@ -9458,8 +9397,11 @@ function exportToPdf() {
         // ============================================
         // PAGE 7: ANÁLISE DE CUSTOS
         // ============================================
-        doc.addPage();
-        yPos = addSectionHeader('ANÁLISE DETALHADA DE CUSTOS', 20);
+        if (yPos > pageHeight - 30) {
+            doc.addPage();
+            yPos = 20;
+        }
+        yPos = addSectionHeader('ANÁLISE DETALHADA DE CUSTOS', yPos);
 
         if (Object.keys(stats.custoMedioPorTipo || {}).length > 0) {
             const custoData = Object.entries(stats.custoMedioPorTipo)
@@ -9484,7 +9426,7 @@ function exportToPdf() {
             yPos = doc.lastAutoTable.finalY + 15;
 
             // Grafico de custos
-            if (yPos > pageHeight - 80) {
+            if (yPos > pageHeight - 35) {
                 doc.addPage();
                 yPos = 20;
             }
@@ -9506,8 +9448,11 @@ function exportToPdf() {
         // ============================================
         // PAGE 8: TOP 5 SETORES COM MAIS RNCs
         // ============================================
-        doc.addPage();
-        yPos = addSectionHeader('TOP 5 SETORES COM MAIS RNCs', 20);
+        if (yPos > pageHeight - 30) {
+            doc.addPage();
+            yPos = 20;
+        }
+        yPos = addSectionHeader('TOP 5 SETORES COM MAIS RNCs', yPos);
 
         if (stats.top5Setores && stats.top5Setores.length > 0) {
             doc.autoTable({
@@ -9528,7 +9473,7 @@ function exportToPdf() {
             yPos = doc.lastAutoTable.finalY + 15;
 
             // Grafico
-            if (yPos > pageHeight - 80) {
+            if (yPos > pageHeight - 35) {
                 doc.addPage();
                 yPos = 20;
             }
@@ -9550,7 +9495,7 @@ function exportToPdf() {
         // ============================================
         // PAGE 9: TOP 5 TIPOS DE FALHA
         // ============================================
-        if (yPos > pageHeight - 80) {
+        if (yPos > pageHeight - 30) {
             doc.addPage();
             yPos = 20;
         }
@@ -9579,8 +9524,11 @@ function exportToPdf() {
         // ============================================
         // PAGE 10: ANÁLISE DE PRAZOS
         // ============================================
-        doc.addPage();
-        yPos = addSectionHeader('ANÁLISE DE PRAZOS E VENCIMENTOS', 20);
+        if (yPos > pageHeight - 30) {
+            doc.addPage();
+            yPos = 20;
+        }
+        yPos = addSectionHeader('ANÁLISE DE PRAZOS E VENCIMENTOS', yPos);
 
         doc.autoTable({
             startY: yPos,
@@ -9605,7 +9553,7 @@ function exportToPdf() {
         // ============================================
         // PAGE 11: AÇÕES RECOMENDADAS
         // ============================================
-        if (yPos > pageHeight - 80) {
+        if (yPos > pageHeight - 30) {
             doc.addPage();
             yPos = 20;
         }
@@ -9638,8 +9586,11 @@ function exportToPdf() {
         // ============================================
         // PAGE 12: RESUMO DE IMPACTO
         // ============================================
-        doc.addPage();
-        yPos = addSectionHeader('RESUMO DE IMPACTO E TENDÊNCIAS', 20);
+        if (yPos > pageHeight - 30) {
+            doc.addPage();
+            yPos = 20;
+        }
+        yPos = addSectionHeader('RESUMO DE IMPACTO E TENDÊNCIAS', yPos);
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
@@ -9748,16 +9699,16 @@ function exportToPdf() {
         // ============================================
         // SALVAR PDF
         // ============================================
-        const filename = `relatorio_mega_completo_${new Date().toISOString().split('T')[0]}.pdf`;
+        const filename = `relatorio_gerencial_rnc_${new Date().toISOString().split('T')[0]}.pdf`;
         doc.save(filename);
 
         hideLoading();
-        showSuccess(`PDF mega-completo exportado! (${totalPages} paginas)`);
-        debugLog('success', `PDF mega-completo exportado - ${totalPages} paginas - DEPLOY 39`);
+        showSuccess(`PDF Gerencial exportado com sucesso! (${totalPages} páginas)`);
+        debugLog('success', `PDF Gerencial v2.3 - ${totalPages} páginas - Logo otimizado, gráficos limpos, espaçamento reduzido`);
 
     } catch (error) {
         hideLoading();
-        debugLog('error', 'Erro ao exportar PDF DEPLOY 39', { error: error.message });
+        debugLog('error', 'Erro ao exportar PDF v2.3', { error: error.message });
         showError('Erro ao exportar PDF: ' + error.message);
     }
 }

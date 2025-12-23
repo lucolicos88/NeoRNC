@@ -20,12 +20,12 @@ const CONFIG = {
   DRIVE_FOLDER_ID: '1Bo5yU-rJtyz-1KVUTIQHlZRv7mFLZ_p6a9TClx0r2w060',
 
   // Versão do Sistema
-  VERSION: 'Sistema RNC v2.2 - PRODUÇÃO (Sistema de Backup Completo + UI Otimizada)',
+  VERSION: 'Sistema RNC v2.3 - DESENVOLVEDOR (Relatório PDF Otimizado + Gráficos Limpos)',
   BUILD_DATE: '2025-12-23',
 
   // Modo de Operação
-  DEBUG_MODE: false, // Controle de logs de debug
-  ENVIRONMENT: 'production', // development | production
+  DEBUG_MODE: true, // Controle de logs de debug
+  ENVIRONMENT: 'development', // development | production
 
   // Nomes das Planilhas
   SHEETS: {
