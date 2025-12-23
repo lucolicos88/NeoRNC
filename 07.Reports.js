@@ -1077,9 +1077,29 @@ var Reports = (function() {
       var dateB = new Date(b['Data Criação'] || b['Data de Abertura'] || 0);
       return dateB - dateA;
     });
-    
+
+    // SERIALIZAÇÃO: Converter todos os objetos Date para strings ISO
+    // Isso é CRÍTICO para google.script.run - objetos Date não serializam corretamente
+    console.log('>>> SERIALIZANDO RNCs para JSON...');
+    var serializedRncs = filteredRncs.map(function(rnc) {
+      var serialized = {};
+      for (var key in rnc) {
+        if (rnc.hasOwnProperty(key)) {
+          var value = rnc[key];
+          // Converter Date para ISO string
+          if (value instanceof Date) {
+            serialized[key] = value.toISOString();
+          } else {
+            serialized[key] = value;
+          }
+        }
+      }
+      return serialized;
+    });
+    console.log('>>> SERIALIZAÇÃO COMPLETA - RNCs serializados:', serializedRncs.length);
+
     var result = {
-      rncs: filteredRncs,
+      rncs: serializedRncs,
       stats: stats,
       filters: filters,
       dataGeracao: new Date().toISOString(),
