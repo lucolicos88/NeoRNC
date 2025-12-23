@@ -831,8 +831,12 @@ var Reports = (function() {
    * @return {Object} Dados do relatório
    */
   function generateReport(filters) {
+  // LOG CRÍTICO - PRIMEIRA LINHA
+  console.log('>>> generateReport CHAMADA - filters:', JSON.stringify(filters));
+  Logger.logInfo('generateReport_ENTRY', { filters: filters });
+
   var startTime = new Date().getTime();
-  
+
   try {
     Logger.logInfo('generateReport_START', { filters: filters });
     
@@ -1092,6 +1096,7 @@ var Reports = (function() {
     return result;
     
   } catch (error) {
+    console.log('>>> generateReport EXCEPTION:', error.toString(), error.stack);
     Logger.logError('generateReport_ERROR', error, { filters: filters });
     return {
       rncs: [],
@@ -1102,6 +1107,7 @@ var Reports = (function() {
     };
   }
 }
+  console.log('>>> generateReport DEFINIDA');
   
   /**
    * Calcula estatísticas do relatório
