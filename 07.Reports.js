@@ -877,7 +877,7 @@ var Reports = (function() {
       else if (str.includes('/') && str.split('/').length === 3) {
         var parts = str.split('/');
         // DD/MM/YYYY -> new Date(YYYY, MM-1, DD)
-        date = new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+        date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
       }
       // Formato YYYY-MM-DD
       else if (str.includes('-') && str.split('-').length === 3) {
@@ -888,7 +888,7 @@ var Reports = (function() {
           date = new Date(str + 'T12:00:00');
         } else {
           // DD-MM-YYYY
-          date = new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+          date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
         }
       }
       else {
