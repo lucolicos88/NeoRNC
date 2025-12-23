@@ -1092,7 +1092,15 @@ var Reports = (function() {
       totalFiltrado: filteredRncs.length,
       duration: Logger.logPerformance('generateReport', startTime)
     });
-    
+
+    console.log('>>> generateReport RETORNANDO:', {
+      hasRncs: !!result.rncs,
+      rncsLength: result.rncs ? result.rncs.length : 0,
+      hasStats: !!result.stats,
+      totalOriginal: result.totalOriginal,
+      totalFiltrado: result.totalFiltrado
+    });
+
     return result;
     
   } catch (error) {
