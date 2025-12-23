@@ -3919,6 +3919,7 @@ textarea.form-control,
         <div class="footer-content">
             <span>Sistema RNC Neoformula - Elaborado por: TI Neoformula</span>
             <span class="footer-version" id="footerVersion">Versão...</span>
+            <span id="footerDeploy" style="font-size: 0.75rem; color: var(--text-muted);"></span>
         </div>
     </footer>
 
@@ -4646,9 +4647,45 @@ if (typeof appContext !== 'undefined' && appContext && appContext.email) {
 }
     document.getElementById('userRole').textContent = appContext.role || 'Usuario';
 
-    // Deploy 74.5.2: Atualizar versão no rodapé
+    // Deploy 74.5.2: Atualizar versão no rodapé com ambiente e deploy
     if (appContext.version) {
-        document.getElementById('footerVersion').textContent = appContext.version;
+        const versionText = appContext.version;
+        const isProd = versionText.includes('PRODUÇÃO');
+        const isDev = versionText.includes('DESENVOLVEDOR');
+
+        // Atualizar badge da versão
+        const footerVersion = document.getElementById('footerVersion');
+        if (isProd) {
+            footerVersion.textContent = '🚀 Versão de PRODUÇÃO';
+            footerVersion.style.background = '#28a745'; // Verde
+        } else if (isDev) {
+            footerVersion.textContent = '🔧 Versão de DESENVOLVEDOR';
+            footerVersion.style.background = '#ffc107'; // Amarelo
+            footerVersion.style.color = '#000'; // Texto preto para contraste
+        } else {
+            footerVersion.textContent = versionText;
+        }
+
+        // Adicionar informação de deploy
+        const footerDeploy = document.getElementById('footerDeploy');
+        if (footerDeploy) {
+            const deployNumber = isProd ? '@61' : isDev ? '@62' : '@HEAD';
+            footerDeploy.textContent = `Deploy ${deployNumber}`;
+
+            // Buscar URL do script assincronamente
+            apiCall('getScriptUrl').then(scriptUrl => {
+                if (scriptUrl) {
+                    footerDeploy.innerHTML = `
+                        Deploy ${deployNumber} |
+                        <a href="${scriptUrl}" target="_blank" style="color: var(--primary); text-decoration: underline;">
+                            🔗 Abrir no Apps Script
+                        </a>
+                    `;
+                }
+            }).catch(err => {
+                console.warn('Não foi possível obter URL do script:', err);
+            });
+        }
     }
 
     // Deploy 68: Mostrar abas apenas para admins

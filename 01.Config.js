@@ -549,6 +549,18 @@ function setSystemConfig(key, value, description) {
 }
 
 /**
+ * Retorna a URL do script do Apps Script
+ * @return {string} URL do script
+ */
+function getScriptUrl() {
+  try {
+    return ScriptApp.getService().getUrl();
+  } catch (error) {
+    return '';
+  }
+}
+
+/**
  * ============================================
  * SANITIZAÇÃO E SEGURANÇA - Deploy 32
  * ============================================
