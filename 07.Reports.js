@@ -1425,25 +1425,63 @@ function calculateReportStats(rncs) {
       stats.maiorCusto = valor;
     }
     
-    // Por Setor
-    var setor = rnc['Setor onde ocorreu a não conformidade'] || 
-               rnc['Setor onde foi feita abertura\n'] || 
-               'Não informado';
-    if (!stats.porSetor[setor]) stats.porSetor[setor] = 0;
-    stats.porSetor[setor]++;
-    
-    // Por Tipo
-    if (!stats.porTipo[tipoRnc]) stats.porTipo[tipoRnc] = 0;
-    stats.porTipo[tipoRnc]++;
-    
-    // Por Risco
-    if (!stats.porRisco[risco]) stats.porRisco[risco] = 0;
-    stats.porRisco[risco]++;
-    
-    // Por Tipo de Falha
-    var tipoFalha = rnc['Tipo de Falha'] || 'Não informado';
-    if (!stats.porTipoFalha[tipoFalha]) stats.porTipoFalha[tipoFalha] = 0;
-    stats.porTipoFalha[tipoFalha]++;
+    // Por Setor - SPLIT por vírgula/ponto e vírgula
+    var setor = (rnc['Setor onde ocorreu a não conformidade'] ||
+                rnc['Setor onde foi feita abertura\n'] || '').trim();
+    if (setor && setor !== '') {
+      var setores = String(setor).split(/[,;]/).map(function(s) { return s.trim(); });
+      for (var si = 0; si < setores.length; si++) {
+        var setorItem = setores[si];
+        if (setorItem && setorItem !== '') {
+          if (!stats.porSetor[setorItem]) stats.porSetor[setorItem] = 0;
+          stats.porSetor[setorItem]++;
+        }
+      }
+    } else {
+      if (!stats.porSetor['Não informado']) stats.porSetor['Não informado'] = 0;
+      stats.porSetor['Não informado']++;
+    }
+
+    // Por Tipo - SPLIT por vírgula/ponto e vírgula
+    if (tipoRnc && tipoRnc.trim() !== '') {
+      var tiposRnc = String(tipoRnc).split(/[,;]/).map(function(t) { return t.trim(); });
+      for (var ti = 0; ti < tiposRnc.length; ti++) {
+        var tipoItem = tiposRnc[ti];
+        if (tipoItem && tipoItem !== '') {
+          if (!stats.porTipo[tipoItem]) stats.porTipo[tipoItem] = 0;
+          stats.porTipo[tipoItem]++;
+        }
+      }
+    } else {
+      if (!stats.porTipo['Não informado']) stats.porTipo['Não informado'] = 0;
+      stats.porTipo['Não informado']++;
+    }
+
+    // Por Risco - SPLIT por vírgula/ponto e vírgula
+    var riscos = String(risco).split(/[,;]/).map(function(r) { return r.trim(); });
+    for (var ri = 0; ri < riscos.length; ri++) {
+      var riscoItem = riscos[ri];
+      if (riscoItem && riscoItem !== '') {
+        if (!stats.porRisco[riscoItem]) stats.porRisco[riscoItem] = 0;
+        stats.porRisco[riscoItem]++;
+      }
+    }
+
+    // Por Tipo de Falha - SPLIT por vírgula/ponto e vírgula
+    var tipoFalha = rnc['Tipo de Falha'] || '';
+    if (tipoFalha && tipoFalha.trim() !== '') {
+      var tiposFalha = String(tipoFalha).split(/[,;]/).map(function(tf) { return tf.trim(); });
+      for (var tfi = 0; tfi < tiposFalha.length; tfi++) {
+        var tipoFalhaItem = tiposFalha[tfi];
+        if (tipoFalhaItem && tipoFalhaItem !== '') {
+          if (!stats.porTipoFalha[tipoFalhaItem]) stats.porTipoFalha[tipoFalhaItem] = 0;
+          stats.porTipoFalha[tipoFalhaItem]++;
+        }
+      }
+    } else {
+      if (!stats.porTipoFalha['Não informado']) stats.porTipoFalha['Não informado'] = 0;
+      stats.porTipoFalha['Não informado']++;
+    }
     
     // Por Responsável
     var responsavel = rnc['Responsável pela abertura da RNC'] || 'Não atribuído';

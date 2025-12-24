@@ -20,7 +20,7 @@ const CONFIG = {
   DRIVE_FOLDER_ID: '1Bo5yU-rJtyz-1KVUTIQHlZRv7mFLZ_p6a9TClx0r2w060',
 
   // Versão do Sistema
-  VERSION: 'Sistema RNC v2.3 - DESENVOLVEDOR (Deploy 88 - FIX Gráficos + Logo + Fontes)',
+  VERSION: 'Sistema RNC v2.3 - DESENVOLVEDOR (Deploy 89 - FIX DEFINITIVO Split Dashboard)',
   BUILD_DATE: '2025-12-24',
 
   // Modo de Operação
