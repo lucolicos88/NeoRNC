@@ -8998,16 +8998,17 @@ function exportToPdf() {
                 [96, 125, 139]    // Blue Grey
             ];
 
-            // Desenhar fatias coloridas (sem sombra 3D)
+            // Desenhar fatias coloridas com ALTA RESOLUÇÃO para parecer círculo perfeito
             data.forEach((item, index) => {
                 const sliceAngle = (item.value / total) * 2 * Math.PI;
                 const color = colors[index % colors.length];
-                const segments = Math.max(30, Math.ceil(sliceAngle * 40));
+                // AUMENTAR RESOLUÇÃO: Usar mais segmentos para curvas suaves
+                const segments = Math.max(60, Math.ceil(sliceAngle * 100));
 
-                // Fatia com borda fina e limpa
+                // Fatia com borda branca fina
                 doc.setFillColor(color[0], color[1], color[2]);
-                doc.setDrawColor(255, 255, 255); // Borda branca para separação
-                doc.setLineWidth(1);
+                doc.setDrawColor(255, 255, 255);
+                doc.setLineWidth(0.5); // Borda mais fina
 
                 for (let i = 0; i < segments; i++) {
                     const angle1 = startAngle + (i / segments) * sliceAngle;
@@ -9024,16 +9025,20 @@ function exportToPdf() {
                 startAngle += sliceAngle;
             });
 
-            // Círculo branco central (estilo donut)
+            // Círculo branco central (estilo donut) - ALTA RESOLUÇÃO
             const innerRadius = radius * 0.55;
             doc.setFillColor(255, 255, 255);
             doc.setDrawColor(240, 240, 240);
-            doc.setLineWidth(0.5);
-            for (let angle = 0; angle < 2 * Math.PI; angle += 0.05) {
-                const x1 = centerX + innerRadius * Math.cos(angle);
-                const y1 = centerY + innerRadius * Math.sin(angle);
-                const x2 = centerX + innerRadius * Math.cos(angle + 0.05);
-                const y2 = centerY + innerRadius * Math.sin(angle + 0.05);
+            doc.setLineWidth(0.3);
+            // AUMENTAR RESOLUÇÃO: Mais segmentos = círculo mais perfeito
+            const circleSegments = 120;
+            for (let i = 0; i < circleSegments; i++) {
+                const angle1 = (i / circleSegments) * 2 * Math.PI;
+                const angle2 = ((i + 1) / circleSegments) * 2 * Math.PI;
+                const x1 = centerX + innerRadius * Math.cos(angle1);
+                const y1 = centerY + innerRadius * Math.sin(angle1);
+                const x2 = centerX + innerRadius * Math.cos(angle2);
+                const y2 = centerY + innerRadius * Math.sin(angle2);
                 doc.triangle(centerX, centerY, x1, y1, x2, y2, 'FD');
             }
 
@@ -9281,7 +9286,8 @@ function exportToPdf() {
         // ============================================
         // PAGE 4: DISTRIBUIÇÃO POR RISCO
         // ============================================
-        if (yPos > pageHeight - 30) {
+        // Verificar espaço para seção completa (título + tabela + gráfico = ~90mm)
+        if (yPos > pageHeight - 100) {
             doc.addPage();
             yPos = 20;
         }
@@ -9310,8 +9316,8 @@ function exportToPdf() {
 
             yPos = doc.lastAutoTable.finalY + 15;
 
-            // Grafico de pizza
-            if (yPos > pageHeight - 35) {
+            // Grafico de pizza - verificar espaço para gráfico completo (70mm)
+            if (yPos > pageHeight - 75) {
                 doc.addPage();
                 yPos = 20;
             }
@@ -9329,7 +9335,8 @@ function exportToPdf() {
         // ============================================
         // PAGE 5: DISTRIBUIÇÃO POR TIPO
         // ============================================
-        if (yPos > pageHeight - 30) {
+        // Verificar espaço para seção completa (título + tabela + gráfico = ~130mm)
+        if (yPos > pageHeight - 140) {
             doc.addPage();
             yPos = 20;
         }
@@ -9359,8 +9366,8 @@ function exportToPdf() {
 
             yPos = doc.lastAutoTable.finalY + 15;
 
-            // Grafico de barras
-            if (yPos > pageHeight - 35) {
+            // Grafico de barras - verificar espaço para gráfico completo (120mm)
+            if (yPos > pageHeight - 125) {
                 doc.addPage();
                 yPos = 20;
             }

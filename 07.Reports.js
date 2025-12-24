@@ -370,16 +370,28 @@ var Reports = (function() {
       }
 
       // === DEPLOY 36: CONTADORES PARA TOP 5 ===
-      // Contar por setor de abertura
+      // Contar por setor de abertura - SPLIT POR VÍRGULA para múltiplos setores
       if (setorAbertura && setorAbertura !== 'Não informado') {
-        if (!contadoresSetores[setorAbertura]) contadoresSetores[setorAbertura] = 0;
-        contadoresSetores[setorAbertura]++;
+        var setores = String(setorAbertura).split(',').map(function(s) { return s.trim(); });
+        for (var s = 0; s < setores.length; s++) {
+          var setor = setores[s];
+          if (setor && setor !== 'Não informado') {
+            if (!contadoresSetores[setor]) contadoresSetores[setor] = 0;
+            contadoresSetores[setor]++;
+          }
+        }
       }
 
-      // Contar por tipo de falha
+      // Contar por tipo de falha - SPLIT POR VÍRGULA para múltiplos tipos
       if (tipoFalha && tipoFalha !== 'Não informado') {
-        if (!contadoresTiposFalha[tipoFalha]) contadoresTiposFalha[tipoFalha] = 0;
-        contadoresTiposFalha[tipoFalha]++;
+        var tipos = String(tipoFalha).split(',').map(function(t) { return t.trim(); });
+        for (var t = 0; t < tipos.length; t++) {
+          var tipo = tipos[t];
+          if (tipo && tipo !== 'Não informado') {
+            if (!contadoresTiposFalha[tipo]) contadoresTiposFalha[tipo] = 0;
+            contadoresTiposFalha[tipo]++;
+          }
+        }
       }
     }
     
