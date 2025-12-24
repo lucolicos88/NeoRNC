@@ -5197,11 +5197,11 @@ function updateFileUploadCounter(count, isEdit = false) {
  * Valida permissões antes de salvar
  * Deploy 32
  */
-function validatePermissionsBeforeSave() {
+async function validatePermissionsBeforeSave() {
     const permission = appContext.permissions['Abertura'];
     
     if (permission !== 'editar') {
-        showError('Você não tem permissão para criar RNCs');
+        await showErrorModal('Permissão Negada', 'Você não tem permissão para criar RNCs.');
         return false;
     }
     
@@ -6755,14 +6755,14 @@ async function deleteAttachment(rncNumber, fileId, fileName) {
         
       } catch (error) {
         debugLog('error', '❌ Erro ao excluir', { error: error.message });
-        showError('Erro ao excluir arquivo: ' + error.message);
-        
+
         // Reabilitar botões
         document.getElementById('btnCancelarExclusao').disabled = false;
         document.getElementById('btnConfirmarExclusao').disabled = false;
         document.getElementById('btnConfirmarExclusao').textContent = '🗑️ Confirmar Exclusão';
-        
+
         hideLoading();
+        await showErrorModal('Erro ao Excluir Arquivo', error.message);
       }
     });
     
@@ -6775,7 +6775,7 @@ async function deleteAttachment(rncNumber, fileId, fileName) {
     
   } catch (error) {
     debugLog('error', '❌ Erro crítico na exclusão', { error: error.message });
-    showError('Erro ao preparar exclusão: ' + error.message);
+    await showErrorModal('Erro ao Preparar Exclusão', error.message);
   }
 }
 
@@ -7286,8 +7286,8 @@ console.log('🔍 RESULTADO DA COMPARAÇÃO:', {
         
     } catch (error) {
         debugLog('error', '❌ Erro ao atualizar RNC', { error: error.message });
-        showError('Erro ao atualizar: ' + error.message);
         hideLoading();
+        await showErrorModal('Erro ao Atualizar RNC', error.message);
     }
 }
         
@@ -11856,13 +11856,13 @@ var loadedTabs = window.NeoRNC.state.loadedTabs;
                         // Atualizar lista
                         document.getElementById('btnListBackups').click();
                     } else {
-                        showError(`❌ Erro ao deletar backup: ${result ? result.error : 'Erro desconhecido'}`);
+                        await showErrorModal('Erro ao Deletar Backup', result ? result.error : 'Erro desconhecido');
                     }
 
                 } catch (error) {
                     hideLoading();
-                    showError('❌ Erro ao deletar backup: ' + error.message);
                     debugLog('error', '❌ Erro ao deletar backup', { error: error.message });
+                    await showErrorModal('Erro ao Deletar Backup', error.message);
                 }
             };
 
@@ -12452,20 +12452,20 @@ async function saveNewUser() {
         const setor = document.getElementById('newUserSetor').value.trim(); // Deploy 67: Obter setor
 
         if (!email) {
-            showError('Digite um email válido');
+            await showErrorModal('Campo Obrigatório', 'Digite um email válido.');
             return;
         }
 
         // Validar formato de email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            showError('Email inválido');
+            await showErrorModal('Email Inválido', 'Por favor, digite um endereço de email válido (exemplo: usuario@empresa.com)');
             return;
         }
 
         // Deploy 67: Validar setor
         if (!setor) {
-            showError('Selecione um setor');
+            await showErrorModal('Campo Obrigatório', 'Selecione um setor para o usuário.');
             return;
         }
 
@@ -12479,7 +12479,7 @@ async function saveNewUser() {
         if (document.getElementById('role_espectador').checked) selectedRoles.push('Espectador');
 
         if (selectedRoles.length === 0) {
-            showError('Selecione pelo menos uma role');
+            await showErrorModal('Permissões Obrigatórias', 'Selecione pelo menos uma role (permissão) para o usuário.');
             return;
         }
 
@@ -12502,8 +12502,8 @@ async function saveNewUser() {
 
     } catch (error) {
         debugLog('error', '❌ Erro ao adicionar usuário', { error: error.message });
-        showError('Erro ao adicionar usuário: ' + error.message);
         hideLoading();
+        await showErrorModal('Erro ao Adicionar Usuário', error.message);
     }
 }
 
@@ -12650,8 +12650,8 @@ async function saveUserRolesFixed(email) {
         const newSetor = document.getElementById('editUserSetor').value.trim();
 
         if (!newSetor) {
-            showError('Selecione um setor');
             hideLoading();
+            await showErrorModal('Campo Obrigatório', 'Selecione um setor para o usuário.');
             return;
         }
 
@@ -12665,8 +12665,8 @@ async function saveUserRolesFixed(email) {
         if (document.getElementById('edit_role_espectador').checked) newRoles.push('Espectador');
 
         if (newRoles.length === 0) {
-            showError('O usuário deve ter pelo menos uma role');
             hideLoading();
+            await showErrorModal('Permissões Obrigatórias', 'O usuário deve ter pelo menos uma role (permissão).');
             return;
         }
 
@@ -12710,11 +12710,11 @@ async function saveUserRolesFixed(email) {
             showInfo('Suas permissões foram alteradas. Recarregando página...');
             setTimeout(() => location.reload(), window.NeoRNC.constants.RELOAD_DELAY);
         }
-        
+
     } catch (error) {
         debugLog('error', '❌ Erro ao salvar roles', { error: error.message });
-        showError('Erro ao salvar roles: ' + error.message);
         hideLoading();
+        await showErrorModal('Erro ao Salvar Permissões', error.message);
     }
 }
 
@@ -12743,53 +12743,53 @@ async function saveUserRoles(email, oldRoles) {
         if (document.getElementById('edit_role_espectador').checked) newRoles.push('Espectador');
         
         if (newRoles.length === 0) {
-            showError('O usuário deve ter pelo menos uma role');
             hideLoading();
+            await showErrorModal('Permissões Obrigatórias', 'O usuário deve ter pelo menos uma role (permissão).');
             return;
         }
-        
+
         // Remover roles antigas que não estão mais selecionadas
         for (let i = 0; i < oldRoles.length; i++) {
             if (newRoles.indexOf(oldRoles[i]) === -1) {
                 await apiCall('removeUserRole', [email, oldRoles[i]]);
             }
         }
-        
+
         // Adicionar novas roles
         for (let i = 0; i < newRoles.length; i++) {
             if (oldRoles.indexOf(newRoles[i]) === -1) {
                 await apiCall('addUserRole', [email, newRoles[i]]);
             }
         }
-        
+
         showSuccess('✅ Roles atualizadas com sucesso!');
-        
+
         closeEditUserRolesModal();
         loadUsers();
         hideLoading();
-        
+
         // Se for o próprio usuário, recarregar página
         if (email === appContext.email) {
             showInfo('Suas permissões foram alteradas. Recarregando página...');
             setTimeout(() => location.reload(), window.NeoRNC.constants.RELOAD_DELAY);
         }
-        
+
     } catch (error) {
         debugLog('error', '❌ Erro ao salvar roles', { error: error.message });
-        showError('Erro ao salvar roles: ' + error.message);
         hideLoading();
+        await showErrorModal('Erro ao Salvar Permissões', error.message);
     }
 }
 
 /**
  * Confirmar remoção de usuário
  */
-function confirmDeleteUser(email) {
+async function confirmDeleteUser(email) {
     if (email === appContext.email) {
-        showError('Você não pode remover a si mesmo!');
+        await showErrorModal('Operação Não Permitida', 'Você não pode remover a si mesmo!');
         return;
     }
-    
+
     if (confirm(`⚠️ ATENÇÃO!\n\nDeseja realmente remover TODAS as permissões do usuário:\n${email}\n\nEsta ação não pode ser desfeita!`)) {
         deleteUser(email);
     }
@@ -12804,25 +12804,25 @@ async function deleteUser(email) {
         const user = users.find(u => u.email === email);
         
         if (!user) {
-            showError('Usuário não encontrado');
             hideLoading();
+            await showErrorModal('Usuário Não Encontrado', 'O usuário especificado não foi encontrado no sistema.');
             return;
         }
-        
+
         // Remover todas as roles
         for (let i = 0; i < user.roles.length; i++) {
             await apiCall('removeUserRole', [email, user.roles[i]]);
         }
-        
+
         showSuccess(`✅ Usuário ${email} removido com sucesso`);
-        
+
         loadUsers();
         hideLoading();
-        
+
     } catch (error) {
         debugLog('error', '❌ Erro ao remover usuário', { error: error.message });
-        showError('Erro ao remover usuário: ' + error.message);
         hideLoading();
+        await showErrorModal('Erro ao Remover Usuário', error.message);
     }
 }
 
