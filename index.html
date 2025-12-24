@@ -9183,22 +9183,39 @@ function exportToPdf() {
         });
 
         // ============================================
-        // PAGE 2: DASHBOARD EXECUTIVO
+        // PAGE 2: DASHBOARD EXECUTIVO - KPIs ESTRATÉGICOS
         // ============================================
         doc.addPage();
         yPos = addSectionHeader('DASHBOARD EXECUTIVO', 20);
 
-        // KPIs em grid 3x3
+        // DESTAQUE: Índice de Performance Global
+        doc.setFillColor(0, 150, 136);
+        doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 35, 3, 3, 'F');
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text('ÍNDICE DE PERFORMANCE GLOBAL', pageWidth / 2, yPos + 10, { align: 'center' });
+
+        const performance = stats.indicePerformance || 0;
+        const performanceColor = performance >= 80 ? [76, 175, 80] : performance >= 60 ? [255, 193, 7] : [244, 67, 54];
+        doc.setFontSize(32);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text(`${performance}/100`, pageWidth / 2, yPos + 25, { align: 'center' });
+
+        yPos += 45;
+
+        // KPIs Executivos em grid 3x3
         const kpis = [
-            { label: 'Total de RNCs', value: stats.total || 0, unit: '' },
-            { label: 'RNCs Finalizadas', value: stats.finalizadas || 0, unit: '' },
-            { label: 'RNCs Abertas', value: stats.abertas || 0, unit: '' },
-            { label: 'Custo Total', value: (stats.custoTotal || 0).toFixed(2), unit: 'R$' },
-            { label: 'Custo Médio', value: (stats.custoTotal / stats.total || 0).toFixed(2), unit: 'R$' },
-            { label: 'Tempo Médio', value: stats.tempoMedioResolucao || 0, unit: 'dias' },
-            { label: 'Taxa Cumprimento', value: stats.taxaCumprimentoPrazo || 0, unit: '%' },
-            { label: 'RNCs Vencidas', value: stats.rncsVencidas || 0, unit: '' },
-            { label: 'Índice Severidade', value: stats.indiceSeveridadePonderado || 0, unit: 'pts' }
+            { label: 'Total de RNCs', value: stats.total || 0, unit: '', icon: '📊' },
+            { label: 'Custo Total', value: (stats.custoTotal || 0).toFixed(2), unit: 'R$', icon: '💰' },
+            { label: 'Custo Médio/RNC', value: (stats.custoMedioPorRnc || 0).toFixed(2), unit: 'R$', icon: '💸' },
+            { label: 'Taxa Efetividade', value: stats.taxaEfetividade || 0, unit: '%', icon: '✅' },
+            { label: 'Cumprimento Prazo', value: stats.taxaCumprimentoPrazo || 0, unit: '%', icon: '⏱️' },
+            { label: 'Tempo Médio', value: stats.tempoMedioResolucao || 0, unit: 'dias', icon: '📅' },
+            { label: 'Tendência Mês', value: stats.tendenciaCrescimento || 0, unit: '%', icon: stats.tendenciaCrescimento > 0 ? '📈' : '📉' },
+            { label: 'RNCs Vencidas', value: stats.rncsVencidas || 0, unit: '', icon: '🚨' },
+            { label: 'Setor Crítico', value: stats.setorMaisCritico || 'N/A', unit: '', icon: '🏢', isText: true }
         ];
 
         const kpiWidth = 55;
@@ -9216,28 +9233,111 @@ function exportToPdf() {
                 kpiCount = 0;
             }
 
-            // Box
-            doc.setFillColor(245, 245, 245);
+            // Box with gradient effect
+            doc.setFillColor(250, 250, 250);
             doc.roundedRect(kpiX, kpiY, kpiWidth, kpiHeight, 2, 2, 'F');
+            doc.setDrawColor(220, 220, 220);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(kpiX, kpiY, kpiWidth, kpiHeight, 2, 2, 'S');
+
+            // Icon (if available)
+            if (kpi.icon) {
+                doc.setFontSize(10);
+                doc.text(kpi.icon, kpiX + 3, kpiY + 7);
+            }
 
             // Label
-            doc.setFontSize(8);
+            doc.setFontSize(7);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(100, 100, 100);
             doc.text(kpi.label, kpiX + kpiWidth / 2, kpiY + 8, { align: 'center' });
 
-            // Value
-            doc.setFontSize(16);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 150, 136);
-            const valueText = kpi.unit === 'R$' ? `${kpi.unit} ${kpi.value}` : `${kpi.value}${kpi.unit}`;
-            doc.text(valueText, kpiX + kpiWidth / 2, kpiY + 19, { align: 'center' });
+            // Value - Handle text vs numeric
+            if (kpi.isText) {
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0, 150, 136);
+                const shortValue = String(kpi.value).substring(0, 12);
+                doc.text(shortValue, kpiX + kpiWidth / 2, kpiY + 18, { align: 'center' });
+            } else {
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0, 150, 136);
+                const valueText = kpi.unit === 'R$' ? `${kpi.unit} ${kpi.value}` : `${kpi.value}${kpi.unit}`;
+                doc.text(valueText, kpiX + kpiWidth / 2, kpiY + 19, { align: 'center' });
+            }
 
             kpiX += kpiWidth + kpiSpacing;
             kpiCount++;
         });
 
         yPos = kpiY + kpiHeight + 15;
+
+        // ANÁLISE DE TENDÊNCIA
+        if (yPos > pageHeight - 50) {
+            doc.addPage();
+            yPos = 20;
+        }
+
+        doc.setFillColor(255, 249, 196);
+        doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 30, 3, 3, 'F');
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(51, 51, 51);
+        doc.text('📊 ANÁLISE PREDITIVA', margin + 5, yPos + 10);
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        const tendenciaIcon = stats.previsaoTendencia === 'Melhorando' ? '📉✅' :
+                             stats.previsaoTendencia === 'Piorando' ? '📈⚠️' : '➡️';
+        const tendenciaText = `${tendenciaIcon} Tendência: ${stats.previsaoTendencia || 'Estável'} (${stats.tendenciaCrescimento > 0 ? '+' : ''}${stats.tendenciaCrescimento || 0}% vs mês anterior)`;
+        doc.text(tendenciaText, margin + 5, yPos + 20);
+
+        yPos += 40;
+
+        // TOP 5 RNCs MAIS CUSTOSAS
+        if (stats.rncsMaisCaras && stats.rncsMaisCaras.length > 0) {
+            if (yPos > pageHeight - 80) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('💸 TOP 5 RNCs MAIS CUSTOSAS', margin, yPos);
+            yPos += 8;
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Pos', 'ID', 'Descrição', 'Valor', 'Setor']],
+                body: stats.rncsMaisCaras.map((rnc, index) => [
+                    `${index + 1}º`,
+                    rnc.id,
+                    rnc.descricao,
+                    `R$ ${rnc.valor.toFixed(2)}`,
+                    rnc.setor
+                ]),
+                theme: 'striped',
+                headStyles: {
+                    fillColor: [244, 67, 54],
+                    textColor: [255, 255, 255],
+                    fontSize: 9,
+                    fontStyle: 'bold'
+                },
+                bodyStyles: { fontSize: 8 },
+                columnStyles: {
+                    0: { cellWidth: 12 },
+                    1: { cellWidth: 20 },
+                    2: { cellWidth: 70 },
+                    3: { cellWidth: 30 },
+                    4: { cellWidth: 35 }
+                },
+                margin: { left: margin, right: margin }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+        }
 
         // ============================================
         // PAGE 3: DISTRIBUIÇÃO POR STATUS
