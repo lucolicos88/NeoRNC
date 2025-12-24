@@ -160,7 +160,17 @@ var Reports = (function() {
       porSemana: {},               // RNCs por semana (últimas 4)
       top5Setores: [],             // Top 5 setores com mais RNCs
       top5TiposFalha: [],          // Top 5 tipos de falha
-      acoesRecomendadas: []        // Array de ações recomendadas
+      acoesRecomendadas: [],       // Array de ações recomendadas
+
+      // === DEPLOY 86: KPIs EXECUTIVOS ESTRATÉGICOS ===
+      tendenciaCrescimento: 0,     // % variação mês atual vs anterior
+      custoMedioPorRnc: 0,         // Custo total / total RNCs
+      taxaEfetividade: 0,          // % RNCs finalizadas com ação efetiva
+      indicePerformance: 0,        // Score combinado (prazo + custo + efetividade)
+      setorMaisCritico: '',        // Setor com maior custo/impacto
+      rncsMaisCaras: [],           // Top 5 RNCs mais custosas
+      distribuicaoPorGravidade: {}, // Distribuição Crítico/Alto/Médio/Baixo
+      previsaoTendencia: ''        // Análise preditiva: Melhorando/Estável/Piorando
     };
     
     // ============================================
@@ -300,41 +310,77 @@ var Reports = (function() {
       }
       
       // --------------------------------------------------
-      // GRÁFICOS (mantidos do código original)
+      // GRÁFICOS - SPLIT POR VÍRGULA/PONTO E VÍRGULA EM TODOS OS CAMPOS
       // --------------------------------------------------
-      
-      // Por Tipo
+
+      // Por Tipo RNC - SPLIT por vírgula/ponto e vírgula
       var tipo = tipoRnc || 'Não informado';
-      if (!stats.porTipo[tipo]) stats.porTipo[tipo] = 0;
-      stats.porTipo[tipo]++;
-      
-      // Por Risco
-      if (!stats.porRisco[risco]) stats.porRisco[risco] = 0;
-      stats.porRisco[risco]++;
-      
-      // Por Tipo de Falha
+      var tiposRnc = String(tipo).split(/[,;]/).map(function(t) { return t.trim(); });
+      for (var tr = 0; tr < tiposRnc.length; tr++) {
+        var tipoItem = tiposRnc[tr];
+        if (tipoItem && tipoItem !== 'Não informado' && tipoItem !== '') {
+          if (!stats.porTipo[tipoItem]) stats.porTipo[tipoItem] = 0;
+          stats.porTipo[tipoItem]++;
+        }
+      }
+
+      // Por Risco - SPLIT por vírgula/ponto e vírgula
+      var riscos = String(risco).split(/[,;]/).map(function(r) { return r.trim(); });
+      for (var r = 0; r < riscos.length; r++) {
+        var riscoItem = riscos[r];
+        if (riscoItem && riscoItem !== '') {
+          if (!stats.porRisco[riscoItem]) stats.porRisco[riscoItem] = 0;
+          stats.porRisco[riscoItem]++;
+        }
+      }
+
+      // Por Tipo de Falha - SPLIT por vírgula/ponto e vírgula
       var tipoFalha = rnc['Tipo de Falha'] || 'Não informado';
-      if (!stats.porTipoFalha[tipoFalha]) stats.porTipoFalha[tipoFalha] = 0;
-      stats.porTipoFalha[tipoFalha]++;
-      
-      // Por Setor de Abertura
-      var setorAbertura = rnc['Setor onde foi feita abertura\n'] || 
-                         rnc['Setor onde foi feita abertura'] || 
+      var tiposFalha = String(tipoFalha).split(/[,;]/).map(function(tf) { return tf.trim(); });
+      for (var tf = 0; tf < tiposFalha.length; tf++) {
+        var falhaItem = tiposFalha[tf];
+        if (falhaItem && falhaItem !== 'Não informado' && falhaItem !== '') {
+          if (!stats.porTipoFalha[falhaItem]) stats.porTipoFalha[falhaItem] = 0;
+          stats.porTipoFalha[falhaItem]++;
+        }
+      }
+
+      // Por Setor de Abertura - SPLIT por vírgula/ponto e vírgula
+      var setorAbertura = rnc['Setor onde foi feita abertura\n'] ||
+                         rnc['Setor onde foi feita abertura'] ||
                          'Não informado';
       setorAbertura = setorAbertura.trim();
-      if (!stats.porSetorAbertura[setorAbertura]) stats.porSetorAbertura[setorAbertura] = 0;
-      stats.porSetorAbertura[setorAbertura]++;
-      
-      // Por Setor de Não Conformidade
+      var setoresAbertura = String(setorAbertura).split(/[,;]/).map(function(sa) { return sa.trim(); });
+      for (var sa = 0; sa < setoresAbertura.length; sa++) {
+        var setorAberturaItem = setoresAbertura[sa];
+        if (setorAberturaItem && setorAberturaItem !== 'Não informado' && setorAberturaItem !== '') {
+          if (!stats.porSetorAbertura[setorAberturaItem]) stats.porSetorAbertura[setorAberturaItem] = 0;
+          stats.porSetorAbertura[setorAberturaItem]++;
+        }
+      }
+
+      // Por Setor de Não Conformidade - SPLIT por vírgula/ponto e vírgula
       var setorNaoConf = rnc['Setor onde ocorreu a não conformidade'] || 'Não informado';
       setorNaoConf = setorNaoConf.trim();
-      if (!stats.porSetorNaoConformidade[setorNaoConf]) stats.porSetorNaoConformidade[setorNaoConf] = 0;
-      stats.porSetorNaoConformidade[setorNaoConf]++;
-      
-      // Por Status da Ação Corretiva
+      var setoresNaoConf = String(setorNaoConf).split(/[,;]/).map(function(snc) { return snc.trim(); });
+      for (var snc = 0; snc < setoresNaoConf.length; snc++) {
+        var setorNaoConfItem = setoresNaoConf[snc];
+        if (setorNaoConfItem && setorNaoConfItem !== 'Não informado' && setorNaoConfItem !== '') {
+          if (!stats.porSetorNaoConformidade[setorNaoConfItem]) stats.porSetorNaoConformidade[setorNaoConfItem] = 0;
+          stats.porSetorNaoConformidade[setorNaoConfItem]++;
+        }
+      }
+
+      // Por Status da Ação Corretiva - SPLIT por vírgula/ponto e vírgula
       var statusAcaoLabel = statusAcao || 'Não iniciada';
-      if (!stats.porStatusAcaoCorretiva[statusAcaoLabel]) stats.porStatusAcaoCorretiva[statusAcaoLabel] = 0;
-      stats.porStatusAcaoCorretiva[statusAcaoLabel]++;
+      var statusesAcao = String(statusAcaoLabel).split(/[,;]/).map(function(st) { return st.trim(); });
+      for (var st = 0; st < statusesAcao.length; st++) {
+        var statusItem = statusesAcao[st];
+        if (statusItem && statusItem !== '') {
+          if (!stats.porStatusAcaoCorretiva[statusItem]) stats.porStatusAcaoCorretiva[statusItem] = 0;
+          stats.porStatusAcaoCorretiva[statusItem]++;
+        }
+      }
       
       // Por Mês (para timeline)
       if (dataCriacao) {
@@ -370,24 +416,24 @@ var Reports = (function() {
       }
 
       // === DEPLOY 36: CONTADORES PARA TOP 5 ===
-      // Contar por setor de abertura - SPLIT POR VÍRGULA para múltiplos setores
+      // Contar por setor de abertura - SPLIT POR VÍRGULA/PONTO E VÍRGULA
       if (setorAbertura && setorAbertura !== 'Não informado') {
-        var setores = String(setorAbertura).split(',').map(function(s) { return s.trim(); });
+        var setores = String(setorAbertura).split(/[,;]/).map(function(s) { return s.trim(); });
         for (var s = 0; s < setores.length; s++) {
           var setor = setores[s];
-          if (setor && setor !== 'Não informado') {
+          if (setor && setor !== 'Não informado' && setor !== '') {
             if (!contadoresSetores[setor]) contadoresSetores[setor] = 0;
             contadoresSetores[setor]++;
           }
         }
       }
 
-      // Contar por tipo de falha - SPLIT POR VÍRGULA para múltiplos tipos
+      // Contar por tipo de falha - SPLIT POR VÍRGULA/PONTO E VÍRGULA
       if (tipoFalha && tipoFalha !== 'Não informado') {
-        var tipos = String(tipoFalha).split(',').map(function(t) { return t.trim(); });
+        var tipos = String(tipoFalha).split(/[,;]/).map(function(t) { return t.trim(); });
         for (var t = 0; t < tipos.length; t++) {
           var tipo = tipos[t];
-          if (tipo && tipo !== 'Não informado') {
+          if (tipo && tipo !== 'Não informado' && tipo !== '') {
             if (!contadoresTiposFalha[tipo]) contadoresTiposFalha[tipo] = 0;
             contadoresTiposFalha[tipo]++;
           }
@@ -490,6 +536,113 @@ var Reports = (function() {
         titulo: 'Baixo Cumprimento de Prazos',
         descricao: 'Apenas ' + stats.taxaCumprimentoPrazo + '% das RNCs são concluídas no prazo.',
         acao: 'Revisar capacidade e alocação de recursos'
+      });
+    }
+
+    // ============================================
+    // DEPLOY 86: KPIs EXECUTIVOS ESTRATÉGICOS
+    // ============================================
+
+    // 1. TENDÊNCIA DE CRESCIMENTO (mês atual vs anterior)
+    if (stats.mesAnterior > 0) {
+      var variacaoAbsoluta = stats.esteMes - stats.mesAnterior;
+      stats.tendenciaCrescimento = Math.round((variacaoAbsoluta / stats.mesAnterior) * 100);
+    }
+
+    // 2. CUSTO MÉDIO POR RNC
+    if (stats.total > 0) {
+      stats.custoMedioPorRnc = Math.round(stats.custoTotal / stats.total);
+    }
+
+    // 3. TAXA DE EFETIVIDADE (RNCs finalizadas / total)
+    if (stats.total > 0) {
+      stats.taxaEfetividade = Math.round((stats.finalizadas / stats.total) * 100);
+    }
+
+    // 4. ÍNDICE DE PERFORMANCE GLOBAL (0-100)
+    // Combinação ponderada: 40% prazo + 30% efetividade + 30% custo
+    var scorePrazo = stats.taxaCumprimentoPrazo || 0;
+    var scoreEfetividade = stats.taxaEfetividade || 0;
+    var scoreCusto = stats.custoMedioPorRnc > 0 ? Math.max(0, 100 - (stats.custoMedioPorRnc / 100)) : 50;
+    stats.indicePerformance = Math.round((scorePrazo * 0.4) + (scoreEfetividade * 0.3) + (scoreCusto * 0.3));
+
+    // 5. SETOR MAIS CRÍTICO (maior custo acumulado)
+    var custosPorSetor = {};
+    for (var i = 0; i < rncs.length; i++) {
+      var rncItem = rncs[i];
+      var setoresItem = String(rncItem['Setor onde foi feita abertura'] || rncItem['Setor onde foi feita abertura\n'] || 'Não informado').split(/[,;]/).map(function(s) { return s.trim(); });
+      var valorItem = parseFloat(rncItem['Valor']) || 0;
+      for (var s = 0; s < setoresItem.length; s++) {
+        var setorItem = setoresItem[s];
+        if (setorItem && setorItem !== 'Não informado') {
+          if (!custosPorSetor[setorItem]) custosPorSetor[setorItem] = 0;
+          custosPorSetor[setorItem] += valorItem;
+        }
+      }
+    }
+    var setorMaxCusto = '';
+    var maxCusto = 0;
+    for (var setor in custosPorSetor) {
+      if (custosPorSetor[setor] > maxCusto) {
+        maxCusto = custosPorSetor[setor];
+        setorMaxCusto = setor;
+      }
+    }
+    stats.setorMaisCritico = setorMaxCusto || 'Não informado';
+
+    // 6. TOP 5 RNCs MAIS CUSTOSAS
+    var rncsComValor = rncs.map(function(r) {
+      return {
+        id: r['ID'] || r['N\u00famero RNC'] || 'S/N',
+        descricao: String(r['Descri\u00e7\u00e3o da n\u00e3o conformidade'] || '').substring(0, 50),
+        valor: parseFloat(r['Valor']) || 0,
+        setor: r['Setor onde foi feita abertura'] || r['Setor onde foi feita abertura\n'] || 'Não informado'
+      };
+    }).filter(function(r) { return r.valor > 0; })
+      .sort(function(a, b) { return b.valor - a.valor; })
+      .slice(0, 5);
+    stats.rncsMaisCaras = rncsComValor;
+
+    // 7. DISTRIBUIÇÃO POR GRAVIDADE
+    stats.distribuicaoPorGravidade = stats.porRisco;
+
+    // 8. PREVISÃO DE TENDÊNCIA (análise preditiva simples)
+    if (stats.tendenciaCrescimento > 10) {
+      stats.previsaoTendencia = 'Piorando';
+    } else if (stats.tendenciaCrescimento < -10) {
+      stats.previsaoTendencia = 'Melhorando';
+    } else {
+      stats.previsaoTendencia = 'Estável';
+    }
+
+    // AÇÕES RECOMENDADAS BASEADAS NOS NOVOS KPIs
+    if (stats.tendenciaCrescimento > 20) {
+      stats.acoesRecomendadas.push({
+        prioridade: 'Alta',
+        icone: '📈',
+        titulo: 'Crescimento Acelerado de RNCs',
+        descricao: 'RNCs aumentaram ' + stats.tendenciaCrescimento + '% este mês.',
+        acao: 'Investigar causas raiz do aumento e implementar ações preventivas'
+      });
+    }
+
+    if (stats.custoMedioPorRnc > 1000) {
+      stats.acoesRecomendadas.push({
+        prioridade: 'Alta',
+        icone: '💰',
+        titulo: 'Custo Médio Elevado',
+        descricao: 'Custo médio por RNC: R$ ' + stats.custoMedioPorRnc.toFixed(2),
+        acao: 'Priorizar ações preventivas para reduzir custos'
+      });
+    }
+
+    if (stats.indicePerformance < 60) {
+      stats.acoesRecomendadas.push({
+        prioridade: 'Alta',
+        icone: '⚡',
+        titulo: 'Performance Abaixo do Esperado',
+        descricao: 'Índice de Performance: ' + stats.indicePerformance + '/100',
+        acao: 'Revisar processos e alocar recursos para melhoria'
       });
     }
 
