@@ -9091,27 +9091,28 @@ function exportToPdf() {
         doc.setFillColor(0, 150, 136);
         doc.rect(0, 0, pageWidth, 90, 'F');
 
-        // LOGO NEOFORMULA - Design unificado e profissional
-        // Fundo branco com borda única
+        // LOGO NEOFORMULA - Imagem real
+        // Fundo branco para o logo
         doc.setFillColor(255, 255, 255);
-        doc.roundedRect(pageWidth / 2 - 45, 15, 90, 30, 3, 3, 'F');
+        doc.roundedRect(pageWidth / 2 - 50, 15, 100, 32, 3, 3, 'F');
 
-        // Borda verde elegante
+        // Borda verde suave
         doc.setDrawColor(0, 150, 136);
-        doc.setLineWidth(2);
-        doc.roundedRect(pageWidth / 2 - 45, 15, 90, 30, 3, 3, 'S');
+        doc.setLineWidth(1);
+        doc.roundedRect(pageWidth / 2 - 50, 15, 100, 32, 3, 3, 'S');
 
-        // Texto "NEOFORMULA" unificado e grande
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(24);
-        doc.setTextColor(0, 150, 136);
-        doc.text('NEOFORMULA', pageWidth / 2, 31, { align: 'center' });
-
-        // Subtítulo
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100, 100, 100);
-        doc.text('Sistema de Gestão de Qualidade', pageWidth / 2, 40, { align: 'center' });
+        // Adicionar logo via URL
+        const logoUrl = 'https://neoformula.com.br/cdn/shop/files/Logotipo-NeoFormula-Manipulacao-Homeopatia_76b2fa98-5ffa-4cc3-ac0a-6d41e1bc8810.png?height=100&v=1677088468';
+        try {
+            // Carregar logo como imagem (PNG)
+            doc.addImage(logoUrl, 'PNG', pageWidth / 2 - 45, 18, 90, 26);
+        } catch (e) {
+            // Fallback: texto se imagem falhar
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(20);
+            doc.setTextColor(0, 150, 136);
+            doc.text('NEOFORMULA', pageWidth / 2, 31, { align: 'center' });
+        }
 
         // Titulo principal
         doc.setTextColor(255, 255, 255);
@@ -9247,20 +9248,20 @@ function exportToPdf() {
             }
 
             // Label
-            doc.setFontSize(7);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(80, 80, 80);
             doc.text(kpi.label, kpiX + kpiWidth / 2, kpiY + 8, { align: 'center' });
 
             // Value - Handle text vs numeric
             if (kpi.isText) {
-                doc.setFontSize(8);
+                doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(0, 150, 136);
-                const shortValue = String(kpi.value).substring(0, 12);
+                const shortValue = String(kpi.value).substring(0, 15);
                 doc.text(shortValue, kpiX + kpiWidth / 2, kpiY + 18, { align: 'center' });
             } else {
-                doc.setFontSize(14);
+                doc.setFontSize(16);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(0, 150, 136);
                 const valueText = kpi.unit === 'R$' ? `${kpi.unit} ${kpi.value}` : `${kpi.value}${kpi.unit}`;
@@ -9322,16 +9323,20 @@ function exportToPdf() {
                 headStyles: {
                     fillColor: [244, 67, 54],
                     textColor: [255, 255, 255],
-                    fontSize: 9,
-                    fontStyle: 'bold'
+                    fontSize: 10,
+                    fontStyle: 'bold',
+                    halign: 'center'
                 },
-                bodyStyles: { fontSize: 8 },
+                bodyStyles: {
+                    fontSize: 9,
+                    cellPadding: 3
+                },
                 columnStyles: {
-                    0: { cellWidth: 12 },
-                    1: { cellWidth: 20 },
-                    2: { cellWidth: 70 },
-                    3: { cellWidth: 30 },
-                    4: { cellWidth: 35 }
+                    0: { cellWidth: 12, halign: 'center' },
+                    1: { cellWidth: 22, halign: 'center' },
+                    2: { cellWidth: 68 },
+                    3: { cellWidth: 28, halign: 'right' },
+                    4: { cellWidth: 37 }
                 },
                 margin: { left: margin, right: margin }
             });

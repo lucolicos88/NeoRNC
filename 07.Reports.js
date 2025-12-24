@@ -314,14 +314,19 @@ var Reports = (function() {
       // --------------------------------------------------
 
       // Por Tipo RNC - SPLIT por vírgula/ponto e vírgula
-      var tipo = tipoRnc || 'Não informado';
-      var tiposRnc = String(tipo).split(/[,;]/).map(function(t) { return t.trim(); });
-      for (var tr = 0; tr < tiposRnc.length; tr++) {
-        var tipoItem = tiposRnc[tr];
-        if (tipoItem && tipoItem !== 'Não informado' && tipoItem !== '') {
-          if (!stats.porTipo[tipoItem]) stats.porTipo[tipoItem] = 0;
-          stats.porTipo[tipoItem]++;
+      if (tipoRnc && tipoRnc.trim() !== '') {
+        var tiposRnc = String(tipoRnc).split(/[,;]/).map(function(t) { return t.trim(); });
+        for (var tr = 0; tr < tiposRnc.length; tr++) {
+          var tipoItem = tiposRnc[tr];
+          if (tipoItem && tipoItem !== '') {
+            if (!stats.porTipo[tipoItem]) stats.porTipo[tipoItem] = 0;
+            stats.porTipo[tipoItem]++;
+          }
         }
+      } else {
+        // Tipo vazio ou não informado
+        if (!stats.porTipo['Não informado']) stats.porTipo['Não informado'] = 0;
+        stats.porTipo['Não informado']++;
       }
 
       // Por Risco - SPLIT por vírgula/ponto e vírgula
@@ -335,51 +340,68 @@ var Reports = (function() {
       }
 
       // Por Tipo de Falha - SPLIT por vírgula/ponto e vírgula
-      var tipoFalha = rnc['Tipo de Falha'] || 'Não informado';
-      var tiposFalha = String(tipoFalha).split(/[,;]/).map(function(tf) { return tf.trim(); });
-      for (var tf = 0; tf < tiposFalha.length; tf++) {
-        var falhaItem = tiposFalha[tf];
-        if (falhaItem && falhaItem !== 'Não informado' && falhaItem !== '') {
-          if (!stats.porTipoFalha[falhaItem]) stats.porTipoFalha[falhaItem] = 0;
-          stats.porTipoFalha[falhaItem]++;
+      var tipoFalha = rnc['Tipo de Falha'] || '';
+      if (tipoFalha && tipoFalha.trim() !== '') {
+        var tiposFalha = String(tipoFalha).split(/[,;]/).map(function(tf) { return tf.trim(); });
+        for (var tf = 0; tf < tiposFalha.length; tf++) {
+          var falhaItem = tiposFalha[tf];
+          if (falhaItem && falhaItem !== '') {
+            if (!stats.porTipoFalha[falhaItem]) stats.porTipoFalha[falhaItem] = 0;
+            stats.porTipoFalha[falhaItem]++;
+          }
         }
+      } else {
+        if (!stats.porTipoFalha['Não informado']) stats.porTipoFalha['Não informado'] = 0;
+        stats.porTipoFalha['Não informado']++;
       }
 
       // Por Setor de Abertura - SPLIT por vírgula/ponto e vírgula
-      var setorAbertura = rnc['Setor onde foi feita abertura\n'] ||
-                         rnc['Setor onde foi feita abertura'] ||
-                         'Não informado';
-      setorAbertura = setorAbertura.trim();
-      var setoresAbertura = String(setorAbertura).split(/[,;]/).map(function(sa) { return sa.trim(); });
-      for (var sa = 0; sa < setoresAbertura.length; sa++) {
-        var setorAberturaItem = setoresAbertura[sa];
-        if (setorAberturaItem && setorAberturaItem !== 'Não informado' && setorAberturaItem !== '') {
-          if (!stats.porSetorAbertura[setorAberturaItem]) stats.porSetorAbertura[setorAberturaItem] = 0;
-          stats.porSetorAbertura[setorAberturaItem]++;
+      var setorAbertura = (rnc['Setor onde foi feita abertura\n'] ||
+                          rnc['Setor onde foi feita abertura'] || '').trim();
+      if (setorAbertura && setorAbertura !== '') {
+        var setoresAbertura = String(setorAbertura).split(/[,;]/).map(function(sa) { return sa.trim(); });
+        for (var sa = 0; sa < setoresAbertura.length; sa++) {
+          var setorAberturaItem = setoresAbertura[sa];
+          if (setorAberturaItem && setorAberturaItem !== '') {
+            if (!stats.porSetorAbertura[setorAberturaItem]) stats.porSetorAbertura[setorAberturaItem] = 0;
+            stats.porSetorAbertura[setorAberturaItem]++;
+          }
         }
+      } else {
+        if (!stats.porSetorAbertura['Não informado']) stats.porSetorAbertura['Não informado'] = 0;
+        stats.porSetorAbertura['Não informado']++;
       }
 
       // Por Setor de Não Conformidade - SPLIT por vírgula/ponto e vírgula
-      var setorNaoConf = rnc['Setor onde ocorreu a não conformidade'] || 'Não informado';
-      setorNaoConf = setorNaoConf.trim();
-      var setoresNaoConf = String(setorNaoConf).split(/[,;]/).map(function(snc) { return snc.trim(); });
-      for (var snc = 0; snc < setoresNaoConf.length; snc++) {
-        var setorNaoConfItem = setoresNaoConf[snc];
-        if (setorNaoConfItem && setorNaoConfItem !== 'Não informado' && setorNaoConfItem !== '') {
-          if (!stats.porSetorNaoConformidade[setorNaoConfItem]) stats.porSetorNaoConformidade[setorNaoConfItem] = 0;
-          stats.porSetorNaoConformidade[setorNaoConfItem]++;
+      var setorNaoConf = (rnc['Setor onde ocorreu a não conformidade'] || '').trim();
+      if (setorNaoConf && setorNaoConf !== '') {
+        var setoresNaoConf = String(setorNaoConf).split(/[,;]/).map(function(snc) { return snc.trim(); });
+        for (var snc = 0; snc < setoresNaoConf.length; snc++) {
+          var setorNaoConfItem = setoresNaoConf[snc];
+          if (setorNaoConfItem && setorNaoConfItem !== '') {
+            if (!stats.porSetorNaoConformidade[setorNaoConfItem]) stats.porSetorNaoConformidade[setorNaoConfItem] = 0;
+            stats.porSetorNaoConformidade[setorNaoConfItem]++;
+          }
         }
+      } else {
+        if (!stats.porSetorNaoConformidade['Não informado']) stats.porSetorNaoConformidade['Não informado'] = 0;
+        stats.porSetorNaoConformidade['Não informado']++;
       }
 
       // Por Status da Ação Corretiva - SPLIT por vírgula/ponto e vírgula
-      var statusAcaoLabel = statusAcao || 'Não iniciada';
-      var statusesAcao = String(statusAcaoLabel).split(/[,;]/).map(function(st) { return st.trim(); });
-      for (var st = 0; st < statusesAcao.length; st++) {
-        var statusItem = statusesAcao[st];
-        if (statusItem && statusItem !== '') {
-          if (!stats.porStatusAcaoCorretiva[statusItem]) stats.porStatusAcaoCorretiva[statusItem] = 0;
-          stats.porStatusAcaoCorretiva[statusItem]++;
+      var statusAcaoLabel = (statusAcao || '').trim();
+      if (statusAcaoLabel && statusAcaoLabel !== '') {
+        var statusesAcao = String(statusAcaoLabel).split(/[,;]/).map(function(st) { return st.trim(); });
+        for (var st = 0; st < statusesAcao.length; st++) {
+          var statusItem = statusesAcao[st];
+          if (statusItem && statusItem !== '') {
+            if (!stats.porStatusAcaoCorretiva[statusItem]) stats.porStatusAcaoCorretiva[statusItem] = 0;
+            stats.porStatusAcaoCorretiva[statusItem]++;
+          }
         }
+      } else {
+        if (!stats.porStatusAcaoCorretiva['Não iniciada']) stats.porStatusAcaoCorretiva['Não iniciada'] = 0;
+        stats.porStatusAcaoCorretiva['Não iniciada']++;
       }
       
       // Por Mês (para timeline)
