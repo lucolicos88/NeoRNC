@@ -9648,7 +9648,7 @@ function exportToPdf() {
                 startY: yPos,
                 head: [['Posição', 'Tipo de Falha', 'Quantidade', 'Percentual']],
                 body: stats.top5TiposFalha.map((tipo, index) => [
-                    `${index + 1}o`,
+                    `${index + 1}º`,
                     tipo.nome,
                     tipo.total,
                     `${Math.round((tipo.total / stats.total) * 100)}%`

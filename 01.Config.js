@@ -20,8 +20,8 @@ const CONFIG = {
   DRIVE_FOLDER_ID: '1Bo5yU-rJtyz-1KVUTIQHlZRv7mFLZ_p6a9TClx0r2w060',
 
   // Versão do Sistema
-  VERSION: 'Sistema RNC v2.3 - DESENVOLVEDOR (Deploy 91 - Logo PDF Base64)',
-  BUILD_DATE: '2025-12-24',
+  VERSION: 'Sistema RNC v2.3 - DESENVOLVEDOR (Deploy 92 - Correções Completas)',
+  BUILD_DATE: '2025-12-26',
 
   // Modo de Operação
   DEBUG_MODE: true, // Controle de logs de debug
