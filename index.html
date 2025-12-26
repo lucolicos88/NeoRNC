@@ -9207,17 +9207,17 @@ function exportToPdf() {
 
         yPos += 45;
 
-        // KPIs Executivos em grid 3x3
+        // KPIs Executivos em grid 3x3 (SEM emojis - incompatíveis com jsPDF)
         const kpis = [
-            { label: 'Total de RNCs', value: stats.total || 0, unit: '', icon: '📊' },
-            { label: 'Custo Total', value: (stats.custoTotal || 0).toFixed(2), unit: 'R$', icon: '💰' },
-            { label: 'Custo Médio/RNC', value: (stats.custoMedioPorRnc || 0).toFixed(2), unit: 'R$', icon: '💸' },
-            { label: 'Taxa Efetividade', value: stats.taxaEfetividade || 0, unit: '%', icon: '✅' },
-            { label: 'Cumprimento Prazo', value: stats.taxaCumprimentoPrazo || 0, unit: '%', icon: '⏱️' },
-            { label: 'Tempo Médio', value: stats.tempoMedioResolucao || 0, unit: 'dias', icon: '📅' },
-            { label: 'Tendência Mês', value: stats.tendenciaCrescimento || 0, unit: '%', icon: stats.tendenciaCrescimento > 0 ? '📈' : '📉' },
-            { label: 'RNCs Vencidas', value: stats.rncsVencidas || 0, unit: '', icon: '🚨' },
-            { label: 'Setor Crítico', value: stats.setorMaisCritico || 'N/A', unit: '', icon: '🏢', isText: true }
+            { label: 'Total de RNCs', value: stats.total || 0, unit: '' },
+            { label: 'Custo Total', value: (stats.custoTotal || 0).toFixed(2), unit: 'R$' },
+            { label: 'Custo Medio/RNC', value: (stats.custoMedioPorRnc || 0).toFixed(2), unit: 'R$' },
+            { label: 'Taxa Efetividade', value: stats.taxaEfetividade || 0, unit: '%' },
+            { label: 'Cumprimento Prazo', value: stats.taxaCumprimentoPrazo || 0, unit: '%' },
+            { label: 'Tempo Medio', value: stats.tempoMedioResolucao || 0, unit: 'dias' },
+            { label: 'Tendencia Mes', value: stats.tendenciaCrescimento || 0, unit: '%' },
+            { label: 'RNCs Vencidas', value: stats.rncsVencidas || 0, unit: '' },
+            { label: 'Setor Critico', value: stats.setorMaisCritico || 'N/A', unit: '', isText: true }
         ];
 
         const kpiWidth = 55;
@@ -9241,12 +9241,6 @@ function exportToPdf() {
             doc.setDrawColor(220, 220, 220);
             doc.setLineWidth(0.3);
             doc.roundedRect(kpiX, kpiY, kpiWidth, kpiHeight, 2, 2, 'S');
-
-            // Icon (if available)
-            if (kpi.icon) {
-                doc.setFontSize(10);
-                doc.text(kpi.icon, kpiX + 3, kpiY + 7);
-            }
 
             // Label
             doc.setFontSize(8);
@@ -9286,13 +9280,11 @@ function exportToPdf() {
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(51, 51, 51);
-        doc.text('📊 ANÁLISE PREDITIVA', margin + 5, yPos + 10);
+        doc.text('ANALISE PREDITIVA', margin + 5, yPos + 10);
 
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        const tendenciaIcon = stats.previsaoTendencia === 'Melhorando' ? '📉✅' :
-                             stats.previsaoTendencia === 'Piorando' ? '📈⚠️' : '➡️';
-        const tendenciaText = `${tendenciaIcon} Tendência: ${stats.previsaoTendencia || 'Estável'} (${stats.tendenciaCrescimento > 0 ? '+' : ''}${stats.tendenciaCrescimento || 0}% vs mês anterior)`;
+        const tendenciaText = `Tendencia: ${stats.previsaoTendencia || 'Estavel'} (${stats.tendenciaCrescimento > 0 ? '+' : ''}${stats.tendenciaCrescimento || 0}% vs mes anterior)`;
         doc.text(tendenciaText, margin + 5, yPos + 20);
 
         yPos += 40;
@@ -9307,7 +9299,7 @@ function exportToPdf() {
             doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0, 0, 0);
-            doc.text('💸 TOP 5 RNCs MAIS CUSTOSAS', margin, yPos);
+            doc.text('TOP 5 RNCs MAIS CUSTOSAS', margin, yPos);
             yPos += 8;
 
             doc.autoTable({

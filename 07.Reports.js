@@ -266,7 +266,7 @@ var Reports = (function() {
       // --------------------------------------------------
       
       // === KPI 1: % IMPACTO AO CLIENTE ===
-      var tipoRnc = rnc['Tipo RNC'] || '';
+      var tipoRnc = rnc['Tipo da RNC'] || rnc['Tipo RNC'] || '';
       if (tipoRnc.toLowerCase().includes('externa') && 
           tipoRnc.toLowerCase().includes('cliente')) {
         stats.impactoClienteTotal++;
@@ -1396,7 +1396,7 @@ function calculateReportStats(rncs) {
   for (var i = 0; i < rncs.length; i++) {
     var rnc = rncs[i];
     var status = rnc['Status Geral'] || CONFIG.STATUS_PIPELINE.ABERTURA;
-    var tipoRnc = rnc['Tipo RNC'] || 'Não informado';
+    var tipoRnc = rnc['Tipo da RNC'] || rnc['Tipo RNC'] || 'Não informado';
     var risco = rnc['Risco'] || 'Baixo';
     var valor = parseFloat(rnc['Valor']) || 0;
     
