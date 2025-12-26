@@ -31,12 +31,12 @@
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
 
-    <!-- ✨ CHART.JS - Biblioteca de Gráficos Animados -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- ✨ APEXCHARTS - Biblioteca de Gráficos Modernos -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
 
-    <!-- ✨ DEPLOY 37: jsPDF - Geração de PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- ✨ PDFMAKE - Geração Profissional de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -7609,136 +7609,173 @@ async function refreshKanban() {
     }
 }     
 
-// === GRÁFICO DE PIZZA COM SVG ===
-// === GRÁFICO DE PIZZA COM SVG E CORES VARIADAS ===
-// === GRÁFICO DE PIZZA ANIMADO COM CHART.JS ===
+// === GRÁFICO DE PIZZA MODERNO COM APEXCHARTS ===
 function renderPieChart(containerId, data) {
     const container = document.getElementById(containerId);
     if (!container || !data) return;
-    
+
     const entries = Object.entries(data);
     if (entries.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">📊 Sem dados</div>';
         return;
     }
-    
+
     const total = entries.reduce((sum, [, value]) => sum + value, 0);
     if (total === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">📊 Sem dados</div>';
         return;
     }
-    
-    // Cores vibrantes
+
+    // Cores vibrantes com gradiente
     const colors = [
-        '#009688', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336', 
+        '#009688', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336',
         '#FFB300', '#00BCD4', '#8BC34A', '#E91E63', '#3F51B5', '#FF5722'
     ];
-    
-    // Container centralizado
-    const canvasId = containerId + '_canvas';
-    container.innerHTML = `
-        <div style="position: relative; height: 300px; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
-            <canvas id="${canvasId}" style="max-width: 300px; max-height: 300px;"></canvas>
-        </div>
-    `;
-    
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext('2d');
-    
-    // Destruir gráfico anterior
-    if (window[canvasId + '_chart']) {
-        window[canvasId + '_chart'].destroy();
+
+    // Limpar container
+    container.innerHTML = '';
+
+    // Destruir gráfico anterior se existir
+    if (window[containerId + '_chart']) {
+        window[containerId + '_chart'].destroy();
     }
-    
-    // ✅ NOVO: Plugin para mostrar valores dentro dos segmentos
-    const centerTextPlugin = {
-        id: 'centerText',
-        afterDatasetsDraw: function(chart) {
-            const ctx = chart.ctx;
-            const meta = chart.getDatasetMeta(0);
-            
-            meta.data.forEach((element, index) => {
-                const dataset = chart.data.datasets[0];
-                const value = dataset.data[index];
-                const total = dataset.data.reduce((a, b) => a + b, 0);
-                const percentage = Math.round((value / total) * 100);
-                
-                // Calcular posição do texto (centro do segmento)
-                const angle = (element.startAngle + element.endAngle) / 2;
-                const radius = (element.innerRadius + element.outerRadius) / 2;
-                const x = element.x + Math.cos(angle) * radius;
-                const y = element.y + Math.sin(angle) * radius;
-                
-                // Configurar texto
-                ctx.save();
-                ctx.fillStyle = '#FFFFFF';
-                ctx.font = 'bold 14px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                ctx.shadowBlur = 4;
-                
-                // Desenhar valor
-                ctx.fillText(value, x, y - 8);
-                
-                // Desenhar percentual
-                ctx.font = 'bold 12px Inter, sans-serif';
-                ctx.fillText(`(${percentage}%)`, x, y + 8);
-                
-                ctx.restore();
-            });
-        }
-    };
-    
-    // Criar gráfico COM plugin de texto
-    window[canvasId + '_chart'] = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: entries.map(([label]) => label),
-            datasets: [{
-                data: entries.map(([, value]) => value),
-                backgroundColor: colors.slice(0, entries.length),
-                borderColor: '#ffffff',
-                borderWidth: 3,
-                hoverOffset: 15,
-                hoverBorderWidth: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleFont: { size: 14, weight: 'bold' },
-                    bodyFont: { size: 13 },
-                    padding: 12,
-                    cornerRadius: 8,
-                    displayColors: true,
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = Math.round((value / total) * 100);
-                            return ` ${label}: ${value} (${percentage}%)`;
-                        }
-                    }
+
+    // Configuração ApexCharts (muito mais bonito!)
+    const options = {
+        series: entries.map(([, value]) => value),
+        chart: {
+            type: 'donut',
+            height: 350,
+            fontFamily: 'Inter, sans-serif',
+            animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 800,
+                animateGradually: {
+                    enabled: true,
+                    delay: 150
+                },
+                dynamicAnimation: {
+                    enabled: true,
+                    speed: 350
                 }
             },
-            animation: {
-                animateRotate: true,
-                animateScale: true,
-                duration: 1500,
-                easing: 'easeInOutQuart'
-            },
-            cutout: '60%'
+            dropShadow: {
+                enabled: true,
+                top: 2,
+                left: 2,
+                blur: 4,
+                opacity: 0.15
+            }
         },
-        plugins: [centerTextPlugin] // ✅ Ativar plugin
-    });
-    
-    debugLog('success', `✨ Gráfico de pizza com valores: ${containerId}`);
+        labels: entries.map(([label]) => label),
+        colors: colors.slice(0, entries.length),
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'dark',
+                type: 'vertical',
+                shadeIntensity: 0.5,
+                gradientToColors: colors.map(c => c + 'CC'),
+                inverseColors: false,
+                opacityFrom: 1,
+                opacityTo: 0.9,
+                stops: [0, 100]
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            style: {
+                fontSize: '14px',
+                fontWeight: 'bold',
+                colors: ['#fff']
+            },
+            dropShadow: {
+                enabled: true,
+                top: 1,
+                left: 1,
+                blur: 2,
+                opacity: 0.8
+            },
+            formatter: function(val, opts) {
+                const value = opts.w.config.series[opts.seriesIndex];
+                return value + '\n(' + val.toFixed(0) + '%)';
+            }
+        },
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '65%',
+                    labels: {
+                        show: true,
+                        name: {
+                            show: true,
+                            fontSize: '18px',
+                            fontWeight: 600,
+                            color: '#333'
+                        },
+                        value: {
+                            show: true,
+                            fontSize: '24px',
+                            fontWeight: 'bold',
+                            color: '#009688',
+                            formatter: function(val) {
+                                return val;
+                            }
+                        },
+                        total: {
+                            show: true,
+                            label: 'Total',
+                            fontSize: '16px',
+                            fontWeight: 600,
+                            color: '#666',
+                            formatter: function(w) {
+                                return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                            }
+                        }
+                    }
+                },
+                expandOnClick: true
+            }
+        },
+        legend: {
+            show: false
+        },
+        tooltip: {
+            enabled: true,
+            theme: 'dark',
+            style: {
+                fontSize: '13px'
+            },
+            y: {
+                formatter: function(val, opts) {
+                    const total = opts.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                    const percentage = ((val / total) * 100).toFixed(1);
+                    return val + ' (' + percentage + '%)';
+                }
+            }
+        },
+        states: {
+            hover: {
+                filter: {
+                    type: 'darken',
+                    value: 0.15
+                }
+            },
+            active: {
+                filter: {
+                    type: 'darken',
+                    value: 0.25
+                }
+            }
+        }
+    };
+
+    // Criar e renderizar gráfico ApexCharts
+    window[containerId + '_chart'] = new ApexCharts(container, options);
+    window[containerId + '_chart'].render();
+
+    debugLog('success', `✨ Gráfico de pizza ApexCharts: ${containerId}`);
 }
 function renderDashboard(stats) {
     const container = document.getElementById('dashboard-content');
@@ -8228,161 +8265,178 @@ async function refreshDashboard() {
             container.innerHTML = chartHtml;
         }
         
-        // === GRÁFICO DE LINHA ANIMADO COM CHART.JS ===
-// === GRÁFICO DE LINHA ANIMADO - LARGURA TOTAL ===
+// === GRÁFICO DE LINHA MODERNO COM APEXCHARTS ===
 function renderLineChart(containerId, data) {
     const container = document.getElementById(containerId);
     if (!container || !data) return;
-    
+
     const entries = Object.entries(data).sort((a, b) => {
         const [monthA, yearA] = a[0].split('/').map(Number);
         const [monthB, yearB] = b[0].split('/').map(Number);
         return (yearA * 12 + monthA) - (yearB * 12 + monthB);
     });
-    
+
     if (entries.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">📈 Sem dados temporais</div>';
         return;
     }
-    
-    const canvasId = containerId + '_canvas';
-    
-    // CONTAINER COM 100% DE LARGURA
-    container.innerHTML = `
-        <div style="position: relative; width: 100%; height: 400px; padding: 0;">
-            <canvas id="${canvasId}" style="width: 100% !important; height: 100% !important;"></canvas>
-        </div>
-    `;
-    
-    // Aguardar o DOM renderizar
-    setTimeout(function() {
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Destruir gráfico anterior se existir
-        if (window[canvasId + '_chart']) {
-            window[canvasId + '_chart'].destroy();
-        }
-        
-        // Criar gradiente para área abaixo da linha
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(0, 150, 136, 0.3)');
-        gradient.addColorStop(1, 'rgba(0, 150, 136, 0)');
-        
-        window[canvasId + '_chart'] = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: entries.map(([period]) => period),
-                datasets: [{
-                    label: 'RNCs por Período',
-                    data: entries.map(([, value]) => value),
-                    borderColor: '#009688',
-                    backgroundColor: gradient,
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 6,
-                    pointHoverRadius: 10,
-                    pointBackgroundColor: '#009688',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 3,
-                    pointHoverBackgroundColor: '#ffffff',
-                    pointHoverBorderColor: '#009688',
-                    pointHoverBorderWidth: 3
-                }]
+
+    // Limpar container
+    container.innerHTML = '';
+
+    // Destruir gráfico anterior se existir
+    if (window[containerId + '_chart']) {
+        window[containerId + '_chart'].destroy();
+    }
+
+    // Configuração ApexCharts
+    const options = {
+        series: [{
+            name: 'RNCs por Período',
+            data: entries.map(([, value]) => value)
+        }],
+        chart: {
+            type: 'area',
+            height: 400,
+            fontFamily: 'Inter, sans-serif',
+            toolbar: {
+                show: true,
+                tools: {
+                    download: true,
+                    zoom: true,
+                    zoomin: true,
+                    zoomout: true,
+                    pan: true,
+                    reset: true
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false, // ← MUDANÇA CRÍTICA
-                layout: {
-                    padding: {
-                        left: 10,
-                        right: 10,
-                        top: 10,
-                        bottom: 10
-                    }
+            animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 800,
+                animateGradually: {
+                    enabled: true,
+                    delay: 150
                 },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        align: 'start',
-                        labels: {
-                            font: {
-                                size: 13,
-                                family: 'Inter, sans-serif',
-                                weight: '600'
-                            },
-                            color: '#333',
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            padding: 15
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleFont: {
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        bodyFont: {
-                            size: 13
-                        },
-                        padding: 12,
-                        cornerRadius: 8,
-                        displayColors: true,
-                        callbacks: {
-                            label: function(context) {
-                                return ` ${context.dataset.label}: ${context.parsed.y} RNC(s)`;
-                            }
-                        }
-                    }
+                dynamicAnimation: {
+                    enabled: true,
+                    speed: 350
+                }
+            },
+            dropShadow: {
+                enabled: true,
+                top: 3,
+                left: 0,
+                blur: 6,
+                opacity: 0.15
+            }
+        },
+        colors: ['#009688'],
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.6,
+                opacityTo: 0.1,
+                stops: [0, 90, 100]
+            }
+        },
+        xaxis: {
+            categories: entries.map(([period]) => period),
+            labels: {
+                style: {
+                    colors: '#666',
+                    fontSize: '12px',
+                    fontWeight: 500
+                }
+            },
+            axisBorder: {
+                show: false
+            },
+            axisTicks: {
+                show: false
+            }
+        },
+        yaxis: {
+            labels: {
+                style: {
+                    colors: '#666',
+                    fontSize: '12px'
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0,
-                            font: {
-                                size: 12,
-                                family: 'Inter, sans-serif'
-                            },
-                            color: '#666'
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            drawBorder: false
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: {
-                                size: 12,
-                                family: 'Inter, sans-serif',
-                                weight: '500'
-                            },
-                            color: '#666'
-                        },
-                        grid: {
-                            display: false
-                        }
-                    }
-                },
-                animation: {
-                    duration: 2000,
-                    easing: 'easeInOutQuart'
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
+                formatter: function(val) {
+                    return Math.floor(val);
                 }
             }
-        });
-        
-        debugLog('success', `✨ Gráfico de linha (largura total) criado: ${containerId}`);
-    }, 100);
+        },
+        grid: {
+            borderColor: 'rgba(0, 0, 0, 0.05)',
+            strokeDashArray: 4,
+            xaxis: {
+                lines: {
+                    show: false
+                }
+            },
+            yaxis: {
+                lines: {
+                    show: true
+                }
+            }
+        },
+        tooltip: {
+            theme: 'dark',
+            x: {
+                show: true
+            },
+            y: {
+                formatter: function(val) {
+                    return val + ' RNC(s)';
+                },
+                title: {
+                    formatter: function() {
+                        return '';
+                    }
+                }
+            },
+            marker: {
+                show: true
+            }
+        },
+        markers: {
+            size: 5,
+            colors: ['#009688'],
+            strokeColors: '#fff',
+            strokeWidth: 3,
+            hover: {
+                size: 8,
+                sizeOffset: 2
+            }
+        },
+        legend: {
+            show: true,
+            position: 'top',
+            horizontalAlign: 'left',
+            fontSize: '13px',
+            fontWeight: 600,
+            markers: {
+                width: 12,
+                height: 12,
+                radius: 12
+            }
+        }
+    };
+
+    // Criar e renderizar gráfico ApexCharts
+    window[containerId + '_chart'] = new ApexCharts(container, options);
+    window[containerId + '_chart'].render();
+
+    debugLog('success', `✨ Gráfico de linha ApexCharts criado: ${containerId}`);
 }
         
         // === RELATÓRIOS ===
