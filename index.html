@@ -7950,10 +7950,10 @@ function renderDashboard(stats) {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 class="chart-title" style="margin: 0;">📈 Timeline de RNCs</h3>
                 <div style="display: flex; gap: 8px;">
-                    <button onclick="changeTimelineGranularity('dia')" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Dia</button>
-                    <button onclick="changeTimelineGranularity('semana')" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Semana</button>
-                    <button onclick="changeTimelineGranularity('mes')" class="timeline-btn-active" style="padding: 6px 12px; border: 1px solid #009688; background: #009688; color: white; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Mês</button>
-                    <button onclick="changeTimelineGranularity('ano')" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Ano</button>
+                    <button onclick="changeTimelineGranularity('dia', this)" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Dia</button>
+                    <button onclick="changeTimelineGranularity('semana', this)" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Semana</button>
+                    <button onclick="changeTimelineGranularity('mes', this)" class="timeline-btn-active" style="padding: 6px 12px; border: 1px solid #009688; background: #009688; color: white; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Mês</button>
+                    <button onclick="changeTimelineGranularity('ano', this)" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Ano</button>
                 </div>
             </div>
             <div id="timelineChart"></div>
@@ -8276,7 +8276,7 @@ async function refreshDashboard() {
 // === ALTERNAR GRANULARIDADE DO TIMELINE ===
 let currentGranularity = 'mes';
 
-function changeTimelineGranularity(granularity) {
+function changeTimelineGranularity(granularity, buttonElement) {
     currentGranularity = granularity;
 
     // Atualizar estilos dos botões
@@ -8284,13 +8284,18 @@ function changeTimelineGranularity(granularity) {
         btn.style.background = 'white';
         btn.style.color = '#009688';
     });
-    event.target.style.background = '#009688';
-    event.target.style.color = 'white';
+
+    // Destacar botão clicado
+    if (buttonElement) {
+        buttonElement.style.background = '#009688';
+        buttonElement.style.color = 'white';
+    }
 
     // Reagrupar dados e re-renderizar
     if (reportData && reportData.rncs) {
         const newData = groupRncsByGranularity(reportData.rncs, granularity);
         renderLineChart('timelineChart', newData);
+        debugLog('info', `Timeline alterado para: ${granularity}`);
     }
 }
 
@@ -9051,7 +9056,7 @@ function exportToPdf() {
 
                 { text: '', pageBreak: 'after' },
 
-                // === KPIs EXECUTIVOS ===
+                // === KPIs EXECUTIVOS (LINHA 1) ===
                 { text: 'KPIs ESTRATÉGICOS', style: 'sectionTitle', margin: [0, 0, 0, 20] },
 
                 {
@@ -9072,15 +9077,50 @@ function exportToPdf() {
                         },
                         {
                             stack: [
-                                { text: 'Taxa Efetividade', style: 'kpiLabel' },
-                                { text: `${stats.taxaEfetividade || 0}%`, style: 'kpiValue' }
+                                { text: 'Custo Médio/RNC', style: 'kpiLabel' },
+                                { text: `R$ ${(stats.custoMedioPorRnc || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, style: 'kpiValue' }
                             ],
                             width: '25%'
                         },
                         {
                             stack: [
+                                { text: 'Taxa Efetividade', style: 'kpiLabel' },
+                                { text: `${stats.taxaEfetividade || 0}%`, style: 'kpiValue' }
+                            ],
+                            width: '25%'
+                        }
+                    ],
+                    margin: [0, 0, 0, 15]
+                },
+
+                // === KPIs EXECUTIVOS (LINHA 2) ===
+                {
+                    columns: [
+                        {
+                            stack: [
                                 { text: 'Cumprimento Prazo', style: 'kpiLabel' },
                                 { text: `${stats.taxaCumprimentoPrazo || 0}%`, style: 'kpiValue' }
+                            ],
+                            width: '25%'
+                        },
+                        {
+                            stack: [
+                                { text: 'Tempo Médio Resolução', style: 'kpiLabel' },
+                                { text: `${stats.tempoMedioResolucao || 0} dias`, style: 'kpiValue' }
+                            ],
+                            width: '25%'
+                        },
+                        {
+                            stack: [
+                                { text: 'RNCs Vencidas', style: 'kpiLabel' },
+                                { text: `${stats.rncsVencidas || 0}`, style: 'kpiValue' }
+                            ],
+                            width: '25%'
+                        },
+                        {
+                            stack: [
+                                { text: 'Tendência Mensal', style: 'kpiLabel' },
+                                { text: `${stats.tendenciaCrescimento >= 0 ? '+' : ''}${stats.tendenciaCrescimento || 0}%`, style: 'kpiValue', color: stats.tendenciaCrescimento >= 0 ? '#F44336' : '#4CAF50' }
                             ],
                             width: '25%'
                         }
@@ -9152,30 +9192,158 @@ function exportToPdf() {
                     margin: [0, 0, 0, 30]
                 },
 
-                { text: '', pageBreak: 'after' },
-
-                // === LISTAGEM DETALHADA ===
-                { text: 'DETALHAMENTO DAS RNCs', style: 'sectionTitle', margin: [0, 0, 0, 15] },
+                // === ANÁLISE POR SETOR ===
+                { text: 'DISTRIBUIÇÃO POR SETOR', style: 'sectionTitle', margin: [0, 30, 0, 15] },
 
                 {
                     table: {
                         headerRows: 1,
-                        widths: [60, '*', 80, 60, 70],
+                        widths: ['*', 100, 80],
                         body: [
                             [
-                                { text: 'Número', style: 'tableHeader' },
+                                { text: 'Setor', style: 'tableHeader' },
+                                { text: 'Quantidade', style: 'tableHeader', alignment: 'center' },
+                                { text: 'Percentual', style: 'tableHeader', alignment: 'center' }
+                            ],
+                            ...Object.entries(stats.porSetor || stats.porSetorAbertura || {}).slice(0, 10).map(([setor, qtd]) => [
+                                setor,
+                                { text: qtd, alignment: 'center' },
+                                { text: `${((qtd / stats.total) * 100).toFixed(1)}%`, alignment: 'center' }
+                            ])
+                        ]
+                    },
+                    layout: {
+                        fillColor: function(rowIndex) {
+                            return rowIndex === 0 ? '#009688' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                        },
+                        hLineWidth: function() { return 0.5; },
+                        vLineWidth: function() { return 0.5; },
+                        hLineColor: function() { return '#ddd'; },
+                        vLineColor: function() { return '#ddd'; }
+                    },
+                    margin: [0, 0, 0, 30]
+                },
+
+                // === TOP 5 RNCs MAIS CUSTOSAS ===
+                { text: 'TOP 5 RNCs MAIS CUSTOSAS', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: [40, '*', 100],
+                        body: [
+                            [
+                                { text: 'Nº', style: 'tableHeader' },
                                 { text: 'Descrição', style: 'tableHeader' },
+                                { text: 'Valor (R$)', style: 'tableHeader', alignment: 'right' }
+                            ],
+                            ...rncs
+                                .sort((a, b) => (parseFloat(b['Valor'] || 0)) - (parseFloat(a['Valor'] || 0)))
+                                .slice(0, 5)
+                                .map((rnc, index) => {
+                                    const titulo = rnc['Título'] || rnc['Descrição da NC'] || rnc['Descrição'] || 'Sem título';
+                                    const numero = rnc['Número da RNC'] || rnc['Número RNC'] || (index + 1);
+                                    const valor = parseFloat(rnc['Valor'] || 0);
+                                    return [
+                                        { text: numero.toString(), fontSize: 9 },
+                                        { text: titulo.substring(0, 60), fontSize: 9 },
+                                        { text: valor.toFixed(2), alignment: 'right', fontSize: 10, bold: true, color: '#F44336' }
+                                    ];
+                                })
+                        ]
+                    },
+                    layout: {
+                        fillColor: function(rowIndex) {
+                            return rowIndex === 0 ? '#009688' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                        },
+                        hLineWidth: function() { return 0.5; },
+                        vLineWidth: function() { return 0.5; },
+                        hLineColor: function() { return '#ddd'; },
+                        vLineColor: function() { return '#ddd'; }
+                    },
+                    margin: [0, 0, 0, 30]
+                },
+
+                // === ANÁLISE PREDITIVA ===
+                { text: 'ANÁLISE PREDITIVA E INSIGHTS', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+
+                {
+                    table: {
+                        widths: ['*'],
+                        body: [
+                            [
+                                {
+                                    stack: [
+                                        { text: 'Setor Crítico', bold: true, fontSize: 11, margin: [0, 5, 0, 5] },
+                                        { text: `${stats.setorMaisCritico || 'N/A'}`, fontSize: 10, color: '#666' },
+                                        { text: '', margin: [0, 10, 0, 0] },
+                                        { text: 'Tendência', bold: true, fontSize: 11, margin: [0, 0, 0, 5] },
+                                        {
+                                            text: `${stats.previsaoTendencia || 'Estável'} (${stats.tendenciaCrescimento >= 0 ? '+' : ''}${stats.tendenciaCrescimento || 0}% no período)`,
+                                            fontSize: 10,
+                                            color: stats.tendenciaCrescimento > 0 ? '#F44336' : '#4CAF50'
+                                        },
+                                        { text: '', margin: [0, 10, 0, 0] },
+                                        { text: 'Observações', bold: true, fontSize: 11, margin: [0, 0, 0, 5] },
+                                        {
+                                            ul: [
+                                                `${stats.total || 0} RNCs registradas no período`,
+                                                `Custo médio por RNC: R$ ${(stats.custoMedioPorRnc || 0).toFixed(2)}`,
+                                                `${stats.rncsVencidas || 0} RNCs vencidas pendentes`,
+                                                `Taxa de cumprimento de prazo: ${stats.taxaCumprimentoPrazo || 0}%`
+                                            ],
+                                            fontSize: 9,
+                                            color: '#666'
+                                        }
+                                    ],
+                                    margin: [10, 10, 10, 10]
+                                }
+                            ]
+                        ]
+                    },
+                    layout: {
+                        hLineWidth: function() { return 0.5; },
+                        vLineWidth: function() { return 0.5; },
+                        hLineColor: function() { return '#009688'; },
+                        vLineColor: function() { return '#009688'; }
+                    },
+                    margin: [0, 0, 0, 20]
+                },
+
+                { text: '', pageBreak: 'after' },
+
+                // === LISTAGEM DETALHADA ===
+                { text: 'DETALHAMENTO COMPLETO DAS RNCs', style: 'sectionTitle', margin: [0, 0, 0, 15] },
+
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: [40, '*', 70, 50, 60],
+                        body: [
+                            [
+                                { text: 'Nº', style: 'tableHeader' },
+                                { text: 'Descrição/Título', style: 'tableHeader' },
                                 { text: 'Tipo', style: 'tableHeader' },
                                 { text: 'Risco', style: 'tableHeader' },
-                                { text: 'Valor', style: 'tableHeader', alignment: 'right' }
+                                { text: 'Valor (R$)', style: 'tableHeader', alignment: 'right' }
                             ],
-                            ...rncs.slice(0, 50).map(rnc => [
-                                rnc['Número da RNC'] || '-',
-                                (rnc['Título'] || rnc['Descrição'] || '-').substring(0, 80),
-                                (rnc['Tipo da RNC'] || rnc['Tipo RNC'] || '-').substring(0, 20),
-                                rnc['Risco'] || 'Baixo',
-                                { text: `R$ ${(parseFloat(rnc['Valor']) || 0).toFixed(2)}`, alignment: 'right' }
-                            ])
+                            ...rncs.slice(0, 50).map((rnc, index) => {
+                                // Pegar título/descrição de qualquer campo disponível
+                                const titulo = rnc['Título'] || rnc['Descrição da NC'] || rnc['Descrição'] ||
+                                              rnc['Descrição da não-conformidade'] || 'Sem título';
+                                const numero = rnc['Número da RNC'] || rnc['Número RNC'] || rnc['ID'] || (index + 1);
+                                const tipo = rnc['Tipo da RNC'] || rnc['Tipo RNC'] || rnc['Tipo'] || 'Não informado';
+                                const risco = rnc['Risco'] || rnc['Nível de Risco'] || 'Baixo';
+                                const valor = parseFloat(rnc['Valor'] || rnc['Custo'] || rnc['Valor (R$)'] || 0);
+
+                                return [
+                                    { text: numero.toString(), fontSize: 9 },
+                                    { text: titulo.substring(0, 80), fontSize: 9 },
+                                    { text: tipo.substring(0, 25), fontSize: 9 },
+                                    { text: risco, fontSize: 9 },
+                                    { text: valor.toFixed(2), alignment: 'right', fontSize: 9 }
+                                ];
+                            })
                         ]
                     },
                     layout: {
