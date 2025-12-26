@@ -573,7 +573,7 @@ var Reports = (function() {
 
     // 2. CUSTO MÉDIO POR RNC
     if (stats.total > 0) {
-      stats.custoMedioPorRnc = Math.round(stats.custoTotal / stats.total);
+      stats.custoMedioPorRnc = parseFloat((stats.custoTotal / stats.total).toFixed(2));
     }
 
     // 3. TAXA DE EFETIVIDADE (RNCs finalizadas / total)

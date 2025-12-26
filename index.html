@@ -75,11 +75,11 @@
 }
 
 .chips-container:hover {
-    border-color: #009688;
+    border-color: #1976D2;
 }
 
 .chips-container:focus-within {
-    border-color: #009688;
+    border-color: #1976D2;
     box-shadow: 0 0 0 0.2rem rgba(0, 150, 136, 0.1);
 }
 
@@ -101,7 +101,7 @@
 
 /* ✅ Chips - Verde do sistema */
 .chip {
-    background: linear-gradient(135deg, #009688 0%, #00796b 100%);
+    background: linear-gradient(135deg, #1976D2 0%, #00796b 100%);
     color: white;
     padding: 6px 12px;
     border-radius: 16px;
@@ -171,12 +171,12 @@
 }
 
 .multiselect-select:hover {
-    border-color: #009688;
+    border-color: #1976D2;
 }
 
 .multiselect-select:focus {
     outline: none;
-    border-color: #009688;
+    border-color: #1976D2;
     box-shadow: 0 0 0 0.2rem rgba(0, 150, 136, 0.1);
 }
 
@@ -198,7 +198,7 @@
 }
 
 .multiselect-select option:checked {
-    background: #009688;    /* ✅ Selecionado verde */
+    background: #1976D2;    /* ✅ Selecionado verde */
     color: white;
 }
 
@@ -287,7 +287,7 @@ textarea.form-control,
 }
 
 .multiselect-select::-webkit-scrollbar-thumb {
-    background: #009688;
+    background: #1976D2;
     border-radius: 4px;
 }
 
@@ -359,7 +359,7 @@ textarea.form-control,
 }
 
 .role-badge {
-    background: #009688;
+    background: #1976D2;
     color: white;
     padding: 3px 8px;
     border-radius: 4px;
@@ -390,7 +390,7 @@ textarea.form-control,
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
-            --primary: #009688;
+            --primary: #1976D2;
             --primary-dark: #00796B;
             --primary-light: #4DB6AC;
             --accent: #FFB300;
@@ -834,7 +834,7 @@ textarea.form-control,
               flex-direction: column;
               align-items: center;
               gap: 5px;
-              background: linear-gradient(135deg, #009688 0%, #00796B 100%);
+              background: linear-gradient(135deg, #1976D2 0%, #00796B 100%);
               padding: 10px 15px;
               border-radius: 8px;
               box-shadow: 0 4px 12px rgba(0, 150, 136, 0.3);
@@ -4346,7 +4346,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
                     <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
                     <h2 style="color: #F44336; margin-bottom: 20px;">Erro de Autenticação</h2>
                     <p style="margin-bottom: 20px; color: #666;">Não foi possível carregar suas informações de acesso.</p>
-                    <button onclick="location.reload()" style="background: #009688; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
+                    <button onclick="location.reload()" style="background: #1976D2; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
                         🔄 Recarregar Página
                     </button>
                 </div>
@@ -4536,7 +4536,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
                             <strong>Status:</strong> ${sanitizeHTML(errorMessage)}<br>
                             <strong>Total de usuários na planilha:</strong> ${appContext.totalLinhasPlanilha || 'N/A'}
                         </div>
-                        <button onclick="location.reload()" style="background: #009688; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
+                        <button onclick="location.reload()" style="background: #1976D2; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
                             🔄 Tentar Novamente
                         </button>
                     </div>
@@ -4614,7 +4614,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
                     <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
                     <h2 style="color: #F44336; margin-bottom: 20px;">Erro ao Carregar</h2>
                     <p style="margin-bottom: 20px; color: #666;">${sanitizeHTML(error.message)}</p>
-                    <button onclick="location.reload()" style="background: #009688; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
+                    <button onclick="location.reload()" style="background: #1976D2; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
                         🔄 Recarregar Página
                     </button>
                 </div>
@@ -5313,7 +5313,7 @@ function showConfirmModal(title, message) {
             <div id="confirmModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s;">
                 <div style="background: white; padding: 2.5rem; border-radius: 16px; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.3s;">
                     <div style="font-size: 48px; margin-bottom: 20px;">❓</div>
-                    <h2 style="color: #009688; margin-bottom: 15px; font-size: 22px; font-weight: 600;">${title}</h2>
+                    <h2 style="color: #1976D2; margin-bottom: 15px; font-size: 22px; font-weight: 600;">${title}</h2>
                     <p style="color: #666; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">${message}</p>
                     <div style="display: flex; gap: 15px; justify-content: center;">
                         <button id="confirmCancel" style="
@@ -5331,7 +5331,7 @@ function showConfirmModal(title, message) {
                             Cancelar
                         </button>
                         <button id="confirmOk" style="
-                            background: #009688;
+                            background: #1976D2;
                             color: white;
                             border: none;
                             padding: 12px 32px;
@@ -5341,7 +5341,7 @@ function showConfirmModal(title, message) {
                             cursor: pointer;
                             transition: all 0.2s;
                             min-width: 120px;
-                        " onmouseover="this.style.background='#00796B';" onmouseout="this.style.background='#009688';">
+                        " onmouseover="this.style.background='#00796B';" onmouseout="this.style.background='#1976D2';">
                             OK
                         </button>
                     </div>
@@ -5460,7 +5460,7 @@ function showInfoModal(title, message, icon) {
                         
                         <!-- Botão -->
                         <button onclick="closeInfoModal()" style="
-                            background: linear-gradient(135deg, #009688 0%, #00796b 100%);
+                            background: linear-gradient(135deg, #1976D2 0%, #00796b 100%);
                             color: white;
                             border: none;
                             padding: 12px 32px;
@@ -6035,7 +6035,7 @@ async function showHistoricoModal(rncNumber) {
             <div id="historicoModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s;">
                 <div style="background: white; padding: 0; border-radius: 16px; max-width: 900px; width: 90%; max-height: 80vh; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.3s; overflow: hidden; display: flex; flex-direction: column;">
                     <!-- Header -->
-                    <div style="padding: 25px 30px; background: linear-gradient(135deg, #009688 0%, #00796B 100%); color: white;">
+                    <div style="padding: 25px 30px; background: linear-gradient(135deg, #1976D2 0%, #00796B 100%); color: white;">
                         <h2 style="margin: 0; font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
                             <span>📜</span>
                             <span>Histórico de Alterações - RNC ${rncNumber}</span>
@@ -6092,7 +6092,7 @@ async function showHistoricoModal(rncNumber) {
                     <!-- Footer -->
                     <div style="padding: 20px 30px; background: #f5f5f5; border-top: 1px solid #ddd; text-align: right;">
                         <button id="historicoModalClose" style="
-                            background: #009688;
+                            background: #1976D2;
                             color: white;
                             border: none;
                             padding: 12px 30px;
@@ -6101,7 +6101,7 @@ async function showHistoricoModal(rncNumber) {
                             font-weight: 600;
                             cursor: pointer;
                             transition: all 0.2s;
-                        " onmouseover="this.style.background='#00796B'" onmouseout="this.style.background='#009688'">
+                        " onmouseover="this.style.background='#00796B'" onmouseout="this.style.background='#1976D2'">
                             Fechar
                         </button>
                     </div>
@@ -6528,8 +6528,8 @@ async function confirmDeleteAttachment(rncNumber, fileId, fileName) {
                         <p style="margin-bottom: 15px; font-size: 15px;">
                             Tem certeza que deseja <strong>excluir permanentemente</strong> o anexo:
                         </p>
-                        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #009688;">
-                            <div style="font-weight: 600; color: #009688; margin-bottom: 5px;">
+                        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #1976D2;">
+                            <div style="font-weight: 600; color: #1976D2; margin-bottom: 5px;">
                                 📎 ${fileName}
                             </div>
                             <div style="font-size: 12px; color: #666;">
@@ -6691,7 +6691,7 @@ async function deleteAttachment(rncNumber, fileId, fileName) {
           <p style="margin-bottom: 15px;">
             Tem certeza que deseja excluir o anexo:
           </p>
-          <p style="font-weight: 600; color: #009688;">
+          <p style="font-weight: 600; color: #1976D2;">
             ${fileName}
           </p>
           <p style="margin-top: 15px; color: #F44336; font-size: 13px;">
@@ -6864,7 +6864,7 @@ function showEditSuccessModal(rncNumber, changes, newStatus) {
     } else {
         changesHtml = `
             <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto; margin: 15px 0;">
-                <div style="font-weight: 600; color: #009688; margin-bottom: 10px; font-size: 14px;">
+                <div style="font-weight: 600; color: #1976D2; margin-bottom: 10px; font-size: 14px;">
                     📝 ${changes.length} ${changes.length === 1 ? 'campo alterado' : 'campos alterados'}:
                 </div>
                 ${changes.map(change => {
@@ -6880,7 +6880,7 @@ function showEditSuccessModal(rncNumber, changes, newStatus) {
             change.newValue.split(';').map(v => v.trim()).filter(v => v) : [];
         
         return `
-            <div style="margin-bottom: 12px; padding: 10px; background: white; border-radius: 6px; border-left: 3px solid #009688;">
+            <div style="margin-bottom: 12px; padding: 10px; background: white; border-radius: 6px; border-left: 3px solid #1976D2;">
                 <div style="font-weight: 600; font-size: 13px; color: #333; margin-bottom: 8px;">
                     🏷️ ${change.field}
                 </div>
@@ -6898,7 +6898,7 @@ function showEditSuccessModal(rncNumber, changes, newStatus) {
                             }
                         </div>
                     </div>
-                    <div style="font-size: 16px; color: #009688; display: flex; align-items: center;">→</div>
+                    <div style="font-size: 16px; color: #1976D2; display: flex; align-items: center;">→</div>
                     <div style="padding: 8px; background: #e8f5e9; border-radius: 4px;">
                         <div style="font-size: 10px; opacity: 0.8; margin-bottom: 4px; text-align: center; color: #2e7d32;">DEPOIS</div>
                         <div style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;">
@@ -6934,7 +6934,7 @@ function showEditSuccessModal(rncNumber, changes, newStatus) {
         }
         
         return `
-            <div style="margin-bottom: 12px; padding: 10px; background: white; border-radius: 6px; border-left: 3px solid #009688;">
+            <div style="margin-bottom: 12px; padding: 10px; background: white; border-radius: 6px; border-left: 3px solid #1976D2;">
                 <div style="font-weight: 600; font-size: 13px; color: #333; margin-bottom: 5px;">
                     🏷️ ${change.field}
                 </div>
@@ -6943,7 +6943,7 @@ function showEditSuccessModal(rncNumber, changes, newStatus) {
                         <div style="font-size: 10px; opacity: 0.8; margin-bottom: 2px;">ANTES</div>
                         <div style="font-weight: 500;">${oldValueDisplay}</div>
                     </div>
-                    <div style="font-size: 16px; color: #009688;">→</div>
+                    <div style="font-size: 16px; color: #1976D2;">→</div>
                     <div style="padding: 6px; background: #e8f5e9; border-radius: 4px; color: #2e7d32; text-align: center;">
                         <div style="font-size: 10px; opacity: 0.8; margin-bottom: 2px;">DEPOIS</div>
                         <div style="font-weight: 500;">${newValueDisplay}</div>
@@ -6970,7 +6970,7 @@ function showEditSuccessModal(rncNumber, changes, newStatus) {
                 <!-- Número da RNC -->
                 <div style="background: #F0FDF4; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #10B981;">
                     <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Número da RNC:</p>
-                    <p style="font-size: 28px; font-weight: bold; color: #009688; margin: 0;">${rncNumber}</p>
+                    <p style="font-size: 28px; font-weight: bold; color: #1976D2; margin: 0;">${rncNumber}</p>
                 </div>
                 
                 <!-- Status (se mudou) -->
@@ -6992,7 +6992,7 @@ function showEditSuccessModal(rncNumber, changes, newStatus) {
                 
                 <!-- Botão OK -->
                 <button onclick="closeEditSuccessModal()" style="
-                    background: #009688; 
+                    background: #1976D2; 
                     color: white; 
                     border: none; 
                     padding: 14px 40px; 
@@ -7002,7 +7002,7 @@ function showEditSuccessModal(rncNumber, changes, newStatus) {
                     cursor: pointer; 
                     transition: all 0.2s;
                     box-shadow: 0 4px 12px rgba(0, 150, 136, 0.3);
-                " onmouseover="this.style.background='#00796B'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(0, 150, 136, 0.4)';" onmouseout="this.style.background='#009688'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 150, 136, 0.3)';">
+                " onmouseover="this.style.background='#00796B'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(0, 150, 136, 0.4)';" onmouseout="this.style.background='#1976D2'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 150, 136, 0.3)';">
                     OK, Entendi
                 </button>
             </div>
@@ -7628,7 +7628,7 @@ function renderPieChart(containerId, data) {
 
     // Cores vibrantes com gradiente
     const colors = [
-        '#009688', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336',
+        '#1976D2', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336',
         '#FFB300', '#00BCD4', '#8BC34A', '#E91E63', '#3F51B5', '#FF5722'
     ];
 
@@ -7718,7 +7718,7 @@ function renderPieChart(containerId, data) {
                             show: true,
                             fontSize: '24px',
                             fontWeight: 'bold',
-                            color: '#009688',
+                            color: '#1976D2',
                             formatter: function(val) {
                                 return val;
                             }
@@ -7786,31 +7786,31 @@ function renderDashboard(stats) {
         <!-- ========================================== -->
         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 30px;">
             
-            <div class="dashboard-card" style="border-top-color: #009688;">
+            <div class="dashboard-card" style="border-top-color: #1976D2;">
                 <div class="dashboard-icon">📊</div>
                 <div class="dashboard-number">${stats.total || 0}</div>
                 <div class="dashboard-label">Total de RNCs</div>
             </div>
             
-            <div class="dashboard-card" style="border-top-color: #009688;">
+            <div class="dashboard-card" style="border-top-color: #1976D2;">
                 <div class="dashboard-icon">📝</div>
                 <div class="dashboard-number">${stats.aberturaRnc || 0}</div>
                 <div class="dashboard-label">Abertura RNC</div>
             </div>
             
-            <div class="dashboard-card" style="border-top-color: #009688;">
+            <div class="dashboard-card" style="border-top-color: #1976D2;">
                 <div class="dashboard-icon">🔍</div>
                 <div class="dashboard-number">${stats.analiseQualidade || 0}</div>
                 <div class="dashboard-label">Análise Qualidade</div>
             </div>
             
-            <div class="dashboard-card" style="border-top-color: #009688;">
+            <div class="dashboard-card" style="border-top-color: #1976D2;">
                 <div class="dashboard-icon">⚡</div>
                 <div class="dashboard-number">${stats.analiseAcao || 0}</div>
                 <div class="dashboard-label">Análise e Ação</div>
             </div>
             
-            <div class="dashboard-card" style="border-top-color: #009688;">
+            <div class="dashboard-card" style="border-top-color: #1976D2;">
                 <div class="dashboard-icon">✅</div>
                 <div class="dashboard-number">${stats.finalizadas || 0}</div>
                 <div class="dashboard-label">Finalizadas</div>
@@ -7822,31 +7822,31 @@ function renderDashboard(stats) {
         <!-- ========================================== -->
         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 30px;">
             
-            <div class="dashboard-card" style="border-top-color: #009688;">
+            <div class="dashboard-card" style="border-top-color: #1976D2;">
                 <div class="dashboard-icon">💰</div>
                 <div class="dashboard-number">R$ ${(stats.custoTotal || 0).toFixed(2)}</div>
                 <div class="dashboard-label">Custo Total</div>
             </div>
             
-            <div class="dashboard-card" style="border-top-color: #009688;">
+            <div class="dashboard-card" style="border-top-color: #1976D2;">
                 <div class="dashboard-icon">⏱️</div>
                 <div class="dashboard-number">${stats.tempoMedioResolucao || 0}</div>
                 <div class="dashboard-label">Dias Médio Resolução</div>
             </div>
             
-            <div class="dashboard-card" style="border-top-color: ${stats.rncsVencidas > 0 ? '#F44336' : '#009688'};">
+            <div class="dashboard-card" style="border-top-color: ${stats.rncsVencidas > 0 ? '#F44336' : '#1976D2'};">
                 <div class="dashboard-icon">⚠️</div>
                 <div class="dashboard-number">${stats.rncsVencidas || 0}</div>
                 <div class="dashboard-label">RNCs Vencidas</div>
             </div>
             
-            <div class="dashboard-card" style="border-top-color: ${stats.rncsProximasVencer > 0 ? '#FFC107' : '#009688'};">
+            <div class="dashboard-card" style="border-top-color: ${stats.rncsProximasVencer > 0 ? '#FFC107' : '#1976D2'};">
                 <div class="dashboard-icon">🕐</div>
                 <div class="dashboard-number">${stats.rncsProximasVencer || 0}</div>
                 <div class="dashboard-label">Próximas Vencer</div>
             </div>
             
-            <div class="dashboard-card" style="border-top-color: #009688;">
+            <div class="dashboard-card" style="border-top-color: #1976D2;">
                 <div class="dashboard-icon">🎯</div>
                 <div class="dashboard-number">${stats.acoesCorretivaTomadas || 0}</div>
                 <div class="dashboard-label">Ações Corretivas Tomadas</div>
@@ -7950,10 +7950,10 @@ function renderDashboard(stats) {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 class="chart-title" style="margin: 0;">📈 Timeline de RNCs</h3>
                 <div style="display: flex; gap: 8px;">
-                    <button onclick="changeTimelineGranularity('dia', this)" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Dia</button>
-                    <button onclick="changeTimelineGranularity('semana', this)" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Semana</button>
-                    <button onclick="changeTimelineGranularity('mes', this)" class="timeline-btn-active" style="padding: 6px 12px; border: 1px solid #009688; background: #009688; color: white; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Mês</button>
-                    <button onclick="changeTimelineGranularity('ano', this)" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Ano</button>
+                    <button onclick="changeTimelineGranularity('dia', this)" style="padding: 6px 12px; border: 1px solid #1976D2; background: white; color: #1976D2; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Dia</button>
+                    <button onclick="changeTimelineGranularity('semana', this)" style="padding: 6px 12px; border: 1px solid #1976D2; background: white; color: #1976D2; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Semana</button>
+                    <button onclick="changeTimelineGranularity('mes', this)" class="timeline-btn-active" style="padding: 6px 12px; border: 1px solid #1976D2; background: #1976D2; color: white; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Mês</button>
+                    <button onclick="changeTimelineGranularity('ano', this)" style="padding: 6px 12px; border: 1px solid #1976D2; background: white; color: #1976D2; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Ano</button>
                 </div>
             </div>
             <div id="timelineChart"></div>
@@ -8007,7 +8007,7 @@ function renderDashboard(stats) {
                     ${stats.rncsProximasVencer > 0 ? `<p style="color: #FFC107;">🕐 <strong>${stats.rncsProximasVencer}</strong> RNC(s) próximas de vencer.</p>` : ''}
                     <p>🎯 <strong>${stats.acoesCorretivaTomadas || 0}</strong> ação(ões) corretiva(s) tomada(s).</p>
                     <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-                    <h4 style="color: #009688; margin-bottom: 10px;">📊 KPIs Estratégicos</h4>
+                    <h4 style="color: #1976D2; margin-bottom: 10px;">📊 KPIs Estratégicos</h4>
                     <p>👥 Impacto ao Cliente: <strong>${stats.impactoClientePercentual}%</strong> (${stats.impactoClienteTotal} RNCs)</p>
                     <p>🔍 Detecção Interna: <strong>${stats.deteccaoInternaPercentual}%</strong> ${stats.deteccaoInternaPercentual >= 70 ? '✅' : '⚠️'}</p>
                     <p>❌ Taxa Não Procede: <strong>${stats.naoProcedeTaxa}%</strong> ${stats.naoProcedeTaxa <= 10 ? '✅' : '⚠️'}</p>
@@ -8026,7 +8026,7 @@ function renderDashboard(stats) {
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px;">
                 <div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 8px;">
                     <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Mês Atual</div>
-                    <div style="font-size: 32px; font-weight: bold; color: #009688;">${stats.esteMes || 0}</div>
+                    <div style="font-size: 32px; font-weight: bold; color: #1976D2;">${stats.esteMes || 0}</div>
                     <div style="font-size: 12px; color: #999; margin-top: 5px;">RNCs criadas</div>
                 </div>
                 <div style="text-align: center; padding: 20px; background: #f5f5f5; border-radius: 8px;">
@@ -8061,7 +8061,7 @@ function renderDashboard(stats) {
                     const altura = maxValue > 0 ? (valor / maxValue) * 150 : 10;
                     return `
                         <div style="flex: 1; text-align: center;">
-                            <div style="background: linear-gradient(to top, #009688, #4CAF50);
+                            <div style="background: linear-gradient(to top, #1976D2, #4CAF50);
                                         height: ${altura}px;
                                         border-radius: 8px 8px 0 0;
                                         margin-bottom: 10px;
@@ -8282,12 +8282,12 @@ function changeTimelineGranularity(granularity, buttonElement) {
     // Atualizar estilos dos botões
     document.querySelectorAll('[onclick^="changeTimelineGranularity"]').forEach(btn => {
         btn.style.background = 'white';
-        btn.style.color = '#009688';
+        btn.style.color = '#1976D2';
     });
 
     // Destacar botão clicado
     if (buttonElement) {
-        buttonElement.style.background = '#009688';
+        buttonElement.style.background = '#1976D2';
         buttonElement.style.color = 'white';
     }
 
@@ -8336,10 +8336,39 @@ function renderLineChart(containerId, data) {
     const container = document.getElementById(containerId);
     if (!container || !data) return;
 
+    // Ordenação inteligente que funciona com dia/semana/mes/ano
     const entries = Object.entries(data).sort((a, b) => {
-        const [monthA, yearA] = a[0].split('/').map(Number);
-        const [monthB, yearB] = b[0].split('/').map(Number);
-        return (yearA * 12 + monthA) - (yearB * 12 + monthB);
+        const keyA = a[0];
+        const keyB = b[0];
+
+        // Detectar formato e criar timestamp para ordenação
+        function parseToTimestamp(key) {
+            // Formato: dd/mm/aaaa (dia)
+            if (key.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                const [dia, mes, ano] = key.split('/').map(Number);
+                return new Date(ano, mes - 1, dia).getTime();
+            }
+            // Formato: Sem N/mm/aaaa (semana)
+            else if (key.startsWith('Sem ')) {
+                const parts = key.replace('Sem ', '').split('/');
+                const semana = parseInt(parts[0]);
+                const mes = parseInt(parts[1]);
+                const ano = parseInt(parts[2]);
+                return new Date(ano, mes - 1, semana).getTime();
+            }
+            // Formato: mm/aaaa (mes)
+            else if (key.match(/^\d{2}\/\d{4}$/)) {
+                const [mes, ano] = key.split('/').map(Number);
+                return new Date(ano, mes - 1, 1).getTime();
+            }
+            // Formato: aaaa (ano)
+            else if (key.match(/^\d{4}$/)) {
+                return new Date(parseInt(key), 0, 1).getTime();
+            }
+            return 0;
+        }
+
+        return parseToTimestamp(keyA) - parseToTimestamp(keyB);
     });
 
     if (entries.length === 0) {
@@ -8397,7 +8426,7 @@ function renderLineChart(containerId, data) {
                 opacity: 0.15
             }
         },
-        colors: ['#009688'],
+        colors: ['#1976D2'],
         dataLabels: {
             enabled: false
         },
@@ -8476,7 +8505,7 @@ function renderLineChart(containerId, data) {
         },
         markers: {
             size: 5,
-            colors: ['#009688'],
+            colors: ['#1976D2'],
             strokeColors: '#fff',
             strokeWidth: 3,
             hover: {
@@ -8806,14 +8835,14 @@ function editRncFromReport(rncNumber) {
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px;">
             
             <!-- KPI: Custo Total -->
-            <div class="dashboard-card" style="border-top-color: #009688;">
+            <div class="dashboard-card" style="border-top-color: #1976D2;">
                 <div class="dashboard-icon">💰</div>
                 <div class="dashboard-number">R$ ${(stats.custoTotal || 0).toFixed(2)}</div>
                 <div class="dashboard-label">Custo Total</div>
             </div>
             
             <!-- KPI: Tempo Médio -->
-            <div class="dashboard-card" style="border-top-color: #009688;">
+            <div class="dashboard-card" style="border-top-color: #1976D2;">
                 <div class="dashboard-icon">⏱️</div>
                 <div class="dashboard-number">${stats.tempoMedioResolucao || 0} dias</div>
                 <div class="dashboard-label">Tempo Médio</div>
@@ -8869,7 +8898,7 @@ function editRncFromReport(rncNumber) {
         <div class="chart-container">
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
-                    <tr style="background: #009688; color: white;">
+                    <tr style="background: #1976D2; color: white;">
                         <th style="padding: 12px; text-align: left;">Tipo de RNC</th>
                         <th style="padding: 12px; text-align: center;">Quantidade</th>
                         <th style="padding: 12px; text-align: right;">Custo Total</th>
@@ -8888,7 +8917,7 @@ function editRncFromReport(rncNumber) {
                                     <td style="padding: 10px;">${tipo}</td>
                                     <td style="padding: 10px; text-align: center;">${dados.count}</td>
                                     <td style="padding: 10px; text-align: right;">R$ ${dados.soma.toFixed(2)}</td>
-                                    <td style="padding: 10px; text-align: right; font-weight: bold; color: #009688;">R$ ${dados.media.toFixed(2)}</td>
+                                    <td style="padding: 10px; text-align: right; font-weight: bold; color: #1976D2;">R$ ${dados.media.toFixed(2)}</td>
                                     <td style="padding: 10px; text-align: center;">
                                         <div style="background: #e0f2f1; padding: 4px 8px; border-radius: 4px; display: inline-block;">
                                             ${percentual}%
@@ -8917,7 +8946,7 @@ function editRncFromReport(rncNumber) {
         <div class="chart-container">
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                 <thead>
-                    <tr style="background: #009688; color: white;">
+                    <tr style="background: #1976D2; color: white;">
                         <th style="padding: 10px; text-align: left;">Nº RNC</th>
                         <th style="padding: 10px; text-align: left;">Cliente</th>
                         <th style="padding: 10px; text-align: center;">Status</th>
@@ -9029,7 +9058,7 @@ function exportToPdf() {
                 // CAPA EXECUTIVA
                 { text: 'RELATÓRIO GERENCIAL', style: 'coverTitle', margin: [0, 100, 0, 10] },
                 { text: 'Sistema de Gestão de Não Conformidades', style: 'coverSubtitle', margin: [0, 0, 0, 20] },
-                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 2, lineColor: '#009688' }], margin: [0, 0, 0, 30] },
+                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 2, lineColor: '#1976D2' }], margin: [0, 0, 0, 30] },
 
                 // Informações do Período
                 {
@@ -9150,7 +9179,7 @@ function exportToPdf() {
                     },
                     layout: {
                         fillColor: function(rowIndex) {
-                            return rowIndex === 0 ? '#009688' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                            return rowIndex === 0 ? '#1976D2' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
                         },
                         hLineWidth: function() { return 0.5; },
                         vLineWidth: function() { return 0.5; },
@@ -9182,7 +9211,7 @@ function exportToPdf() {
                     },
                     layout: {
                         fillColor: function(rowIndex) {
-                            return rowIndex === 0 ? '#009688' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                            return rowIndex === 0 ? '#1976D2' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
                         },
                         hLineWidth: function() { return 0.5; },
                         vLineWidth: function() { return 0.5; },
@@ -9214,7 +9243,7 @@ function exportToPdf() {
                     },
                     layout: {
                         fillColor: function(rowIndex) {
-                            return rowIndex === 0 ? '#009688' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                            return rowIndex === 0 ? '#1976D2' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
                         },
                         hLineWidth: function() { return 0.5; },
                         vLineWidth: function() { return 0.5; },
@@ -9241,8 +9270,13 @@ function exportToPdf() {
                                 .sort((a, b) => (parseFloat(b['Valor'] || 0)) - (parseFloat(a['Valor'] || 0)))
                                 .slice(0, 5)
                                 .map((rnc, index) => {
-                                    const titulo = rnc['Título'] || rnc['Descrição da NC'] || rnc['Descrição'] || 'Sem título';
-                                    const numero = rnc['Número da RNC'] || rnc['Número RNC'] || (index + 1);
+                                    const titulo = rnc['Descrição da não conformidade'] ||
+                                                  rnc['Descrição da NC'] ||
+                                                  rnc['Descrição da não-conformidade'] ||
+                                                  rnc['Título'] ||
+                                                  rnc['Descrição'] ||
+                                                  'Sem título';
+                                    const numero = rnc['Número da RNC'] || rnc['Número RNC'] || rnc['ID'] || (index + 1);
                                     const valor = parseFloat(rnc['Valor'] || 0);
                                     return [
                                         { text: numero.toString(), fontSize: 9 },
@@ -9254,7 +9288,7 @@ function exportToPdf() {
                     },
                     layout: {
                         fillColor: function(rowIndex) {
-                            return rowIndex === 0 ? '#009688' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                            return rowIndex === 0 ? '#1976D2' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
                         },
                         hLineWidth: function() { return 0.5; },
                         vLineWidth: function() { return 0.5; },
@@ -9264,8 +9298,8 @@ function exportToPdf() {
                     margin: [0, 0, 0, 30]
                 },
 
-                // === ANÁLISE PREDITIVA ===
-                { text: 'ANÁLISE PREDITIVA E INSIGHTS', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+                // === ANÁLISE DE TENDÊNCIAS TEMPORAIS ===
+                { text: 'ANÁLISE DE TENDÊNCIAS TEMPORAIS', style: 'sectionTitle', margin: [0, 20, 0, 15] },
 
                 {
                     table: {
@@ -9274,24 +9308,90 @@ function exportToPdf() {
                             [
                                 {
                                     stack: [
-                                        { text: 'Setor Crítico', bold: true, fontSize: 11, margin: [0, 5, 0, 5] },
-                                        { text: `${stats.setorMaisCritico || 'N/A'}`, fontSize: 10, color: '#666' },
-                                        { text: '', margin: [0, 10, 0, 0] },
-                                        { text: 'Tendência', bold: true, fontSize: 11, margin: [0, 0, 0, 5] },
+                                        { text: 'Evolução Mensal', bold: true, fontSize: 11, margin: [0, 5, 0, 5] },
                                         {
-                                            text: `${stats.previsaoTendencia || 'Estável'} (${stats.tendenciaCrescimento >= 0 ? '+' : ''}${stats.tendenciaCrescimento || 0}% no período)`,
-                                            fontSize: 10,
-                                            color: stats.tendenciaCrescimento > 0 ? '#F44336' : '#4CAF50'
+                                            text: stats.tendenciaCrescimento >= 0
+                                                ? `As RNCs apresentam tendência de CRESCIMENTO de ${stats.tendenciaCrescimento}% em relação ao período anterior. Este aumento requer atenção imediata da gestão.`
+                                                : `As RNCs apresentam tendência de REDUÇÃO de ${Math.abs(stats.tendenciaCrescimento)}% em relação ao período anterior. As ações implementadas estão surtindo efeito positivo.`,
+                                            fontSize: 9,
+                                            color: stats.tendenciaCrescimento >= 0 ? '#F44336' : '#4CAF50',
+                                            margin: [0, 0, 0, 10]
                                         },
-                                        { text: '', margin: [0, 10, 0, 0] },
-                                        { text: 'Observações', bold: true, fontSize: 11, margin: [0, 0, 0, 5] },
+                                        { text: 'Sazonalidade', bold: true, fontSize: 11, margin: [0, 10, 0, 5] },
                                         {
-                                            ul: [
-                                                `${stats.total || 0} RNCs registradas no período`,
-                                                `Custo médio por RNC: R$ ${(stats.custoMedioPorRnc || 0).toFixed(2)}`,
-                                                `${stats.rncsVencidas || 0} RNCs vencidas pendentes`,
-                                                `Taxa de cumprimento de prazo: ${stats.taxaCumprimentoPrazo || 0}%`
-                                            ],
+                                            text: stats.esteMes > stats.mesAnterior
+                                                ? `Mês atual (${stats.esteMes} RNCs) apresenta volume ${Math.round(((stats.esteMes - stats.mesAnterior) / stats.mesAnterior) * 100)}% superior ao mês anterior (${stats.mesAnterior} RNCs). Investigar causas do aumento.`
+                                                : `Mês atual (${stats.esteMes} RNCs) apresenta redução em relação ao mês anterior (${stats.mesAnterior} RNCs). Tendência positiva.`,
+                                            fontSize: 9,
+                                            color: '#666',
+                                            margin: [0, 0, 0, 10]
+                                        },
+                                        { text: 'Velocidade de Resolução', bold: true, fontSize: 11, margin: [0, 10, 0, 5] },
+                                        {
+                                            text: `O tempo médio de resolução é de ${stats.tempoMedioResolucao || 0} dias. ${
+                                                stats.tempoMedioResolucao > 30
+                                                    ? 'ALERTA: Tempo acima do ideal (30 dias). Reavaliar processos e recursos alocados.'
+                                                    : stats.tempoMedioResolucao > 15
+                                                        ? 'Tempo dentro da média aceitável, mas há margem para otimização.'
+                                                        : 'Excelente performance. Processos eficientes de tratativa.'
+                                            }`,
+                                            fontSize: 9,
+                                            color: stats.tempoMedioResolucao > 30 ? '#F44336' : (stats.tempoMedioResolucao > 15 ? '#FF9800' : '#4CAF50')
+                                        }
+                                    ],
+                                    margin: [10, 10, 10, 10]
+                                }
+                            ]
+                        ]
+                    },
+                    layout: {
+                        hLineWidth: function() { return 0.5; },
+                        vLineWidth: function() { return 0.5; },
+                        hLineColor: function() { return '#1976D2'; },
+                        vLineColor: function() { return '#1976D2'; }
+                    },
+                    margin: [0, 0, 0, 20]
+                },
+
+                // === ANÁLISE DE IMPACTO FINANCEIRO ===
+                { text: 'ANÁLISE DE IMPACTO FINANCEIRO', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+
+                {
+                    table: {
+                        widths: ['*'],
+                        body: [
+                            [
+                                {
+                                    stack: [
+                                        { text: 'Custo Total Acumulado', bold: true, fontSize: 11, margin: [0, 5, 0, 5] },
+                                        {
+                                            text: `R$ ${(stats.custoTotal || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} em não conformidades no período analisado. ${
+                                                stats.custoTotal > 100000
+                                                    ? 'CRÍTICO: Impacto financeiro elevado. Priorizar ações preventivas e corretivas.'
+                                                    : stats.custoTotal > 50000
+                                                        ? 'MODERADO: Monitorar evolução e implementar melhorias de processo.'
+                                                        : 'CONTROLADO: Custos dentro da faixa aceitável.'
+                                            }`,
+                                            fontSize: 9,
+                                            color: stats.custoTotal > 100000 ? '#F44336' : (stats.custoTotal > 50000 ? '#FF9800' : '#4CAF50'),
+                                            margin: [0, 0, 0, 10]
+                                        },
+                                        { text: 'Custo Médio por RNC', bold: true, fontSize: 11, margin: [0, 10, 0, 5] },
+                                        {
+                                            text: `R$ ${(stats.custoMedioPorRnc || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} por não conformidade. ${
+                                                stats.custoMedioPorRnc > 5000
+                                                    ? 'ALTO: RNCs com impacto financeiro significativo. Revisar processos críticos.'
+                                                    : stats.custoMedioPorRnc > 1000
+                                                        ? 'MÉDIO: Custos relevantes que justificam investimento em prevenção.'
+                                                        : 'BAIXO: Custos unitários controlados.'
+                                            }`,
+                                            fontSize: 9,
+                                            color: stats.custoMedioPorRnc > 5000 ? '#F44336' : (stats.custoMedioPorRnc > 1000 ? '#FF9800' : '#4CAF50'),
+                                            margin: [0, 0, 0, 10]
+                                        },
+                                        { text: 'ROI de Ações Preventivas', bold: true, fontSize: 11, margin: [0, 10, 0, 5] },
+                                        {
+                                            text: `Investir em prevenção pode reduzir custos em até 70%. Com o custo médio de R$ ${(stats.custoMedioPorRnc || 0).toFixed(2)}, cada RNC evitada gera economia significativa.`,
                                             fontSize: 9,
                                             color: '#666'
                                         }
@@ -9304,8 +9404,243 @@ function exportToPdf() {
                     layout: {
                         hLineWidth: function() { return 0.5; },
                         vLineWidth: function() { return 0.5; },
-                        hLineColor: function() { return '#009688'; },
-                        vLineColor: function() { return '#009688'; }
+                        hLineColor: function() { return '#1976D2'; },
+                        vLineColor: function() { return '#1976D2'; }
+                    },
+                    margin: [0, 0, 0, 20]
+                },
+
+                // === ANÁLISE POR CRITICIDADE ===
+                { text: 'ANÁLISE POR NÍVEL DE CRITICIDADE', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+
+                {
+                    table: {
+                        widths: ['*'],
+                        body: [
+                            [
+                                {
+                                    stack: [
+                                        { text: 'Setor Mais Crítico', bold: true, fontSize: 11, margin: [0, 5, 0, 5] },
+                                        {
+                                            text: `${stats.setorMaisCritico || 'N/A'} - Setor identificado com maior volume ou impacto de não conformidades. Requer plano de ação imediato com análise de causa raiz.`,
+                                            fontSize: 9,
+                                            color: '#F44336',
+                                            margin: [0, 0, 0, 10]
+                                        },
+                                        { text: 'Distribuição de Riscos', bold: true, fontSize: 11, margin: [0, 10, 0, 5] },
+                                        {
+                                            ul: Object.entries(stats.porRisco || {}).map(([risco, qtd]) =>
+                                                `${risco}: ${qtd} RNCs (${((qtd / stats.total) * 100).toFixed(1)}%)`
+                                            ),
+                                            fontSize: 9,
+                                            color: '#666',
+                                            margin: [0, 0, 0, 10]
+                                        },
+                                        { text: 'Taxa de Efetividade', bold: true, fontSize: 11, margin: [0, 10, 0, 5] },
+                                        {
+                                            text: `${stats.taxaEfetividade || 0}% das RNCs foram finalizadas com ações efetivas. ${
+                                                stats.taxaEfetividade < 70
+                                                    ? 'CRÍTICO: Taxa abaixo do ideal (>80%). Revisar qualidade das ações corretivas.'
+                                                    : stats.taxaEfetividade < 90
+                                                        ? 'ATENÇÃO: Performance aceitável, mas há espaço para melhorias.'
+                                                        : 'EXCELENTE: Alta efetividade das ações implementadas.'
+                                            }`,
+                                            fontSize: 9,
+                                            color: stats.taxaEfetividade < 70 ? '#F44336' : (stats.taxaEfetividade < 90 ? '#FF9800' : '#4CAF50')
+                                        }
+                                    ],
+                                    margin: [10, 10, 10, 10]
+                                }
+                            ]
+                        ]
+                    },
+                    layout: {
+                        hLineWidth: function() { return 0.5; },
+                        vLineWidth: function() { return 0.5; },
+                        hLineColor: function() { return '#1976D2'; },
+                        vLineColor: function() { return '#1976D2'; }
+                    },
+                    margin: [0, 0, 0, 20]
+                },
+
+                { text: '', pageBreak: 'after' },
+
+                // === CONCLUSÃO PREDITIVA ===
+                { text: 'CONCLUSÃO PREDITIVA', style: 'sectionTitle', margin: [0, 0, 0, 15] },
+
+                {
+                    table: {
+                        widths: ['*'],
+                        body: [
+                            [
+                                {
+                                    stack: [
+                                        { text: 'Projeção para Próximos 3 Meses', bold: true, fontSize: 12, margin: [0, 5, 0, 10] },
+                                        {
+                                            text: stats.tendenciaCrescimento >= 0
+                                                ? `Baseado na tendência atual de +${stats.tendenciaCrescimento}% ao mês, estima-se um acréscimo de ${Math.round(stats.esteMes * (1 + stats.tendenciaCrescimento/100) * 3)} RNCs nos próximos 3 meses, com custo projetado de R$ ${(stats.custoMedioPorRnc * stats.esteMes * (1 + stats.tendenciaCrescimento/100) * 3).toLocaleString('pt-BR', {minimumFractionDigits: 2})}.`
+                                                : `Com a tendência de redução de ${Math.abs(stats.tendenciaCrescimento)}% ao mês, projeta-se uma diminuição sustentável se as ações preventivas forem mantidas.`,
+                                            fontSize: 10,
+                                            color: stats.tendenciaCrescimento >= 0 ? '#F44336' : '#4CAF50',
+                                            margin: [0, 0, 0, 15]
+                                        },
+                                        { text: 'Padrões Identificados', bold: true, fontSize: 12, margin: [0, 10, 0, 10] },
+                                        {
+                                            ul: [
+                                                `Setor ${stats.setorMaisCritico || 'N/A'} concentra maior volume de RNCs - requer capacitação específica`,
+                                                `Tipo de RNC predominante: ${Object.entries(stats.porTipo || {}).sort((a,b) => b[1] - a[1])[0]?.[0] || 'N/A'} - investigar causa raiz sistêmica`,
+                                                `${stats.rncsVencidas || 0} RNCs vencidas pendentes - risco de reincidência e agravamento`,
+                                                `Tempo médio de ${stats.tempoMedioResolucao || 0} dias indica ${stats.tempoMedioResolucao > 30 ? 'sobrecarga operacional' : 'processo adequado'}`,
+                                                `Taxa de cumprimento de ${stats.taxaCumprimentoPrazo || 0}% ${stats.taxaCumprimentoPrazo < 80 ? 'requer atenção urgente' : 'dentro do esperado'}`
+                                            ],
+                                            fontSize: 10,
+                                            color: '#333',
+                                            margin: [0, 0, 0, 15]
+                                        },
+                                        { text: 'Alertas Estratégicos', bold: true, fontSize: 12, margin: [0, 10, 0, 10] },
+                                        {
+                                            ul: [
+                                                stats.custoTotal > 100000 ? '🔴 CRÍTICO: Impacto financeiro >R$ 100k - Reunião emergencial recomendada' : null,
+                                                stats.tendenciaCrescimento > 20 ? '🔴 CRÍTICO: Crescimento >20% - Intervenção imediata necessária' : null,
+                                                stats.rncsVencidas > 5 ? `⚠️ ATENÇÃO: ${stats.rncsVencidas} RNCs vencidas podem gerar passivos` : null,
+                                                stats.taxaCumprimentoPrazo < 70 ? '⚠️ ATENÇÃO: Baixa taxa de cumprimento - revisar capacidade da equipe' : null,
+                                                stats.tempoMedioResolucao > 45 ? '⚠️ ATENÇÃO: Tempo médio >45 dias - processo ineficiente' : null,
+                                                '✅ Oportunidade: Implementar sistema de automação para reduzir tempo de tratativa em 40%',
+                                                '✅ Oportunidade: Treinamento preventivo pode reduzir incidência em até 60%'
+                                            ].filter(Boolean),
+                                            fontSize: 10,
+                                            color: '#333'
+                                        }
+                                    ],
+                                    margin: [10, 10, 10, 10]
+                                }
+                            ]
+                        ]
+                    },
+                    layout: {
+                        fillColor: '#FFF8E1',
+                        hLineWidth: function() { return 1; },
+                        vLineWidth: function() { return 1; },
+                        hLineColor: function() { return '#FF9800'; },
+                        vLineColor: function() { return '#FF9800'; }
+                    },
+                    margin: [0, 0, 0, 25]
+                },
+
+                // === RECOMENDAÇÕES ESTRATÉGICAS ===
+                { text: 'RECOMENDAÇÕES ESTRATÉGICAS PARA A DIRETORIA', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: [60, 120, '*', 80],
+                        body: [
+                            [
+                                { text: 'Prioridade', style: 'tableHeader' },
+                                { text: 'Área de Atuação', style: 'tableHeader' },
+                                { text: 'Recomendação', style: 'tableHeader' },
+                                { text: 'Impacto Esperado', style: 'tableHeader' }
+                            ],
+                            [
+                                { text: 'CRÍTICA', fontSize: 10, bold: true, color: '#F44336' },
+                                { text: 'Prevenção', fontSize: 9 },
+                                { text: `Implementar programa de treinamento mensal no setor ${stats.setorMaisCritico || 'crítico'} sobre boas práticas e qualidade`, fontSize: 9 },
+                                { text: 'Redução de 40-60% em 6 meses', fontSize: 9, color: '#4CAF50' }
+                            ],
+                            [
+                                { text: 'CRÍTICA', fontSize: 10, bold: true, color: '#F44336' },
+                                { text: 'Processos', fontSize: 9 },
+                                { text: 'Revisar e documentar processos críticos que geram maior volume de RNCs. Criar checklists preventivos.', fontSize: 9 },
+                                { text: 'Redução de 30-50% em 3-4 meses', fontSize: 9, color: '#4CAF50' }
+                            ],
+                            [
+                                { text: 'ALTA', fontSize: 10, bold: true, color: '#FF9800' },
+                                { text: 'Gestão Financeira', fontSize: 9 },
+                                { text: `Criar provisão orçamentária para custos de não conformidade: R$ ${(stats.custoMedioPorRnc * stats.esteMes * 12).toLocaleString('pt-BR', {minimumFractionDigits: 2})}/ano`, fontSize: 9 },
+                                { text: 'Controle financeiro proativo', fontSize: 9, color: '#1976D2' }
+                            ],
+                            [
+                                { text: 'ALTA', fontSize: 10, bold: true, color: '#FF9800' },
+                                { text: 'Tecnologia', fontSize: 9 },
+                                { text: 'Investir em sistema de automação e workflows para agilizar tratativas e reduzir tempo médio', fontSize: 9 },
+                                { text: 'Redução de 40% no tempo de resolução', fontSize: 9, color: '#4CAF50' }
+                            ],
+                            [
+                                { text: 'MÉDIA', fontSize: 10, bold: true, color: '#1976D2' },
+                                { text: 'Indicadores', fontSize: 9 },
+                                { text: 'Estabelecer metas trimestrais: Taxa efetividade >90%, Cumprimento prazo >85%, Custo médio <R$ 1.000', fontSize: 9 },
+                                { text: 'Melhoria contínua mensurável', fontSize: 9, color: '#1976D2' }
+                            ],
+                            [
+                                { text: 'MÉDIA', fontSize: 10, bold: true, color: '#1976D2' },
+                                { text: 'Cultura', fontSize: 9 },
+                                { text: 'Implementar programa de reconhecimento para setores com redução significativa de RNCs', fontSize: 9 },
+                                { text: 'Engajamento e motivação', fontSize: 9, color: '#4CAF50' }
+                            ]
+                        ]
+                    },
+                    layout: {
+                        fillColor: function(rowIndex) {
+                            return rowIndex === 0 ? '#1976D2' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                        },
+                        hLineWidth: function() { return 0.5; },
+                        vLineWidth: function() { return 0.5; },
+                        hLineColor: function() { return '#ddd'; },
+                        vLineColor: function() { return '#ddd'; }
+                    },
+                    margin: [0, 0, 0, 25]
+                },
+
+                // === INVESTIMENTOS SUGERIDOS ===
+                { text: 'INVESTIMENTOS SUGERIDOS', style: 'sectionTitle', margin: [0, 15, 0, 15] },
+
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: ['*', 100, 100],
+                        body: [
+                            [
+                                { text: 'Investimento', style: 'tableHeader' },
+                                { text: 'Valor Estimado', style: 'tableHeader', alignment: 'right' },
+                                { text: 'ROI Esperado', style: 'tableHeader', alignment: 'center' }
+                            ],
+                            [
+                                { text: 'Sistema de Gestão de Qualidade (Software)', fontSize: 9 },
+                                { text: 'R$ 15.000', fontSize: 9, alignment: 'right' },
+                                { text: '300% em 12 meses', fontSize: 9, alignment: 'center', color: '#4CAF50', bold: true }
+                            ],
+                            [
+                                { text: 'Programa de Treinamento Anual (Equipe completa)', fontSize: 9 },
+                                { text: 'R$ 8.000', fontSize: 9, alignment: 'right' },
+                                { text: '250% em 6 meses', fontSize: 9, alignment: 'center', color: '#4CAF50', bold: true }
+                            ],
+                            [
+                                { text: 'Consultoria em Processos (3 meses)', fontSize: 9 },
+                                { text: 'R$ 12.000', fontSize: 9, alignment: 'right' },
+                                { text: '200% em 9 meses', fontSize: 9, alignment: 'center', color: '#4CAF50', bold: true }
+                            ],
+                            [
+                                { text: 'Auditoria Externa de Qualidade', fontSize: 9 },
+                                { text: 'R$ 5.000', fontSize: 9, alignment: 'right' },
+                                { text: 'Redução de riscos', fontSize: 9, alignment: 'center', color: '#1976D2' }
+                            ],
+                            [
+                                { text: 'TOTAL INVESTIMENTO', fontSize: 10, bold: true },
+                                { text: 'R$ 40.000', fontSize: 10, alignment: 'right', bold: true },
+                                { text: `Economia: R$ ${(stats.custoTotal * 0.6).toLocaleString('pt-BR', {minimumFractionDigits: 2})}/ano`, fontSize: 9, alignment: 'center', color: '#4CAF50', bold: true }
+                            ]
+                        ]
+                    },
+                    layout: {
+                        fillColor: function(rowIndex, node) {
+                            if (rowIndex === 0) return '#1976D2';
+                            if (rowIndex === node.table.body.length - 1) return '#E3F2FD';
+                            return rowIndex % 2 === 0 ? '#f5f5f5' : null;
+                        },
+                        hLineWidth: function() { return 0.5; },
+                        vLineWidth: function() { return 0.5; },
+                        hLineColor: function() { return '#ddd'; },
+                        vLineColor: function() { return '#ddd'; }
                     },
                     margin: [0, 0, 0, 20]
                 },
@@ -9328,9 +9663,13 @@ function exportToPdf() {
                                 { text: 'Valor (R$)', style: 'tableHeader', alignment: 'right' }
                             ],
                             ...rncs.slice(0, 50).map((rnc, index) => {
-                                // Pegar título/descrição de qualquer campo disponível
-                                const titulo = rnc['Título'] || rnc['Descrição da NC'] || rnc['Descrição'] ||
-                                              rnc['Descrição da não-conformidade'] || 'Sem título';
+                                // Pegar título/descrição de qualquer campo disponível (ORDEM IMPORTA!)
+                                const titulo = rnc['Descrição da não conformidade'] ||
+                                              rnc['Descrição da NC'] ||
+                                              rnc['Descrição da não-conformidade'] ||
+                                              rnc['Título'] ||
+                                              rnc['Descrição'] ||
+                                              'Sem título';
                                 const numero = rnc['Número da RNC'] || rnc['Número RNC'] || rnc['ID'] || (index + 1);
                                 const tipo = rnc['Tipo da RNC'] || rnc['Tipo RNC'] || rnc['Tipo'] || 'Não informado';
                                 const risco = rnc['Risco'] || rnc['Nível de Risco'] || 'Baixo';
@@ -9348,7 +9687,7 @@ function exportToPdf() {
                     },
                     layout: {
                         fillColor: function(rowIndex) {
-                            return rowIndex === 0 ? '#009688' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                            return rowIndex === 0 ? '#1976D2' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
                         },
                         hLineWidth: function() { return 0.5; },
                         vLineWidth: function() { return 0.5; },
@@ -9365,7 +9704,7 @@ function exportToPdf() {
                 headerLeft: {
                     fontSize: 10,
                     bold: true,
-                    color: '#009688'
+                    color: '#1976D2'
                 },
                 headerRight: {
                     fontSize: 9,
@@ -9381,7 +9720,7 @@ function exportToPdf() {
                 coverTitle: {
                     fontSize: 32,
                     bold: true,
-                    color: '#009688',
+                    color: '#1976D2',
                     alignment: 'center'
                 },
                 coverSubtitle: {
@@ -9405,7 +9744,7 @@ function exportToPdf() {
                 sectionTitle: {
                     fontSize: 16,
                     bold: true,
-                    color: '#009688'
+                    color: '#1976D2'
                 },
 
                 // KPIs
@@ -9417,7 +9756,7 @@ function exportToPdf() {
                 kpiValue: {
                     fontSize: 24,
                     bold: true,
-                    color: '#009688'
+                    color: '#1976D2'
                 },
 
                 // Tabelas
@@ -9425,7 +9764,7 @@ function exportToPdf() {
                     fontSize: 11,
                     bold: true,
                     color: '#ffffff',
-                    fillColor: '#009688'
+                    fillColor: '#1976D2'
                 }
             },
 
@@ -9609,7 +9948,7 @@ function editList(listName) {
     var modalHtml = `
         <div id="editListModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
             <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
-                <h3 style="margin-bottom: 1rem; color: #009688;">✏️ Editar Lista: ${listName}</h3>
+                <h3 style="margin-bottom: 1rem; color: #1976D2;">✏️ Editar Lista: ${listName}</h3>
                 
                 <div class="form-group">
                     <label>Itens da Lista:</label>
@@ -9699,7 +10038,7 @@ function deleteListConfirm(listName) {
                     <p style="margin-bottom: 1rem;">
                         Tem certeza que deseja deletar a lista:
                     </p>
-                    <p style="font-weight: 600; color: #009688; font-size: 16px;">
+                    <p style="font-weight: 600; color: #1976D2; font-size: 16px;">
                         "${listName}"
                     </p>
                     <p style="margin-top: 1rem; color: #F44336; font-size: 14px;">
@@ -9769,7 +10108,7 @@ document.getElementById('addNewList').addEventListener('click', function() {
     var modalHtml = `
         <div id="newListModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
             <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 450px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                <h3 style="margin-bottom: 1.5rem; color: #009688;">📋 Nova Lista</h3>
+                <h3 style="margin-bottom: 1.5rem; color: #1976D2;">📋 Nova Lista</h3>
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Nome da nova lista:</label>
                     <input type="text" id="newListName" class="form-control" placeholder="Digite o nome da lista" style="width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
@@ -9937,7 +10276,7 @@ function deleteSectionConfirm(sectionName) {
                     <p style="margin-bottom: 1rem;">
                         Tem certeza que deseja deletar a seção:
                     </p>
-                    <p style="font-weight: 600; color: #009688; font-size: 16px;">
+                    <p style="font-weight: 600; color: #1976D2; font-size: 16px;">
                         "${sectionName}"
                     </p>
                     <p style="margin-top: 1rem; color: #F44336; font-size: 14px;">
@@ -10007,7 +10346,7 @@ document.getElementById('addNewSection').addEventListener('click', function() {
     var modalHtml = `
         <div id="newSectionModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
             <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 450px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                <h3 style="margin-bottom: 1.5rem; color: #009688;">📄 Nova Seção</h3>
+                <h3 style="margin-bottom: 1.5rem; color: #1976D2;">📄 Nova Seção</h3>
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Nome da nova seção:</label>
                     <input type="text" id="newSectionName" class="form-control" placeholder="Digite o nome da seção" style="width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
@@ -10223,7 +10562,7 @@ function deleteFieldConfirm(secao, campo) {
             <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%;">
                 <h3 style="margin-bottom: 1.5rem; color: #F44336;">Excluir Campo</h3>
                 <p>Tem certeza que deseja deletar o campo:</p>
-                <p style="font-weight: 600; color: #009688;">"${campo}"</p>
+                <p style="font-weight: 600; color: #1976D2;">"${campo}"</p>
                 <p>da seção: <strong>"${secao}"</strong></p>
                 <p style="color: #F44336;">Esta ação não pode ser desfeita!</p>
                 <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
@@ -10314,7 +10653,7 @@ document.getElementById('addNewField').addEventListener('click', function() {
     var modalHtml = `
         <div id="newFieldModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
             <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                <h3 style="margin-bottom: 1.5rem; color: #009688;">🏷️ Novo Campo</h3>
+                <h3 style="margin-bottom: 1.5rem; color: #1976D2;">🏷️ Novo Campo</h3>
                 
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Seção:</label>
@@ -10399,7 +10738,7 @@ document.getElementById('addNewUser').addEventListener('click', function() {
     const modalHtml = `
         <div id="addUserModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
             <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
-                <h3 style="margin-bottom: 1rem; color: #009688;">➕ Adicionar Novo Usuário</h3>
+                <h3 style="margin-bottom: 1rem; color: #1976D2;">➕ Adicionar Novo Usuário</h3>
                 
                 <div class="form-group">
                     <label>📧 Email do Usuário</label>
@@ -11957,7 +12296,7 @@ function renderUsersTable(users) {
             <div style="
                 background: white;
                 border: 1px solid #e5e7eb;
-                border-left: 3px solid ${isAdmin ? '#F44336' : '#009688'};
+                border-left: 3px solid ${isAdmin ? '#F44336' : '#1976D2'};
                 border-radius: 8px;
                 padding: 12px;
                 transition: all 0.2s ease;
@@ -11990,13 +12329,13 @@ function renderUsersTable(users) {
                         flex: 1;
                         padding: 6px 10px;
                         font-size: 11px;
-                        border: 1px solid #009688;
+                        border: 1px solid #1976D2;
                         background: white;
-                        color: #009688;
+                        color: #1976D2;
                         border-radius: 4px;
                         cursor: pointer;
                         transition: all 0.2s ease;
-                    " onmouseover="this.style.background='#009688'; this.style.color='white';" onmouseout="this.style.background='white'; this.style.color='#009688';">
+                    " onmouseover="this.style.background='#1976D2'; this.style.color='white';" onmouseout="this.style.background='white'; this.style.color='#1976D2';">
                         ✏️ Editar
                     </button>
                     
@@ -12133,7 +12472,7 @@ async function editUserRoles(email) {
         const modalHtml = `
             <div id="editUserRolesModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
                 <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
-                    <h3 style="margin-bottom: 1rem; color: #009688;">✏️ Editar Roles de ${email}</h3>
+                    <h3 style="margin-bottom: 1rem; color: #1976D2;">✏️ Editar Roles de ${email}</h3>
 
                     <div class="form-group">
                         <label>🏢 Setor do Usuário</label>
@@ -13036,7 +13375,7 @@ function showPrintDialog(result) {
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     ">
       <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-        <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #009688, #00796B); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px;">
+        <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #1976D2, #00796B); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px;">
           🖨️
         </div>
         <div>
@@ -13048,7 +13387,7 @@ function showPrintDialog(result) {
       <div style="background: #F5F5F5; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <span style="color: #666; font-size: 14px;">📋 Campos preenchidos:</span>
-          <strong style="color: #009688; font-size: 18px;">${result.fieldsProcessed}</strong>
+          <strong style="color: #1976D2; font-size: 18px;">${result.fieldsProcessed}</strong>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="color: #666; font-size: 14px;">⏭️ Campos ignorados:</span>
@@ -13074,7 +13413,7 @@ function showPrintDialog(result) {
         
         <button 
           id="btnOpenPrint"
-          style="flex: 2; padding: 14px 24px; background: linear-gradient(135deg, #009688, #00796B); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 150, 136, 0.3);"
+          style="flex: 2; padding: 14px 24px; background: linear-gradient(135deg, #1976D2, #00796B); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 150, 136, 0.3);"
         >
           🖨️ Abrir e Imprimir
         </button>
@@ -13177,7 +13516,7 @@ function showSuccessModal(rncNumber) {
                 border-left: 4px solid #10B981;
             ">
                 <p style="color: #666; font-size: 14px; margin-bottom: 5px;">Número da RNC:</p>
-                <p style="font-size: 36px; font-weight: bold; color: #009688; margin: 0;">
+                <p style="font-size: 36px; font-weight: bold; color: #1976D2; margin: 0;">
                     ${rncNumber}
                 </p>
             </div>
@@ -13185,7 +13524,7 @@ function showSuccessModal(rncNumber) {
                 🎉 Você pode criar outra RNC ou fechar esta janela
             </p>
             <button onclick="this.closest('div[style*=fixed]').remove()" style="
-                background: #009688;
+                background: #1976D2;
                 color: white;
                 border: none;
                 padding: 14px 40px;
@@ -13195,7 +13534,7 @@ function showSuccessModal(rncNumber) {
                 cursor: pointer;
                 transition: all 0.2s;
                 box-shadow: 0 4px 12px rgba(0, 150, 136, 0.3);
-            " onmouseover="this.style.background='#00796B'" onmouseout="this.style.background='#009688'">
+            " onmouseover="this.style.background='#00796B'" onmouseout="this.style.background='#1976D2'">
                 OK, Entendi
             </button>
         </div>
