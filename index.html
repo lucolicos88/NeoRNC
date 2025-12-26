@@ -7686,8 +7686,8 @@ function renderPieChart(containerId, data) {
         dataLabels: {
             enabled: true,
             style: {
-                fontSize: '14px',
-                fontWeight: 'bold',
+                fontSize: '13px',
+                fontWeight: '600',
                 colors: ['#fff']
             },
             dropShadow: {
@@ -7695,7 +7695,7 @@ function renderPieChart(containerId, data) {
                 top: 1,
                 left: 1,
                 blur: 2,
-                opacity: 0.8
+                opacity: 0.6
             },
             formatter: function(val, opts) {
                 const value = opts.w.config.series[opts.seriesIndex];
@@ -7947,7 +7947,15 @@ function renderDashboard(stats) {
         
         <!-- Timeline (mantido) -->
         <div class="chart-container" style="margin-bottom: 30px;">
-            <h3 class="chart-title">📈 Timeline de RNCs</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 class="chart-title" style="margin: 0;">📈 Timeline de RNCs</h3>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="changeTimelineGranularity('dia')" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Dia</button>
+                    <button onclick="changeTimelineGranularity('semana')" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Semana</button>
+                    <button onclick="changeTimelineGranularity('mes')" class="timeline-btn-active" style="padding: 6px 12px; border: 1px solid #009688; background: #009688; color: white; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Mês</button>
+                    <button onclick="changeTimelineGranularity('ano')" style="padding: 6px 12px; border: 1px solid #009688; background: white; color: #009688; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Ano</button>
+                </div>
+            </div>
             <div id="timelineChart"></div>
         </div>
         
@@ -8265,6 +8273,59 @@ async function refreshDashboard() {
             container.innerHTML = chartHtml;
         }
         
+// === ALTERNAR GRANULARIDADE DO TIMELINE ===
+let currentGranularity = 'mes';
+
+function changeTimelineGranularity(granularity) {
+    currentGranularity = granularity;
+
+    // Atualizar estilos dos botões
+    document.querySelectorAll('[onclick^="changeTimelineGranularity"]').forEach(btn => {
+        btn.style.background = 'white';
+        btn.style.color = '#009688';
+    });
+    event.target.style.background = '#009688';
+    event.target.style.color = 'white';
+
+    // Reagrupar dados e re-renderizar
+    if (reportData && reportData.rncs) {
+        const newData = groupRncsByGranularity(reportData.rncs, granularity);
+        renderLineChart('timelineChart', newData);
+    }
+}
+
+function groupRncsByGranularity(rncs, granularity) {
+    const grouped = {};
+
+    rncs.forEach(rnc => {
+        const dataAbertura = rnc['Data de Abertura'];
+        if (!dataAbertura) return;
+
+        let key;
+        const date = new Date(dataAbertura);
+
+        switch (granularity) {
+            case 'dia':
+                key = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+                break;
+            case 'semana':
+                const weekNum = Math.ceil((date.getDate() + 6 - date.getDay()) / 7);
+                key = `Sem ${weekNum}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+                break;
+            case 'ano':
+                key = `${date.getFullYear()}`;
+                break;
+            case 'mes':
+            default:
+                key = `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+        }
+
+        grouped[key] = (grouped[key] || 0) + 1;
+    });
+
+    return grouped;
+}
+
 // === GRÁFICO DE LINHA MODERNO COM APEXCHARTS ===
 function renderLineChart(containerId, data) {
     const container = document.getElementById(containerId);
@@ -8916,7 +8977,7 @@ function editRncFromReport(rncNumber) {
         
 /**
  * ============================================
- * DEPLOY 39: RELATORIO PDF MEGA COMPLETO - BUILD 20251204
+ * DEPLOY 95: RELATÓRIO PDF EXECUTIVO COM PDFMAKE
  * Ultra-Professional Report - Board Ready
  * ============================================
  */
@@ -8927,972 +8988,293 @@ function exportToPdf() {
     }
 
     try {
-        showLoading('Gerando PDF mega-completo...');
+        showLoading('Gerando PDF Executivo...');
 
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
         const stats = reportData.stats;
         const rncs = reportData.rncs;
 
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const margin = 15;
-        let yPos = 20;
+        // === DEFINIÇÃO DO DOCUMENTO PDF COM PDFMAKE ===
+        const docDefinition = {
+            pageSize: 'A4',
+            pageMargins: [40, 60, 40, 60],
 
-        // Helper: Add Section Header
-        function addSectionHeader(title, yPosition) {
-            if (yPosition > pageHeight - 30) {
-                doc.addPage();
-                yPosition = 20;
+            // === HEADER ===
+            header: function(currentPage, pageCount) {
+                return {
+                    columns: [
+                        { text: 'NEOFORMULA', style: 'headerLeft' },
+                        { text: `Página ${currentPage} de ${pageCount}`, style: 'headerRight' }
+                    ],
+                    margin: [40, 20, 40, 0]
+                };
+            },
+
+            // === FOOTER ===
+            footer: function(currentPage, pageCount) {
+                return {
+                    text: `Relatório Gerencial de RNCs | Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
+                    alignment: 'center',
+                    style: 'footer',
+                    margin: [0, 0, 0, 20]
+                };
+            },
+
+            // === CONTEÚDO ===
+            content: [
+                // CAPA EXECUTIVA
+                { text: 'RELATÓRIO GERENCIAL', style: 'coverTitle', margin: [0, 100, 0, 10] },
+                { text: 'Sistema de Gestão de Não Conformidades', style: 'coverSubtitle', margin: [0, 0, 0, 20] },
+                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 2, lineColor: '#009688' }], margin: [0, 0, 0, 30] },
+
+                // Informações do Período
+                {
+                    columns: [
+                        { text: 'PERÍODO:', style: 'infoLabel', width: 100 },
+                        { text: `${stats.periodo || 'Todos os registros'}`, style: 'infoValue' }
+                    ],
+                    margin: [0, 0, 0, 10]
+                },
+                {
+                    columns: [
+                        { text: 'TOTAL DE RNCs:', style: 'infoLabel', width: 100 },
+                        { text: `${stats.total || 0}`, style: 'infoValue' }
+                    ],
+                    margin: [0, 0, 0, 10]
+                },
+                {
+                    columns: [
+                        { text: 'GERADO EM:', style: 'infoLabel', width: 100 },
+                        { text: new Date().toLocaleString('pt-BR'), style: 'infoValue' }
+                    ],
+                    margin: [0, 0, 0, 40]
+                },
+
+                { text: '', pageBreak: 'after' },
+
+                // === KPIs EXECUTIVOS ===
+                { text: 'KPIs ESTRATÉGICOS', style: 'sectionTitle', margin: [0, 0, 0, 20] },
+
+                {
+                    columns: [
+                        {
+                            stack: [
+                                { text: 'Total de RNCs', style: 'kpiLabel' },
+                                { text: `${stats.total || 0}`, style: 'kpiValue' }
+                            ],
+                            width: '25%'
+                        },
+                        {
+                            stack: [
+                                { text: 'Custo Total', style: 'kpiLabel' },
+                                { text: `R$ ${(stats.custoTotal || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, style: 'kpiValue' }
+                            ],
+                            width: '25%'
+                        },
+                        {
+                            stack: [
+                                { text: 'Taxa Efetividade', style: 'kpiLabel' },
+                                { text: `${stats.taxaEfetividade || 0}%`, style: 'kpiValue' }
+                            ],
+                            width: '25%'
+                        },
+                        {
+                            stack: [
+                                { text: 'Cumprimento Prazo', style: 'kpiLabel' },
+                                { text: `${stats.taxaCumprimentoPrazo || 0}%`, style: 'kpiValue' }
+                            ],
+                            width: '25%'
+                        }
+                    ],
+                    margin: [0, 0, 0, 30]
+                },
+
+                // === DISTRIBUIÇÃO POR TIPO ===
+                { text: 'DISTRIBUIÇÃO DAS RNCs', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: ['*', 100, 80],
+                        body: [
+                            [
+                                { text: 'Tipo de RNC', style: 'tableHeader' },
+                                { text: 'Quantidade', style: 'tableHeader', alignment: 'center' },
+                                { text: 'Percentual', style: 'tableHeader', alignment: 'center' }
+                            ],
+                            ...Object.entries(stats.porTipo || {}).map(([tipo, qtd]) => [
+                                tipo,
+                                { text: qtd, alignment: 'center' },
+                                { text: `${((qtd / stats.total) * 100).toFixed(1)}%`, alignment: 'center' }
+                            ])
+                        ]
+                    },
+                    layout: {
+                        fillColor: function(rowIndex) {
+                            return rowIndex === 0 ? '#009688' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                        },
+                        hLineWidth: function() { return 0.5; },
+                        vLineWidth: function() { return 0.5; },
+                        hLineColor: function() { return '#ddd'; },
+                        vLineColor: function() { return '#ddd'; }
+                    },
+                    margin: [0, 0, 0, 20]
+                },
+
+                // === ANÁLISE POR RISCO ===
+                { text: 'ANÁLISE POR NÍVEL DE RISCO', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: ['*', 100, 80],
+                        body: [
+                            [
+                                { text: 'Nível de Risco', style: 'tableHeader' },
+                                { text: 'Quantidade', style: 'tableHeader', alignment: 'center' },
+                                { text: 'Percentual', style: 'tableHeader', alignment: 'center' }
+                            ],
+                            ...Object.entries(stats.porRisco || {}).map(([risco, qtd]) => [
+                                risco,
+                                { text: qtd, alignment: 'center' },
+                                { text: `${((qtd / stats.total) * 100).toFixed(1)}%`, alignment: 'center' }
+                            ])
+                        ]
+                    },
+                    layout: {
+                        fillColor: function(rowIndex) {
+                            return rowIndex === 0 ? '#009688' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                        },
+                        hLineWidth: function() { return 0.5; },
+                        vLineWidth: function() { return 0.5; },
+                        hLineColor: function() { return '#ddd'; },
+                        vLineColor: function() { return '#ddd'; }
+                    },
+                    margin: [0, 0, 0, 30]
+                },
+
+                { text: '', pageBreak: 'after' },
+
+                // === LISTAGEM DETALHADA ===
+                { text: 'DETALHAMENTO DAS RNCs', style: 'sectionTitle', margin: [0, 0, 0, 15] },
+
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: [60, '*', 80, 60, 70],
+                        body: [
+                            [
+                                { text: 'Número', style: 'tableHeader' },
+                                { text: 'Descrição', style: 'tableHeader' },
+                                { text: 'Tipo', style: 'tableHeader' },
+                                { text: 'Risco', style: 'tableHeader' },
+                                { text: 'Valor', style: 'tableHeader', alignment: 'right' }
+                            ],
+                            ...rncs.slice(0, 50).map(rnc => [
+                                rnc['Número da RNC'] || '-',
+                                (rnc['Título'] || rnc['Descrição'] || '-').substring(0, 80),
+                                (rnc['Tipo da RNC'] || rnc['Tipo RNC'] || '-').substring(0, 20),
+                                rnc['Risco'] || 'Baixo',
+                                { text: `R$ ${(parseFloat(rnc['Valor']) || 0).toFixed(2)}`, alignment: 'right' }
+                            ])
+                        ]
+                    },
+                    layout: {
+                        fillColor: function(rowIndex) {
+                            return rowIndex === 0 ? '#009688' : (rowIndex % 2 === 0 ? '#f5f5f5' : null);
+                        },
+                        hLineWidth: function() { return 0.5; },
+                        vLineWidth: function() { return 0.5; },
+                        hLineColor: function() { return '#ddd'; },
+                        vLineColor: function() { return '#ddd'; }
+                    },
+                    fontSize: 9
+                }
+            ],
+
+            // === ESTILOS ===
+            styles: {
+                // Header/Footer
+                headerLeft: {
+                    fontSize: 10,
+                    bold: true,
+                    color: '#009688'
+                },
+                headerRight: {
+                    fontSize: 9,
+                    alignment: 'right',
+                    color: '#666'
+                },
+                footer: {
+                    fontSize: 8,
+                    color: '#666'
+                },
+
+                // Capa
+                coverTitle: {
+                    fontSize: 32,
+                    bold: true,
+                    color: '#009688',
+                    alignment: 'center'
+                },
+                coverSubtitle: {
+                    fontSize: 16,
+                    color: '#666',
+                    alignment: 'center'
+                },
+
+                // Informações
+                infoLabel: {
+                    fontSize: 11,
+                    bold: true,
+                    color: '#333'
+                },
+                infoValue: {
+                    fontSize: 11,
+                    color: '#666'
+                },
+
+                // Seções
+                sectionTitle: {
+                    fontSize: 16,
+                    bold: true,
+                    color: '#009688'
+                },
+
+                // KPIs
+                kpiLabel: {
+                    fontSize: 10,
+                    color: '#666',
+                    margin: [0, 0, 0, 5]
+                },
+                kpiValue: {
+                    fontSize: 24,
+                    bold: true,
+                    color: '#009688'
+                },
+
+                // Tabelas
+                tableHeader: {
+                    fontSize: 11,
+                    bold: true,
+                    color: '#ffffff',
+                    fillColor: '#009688'
+                }
+            },
+
+            defaultStyle: {
+                font: 'Roboto',
+                fontSize: 10,
+                color: '#333'
             }
-            doc.setFillColor(0, 150, 136);
-            doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, margin + 3, yPosition + 7);
-            return yPosition + 15;
-        }
-
-        // Helper: Draw Bar Chart (Limpo e Profissional)
-        function drawBarChart(data, startY, maxWidth = 120) {
-            const barHeight = 10;
-            const barSpacing = 14;
-            let y = startY;
-
-            const maxValue = Math.max(...data.map(d => d.value));
-
-            // Paleta de cores limpa e profissional
-            const colors = [
-                [0, 150, 136],   // Teal (brand)
-                [255, 152, 0],   // Orange
-                [76, 175, 80],   // Green
-                [33, 150, 243],  // Blue
-                [156, 39, 176],  // Purple
-                [255, 193, 7],   // Amber
-                [244, 67, 54],   // Red
-                [96, 125, 139]   // Blue Grey
-            ];
-
-            data.forEach((item, index) => {
-                if (y > pageHeight - 25) {
-                    doc.addPage();
-                    y = 20;
-                }
-
-                const barWidth = Math.max((item.value / maxValue) * maxWidth, 2);
-                const color = colors[index % colors.length];
-
-                // Background track (trilho cinza claro)
-                doc.setFillColor(245, 245, 245);
-                doc.rect(margin + 50, y, maxWidth, barHeight, 'F');
-
-                // Barra colorida simples (sem gradientes ou sombras)
-                doc.setFillColor(color[0], color[1], color[2]);
-                doc.rect(margin + 50, y, barWidth, barHeight, 'F');
-
-                // Borda fina e sutil
-                doc.setDrawColor(220, 220, 220);
-                doc.setLineWidth(0.2);
-                doc.rect(margin + 50, y, maxWidth, barHeight, 'S');
-
-                // Número de posição
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(8);
-                doc.setTextColor(80, 80, 80);
-                doc.text(`${index + 1}`, margin + 2, y + 7);
-
-                // Label
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(51, 51, 51);
-                const label = item.label.substring(0, 32);
-                doc.text(label, margin + 7, y + 7);
-
-                // Valor no final da barra
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(8);
-                if (barWidth > 12) {
-                    // Dentro da barra (branco)
-                    doc.setTextColor(255, 255, 255);
-                    doc.text(String(item.value), margin + 50 + barWidth - 6, y + 7);
-                } else {
-                    // Fora da barra (escuro)
-                    doc.setTextColor(51, 51, 51);
-                    doc.text(String(item.value), margin + 52 + barWidth, y + 7);
-                }
-
-                // Percentual
-                const pct = ((item.value / maxValue) * 100).toFixed(0);
-                doc.setFontSize(7);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(130, 130, 130);
-                doc.text(`${pct}%`, margin + 50 + maxWidth + 2, y + 7);
-
-                y += barSpacing;
-            });
-
-            return y + 5;
-        }
-
-        // Helper: Draw Pie Chart (Limpo e Moderno - Estilo Donut)
-        function drawPieChart(data, centerX, centerY, radius) {
-            const total = data.reduce((sum, d) => sum + d.value, 0);
-            let startAngle = -Math.PI / 2;
-
-            // Paleta de cores profissional
-            const colors = [
-                [0, 150, 136],    // Teal (BRAND)
-                [255, 152, 0],    // Orange
-                [76, 175, 80],    // Green
-                [33, 150, 243],   // Blue
-                [156, 39, 176],   // Purple
-                [255, 193, 7],    // Amber
-                [244, 67, 54],    // Red
-                [96, 125, 139]    // Blue Grey
-            ];
-
-            // Desenhar fatias coloridas com ALTA RESOLUÇÃO para parecer círculo perfeito
-            data.forEach((item, index) => {
-                const sliceAngle = (item.value / total) * 2 * Math.PI;
-                const color = colors[index % colors.length];
-                // AUMENTAR RESOLUÇÃO: Usar mais segmentos para curvas suaves
-                const segments = Math.max(60, Math.ceil(sliceAngle * 100));
-
-                // Fatia com borda branca fina
-                doc.setFillColor(color[0], color[1], color[2]);
-                doc.setDrawColor(255, 255, 255);
-                doc.setLineWidth(0.5); // Borda mais fina
-
-                for (let i = 0; i < segments; i++) {
-                    const angle1 = startAngle + (i / segments) * sliceAngle;
-                    const angle2 = startAngle + ((i + 1) / segments) * sliceAngle;
-
-                    const x1 = centerX + radius * Math.cos(angle1);
-                    const y1 = centerY + radius * Math.sin(angle1);
-                    const x2 = centerX + radius * Math.cos(angle2);
-                    const y2 = centerY + radius * Math.sin(angle2);
-
-                    doc.triangle(centerX, centerY, x1, y1, x2, y2, 'FD');
-                }
-
-                startAngle += sliceAngle;
-            });
-
-            // Círculo branco central (estilo donut) - ALTA RESOLUÇÃO
-            const innerRadius = radius * 0.55;
-            doc.setFillColor(255, 255, 255);
-            doc.setDrawColor(240, 240, 240);
-            doc.setLineWidth(0.3);
-            // AUMENTAR RESOLUÇÃO: Mais segmentos = círculo mais perfeito
-            const circleSegments = 120;
-            for (let i = 0; i < circleSegments; i++) {
-                const angle1 = (i / circleSegments) * 2 * Math.PI;
-                const angle2 = ((i + 1) / circleSegments) * 2 * Math.PI;
-                const x1 = centerX + innerRadius * Math.cos(angle1);
-                const y1 = centerY + innerRadius * Math.sin(angle1);
-                const x2 = centerX + innerRadius * Math.cos(angle2);
-                const y2 = centerY + innerRadius * Math.sin(angle2);
-                doc.triangle(centerX, centerY, x1, y1, x2, y2, 'FD');
-            }
-
-            // Total no centro
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 150, 136);
-            doc.text(String(total), centerX, centerY - 1, { align: 'center' });
-            doc.setFontSize(7);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(120, 120, 120);
-            doc.text('Total', centerX, centerY + 4, { align: 'center' });
-
-            // Legenda limpa e organizada
-            let legendY = centerY - radius + 10;
-            data.forEach((item, index) => {
-                const color = colors[index % colors.length];
-                const pct = ((item.value / total) * 100).toFixed(1);
-
-                // Quadrado colorido
-                doc.setFillColor(color[0], color[1], color[2]);
-                doc.rect(centerX + radius + 10, legendY - 2, 3.5, 3.5, 'F');
-
-                // Valor
-                doc.setFontSize(8);
-                doc.setTextColor(51, 51, 51);
-                doc.setFont('helvetica', 'bold');
-                doc.text(`${item.value}`, centerX + radius + 15, legendY + 1);
-
-                // Percentual
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(7);
-                doc.setTextColor(100, 100, 100);
-                doc.text(`(${pct}%)`, centerX + radius + 22, legendY + 1);
-
-                // Label
-                doc.setFontSize(7);
-                doc.setTextColor(100, 100, 100);
-                const labelTrunc = item.label.substring(0, 24);
-                doc.text(labelTrunc, centerX + radius + 15, legendY + 4.5);
-
-                legendY += 10;
-            });
-        }
-
-        // ============================================
-        // PAGE 1: CAPA PROFISSIONAL
-        // ============================================
-        // Fundo verde do header
-        doc.setFillColor(0, 150, 136);
-        doc.rect(0, 0, pageWidth, 90, 'F');
-
-        // LOGO NEOFORMULA - Imagem real
-        // Fundo branco para o logo
-        doc.setFillColor(255, 255, 255);
-        doc.roundedRect(pageWidth / 2 - 50, 15, 100, 32, 3, 3, 'F');
-
-        // Borda verde suave
-        doc.setDrawColor(0, 150, 136);
-        doc.setLineWidth(1);
-        doc.roundedRect(pageWidth / 2 - 50, 15, 100, 32, 3, 3, 'S');
-
-        // Adicionar logo (base64 embutido - sem CORS)
-        const logoBase64 = 'data:image/png;base64,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';
-        try {
-            // Adicionar logo (PNG base64)
-            doc.addImage(logoBase64, 'PNG', pageWidth / 2 - 45, 18, 90, 26);
-        } catch (e) {
-            // Fallback: texto se imagem falhar
-            console.error('Erro ao carregar logo:', e);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(20);
-            doc.setTextColor(0, 150, 136);
-            doc.text('NEOFORMULA', pageWidth / 2, 31, { align: 'center' });
-        }
-
-        // Titulo principal
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(36);
-        doc.text('RELATÓRIO', pageWidth / 2, 55, { align: 'center' });
-        doc.setFontSize(32);
-        doc.text('GERENCIAL', pageWidth / 2, 70, { align: 'center' });
-
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Sistema de Gestão de Não Conformidades', pageWidth / 2, 82, { align: 'center' });
-
-        // Informações do período
-        yPos = 105;
-        doc.setTextColor(51, 51, 51);
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-
-        const dataInicio = document.getElementById('dataInicio').value;
-        const dataFim = document.getElementById('dataFim').value;
-
-        // Formatar datas para dd/mm/yyyy
-        const formatarData = (dataISO) => {
-            if (!dataISO) return '';
-            const [ano, mes, dia] = dataISO.split('-');
-            return `${dia}/${mes}/${ano}`;
         };
 
-        const periodo = dataInicio && dataFim ?
-            `Período: ${formatarData(dataInicio)} até ${formatarData(dataFim)}` :
-            'Período: Todos os registros';
-
-        doc.text(periodo, pageWidth / 2, yPos, { align: 'center' });
-        yPos += 8;
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        const hoje = new Date();
-        const dataGeracao = `${hoje.getDate().toString().padStart(2, '0')}/${(hoje.getMonth() + 1).toString().padStart(2, '0')}/${hoje.getFullYear()}`;
-        const horaGeracao = `${hoje.getHours().toString().padStart(2, '0')}:${hoje.getMinutes().toString().padStart(2, '0')}`;
-        doc.text(`Data de Geração: ${dataGeracao} às ${horaGeracao}`, pageWidth / 2, yPos, { align: 'center' });
-
-        // Box de destaque
-        yPos += 20;
-        doc.setFillColor(245, 245, 245);
-        doc.roundedRect(margin + 10, yPos, pageWidth - 2 * margin - 20, 60, 5, 5, 'F');
-
-        yPos += 12;
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 150, 136);
-        doc.text('INDICADORES PRINCIPAIS', pageWidth / 2, yPos, { align: 'center' });
-
-        yPos += 10;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(51, 51, 51);
-
-        const indicadores = [
-            `Total de RNCs: ${stats.total || 0}`,
-            `Custo Total: R$ ${(stats.custoTotal || 0).toFixed(2)}`,
-            `Taxa de Finalização: ${Math.round((stats.finalizadas / stats.total) * 100) || 0}%`,
-            `Tempo Médio de Resolução: ${stats.tempoMedioResolucao || 0} dias`
-        ];
-
-        indicadores.forEach(ind => {
-            doc.text(ind, pageWidth / 2, yPos, { align: 'center' });
-            yPos += 7;
-        });
-
-        // ============================================
-        // PAGE 2: DASHBOARD EXECUTIVO - KPIs ESTRATÉGICOS
-        // ============================================
-        doc.addPage();
-        yPos = addSectionHeader('DASHBOARD EXECUTIVO', 20);
-
-        // DESTAQUE: Índice de Performance Global
-        doc.setFillColor(0, 150, 136);
-        doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 35, 3, 3, 'F');
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(255, 255, 255);
-        doc.text('ÍNDICE DE PERFORMANCE GLOBAL', pageWidth / 2, yPos + 10, { align: 'center' });
-
-        const performance = stats.indicePerformance || 0;
-        const performanceColor = performance >= 80 ? [76, 175, 80] : performance >= 60 ? [255, 193, 7] : [244, 67, 54];
-        doc.setFontSize(32);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(255, 255, 255);
-        doc.text(`${performance}/100`, pageWidth / 2, yPos + 25, { align: 'center' });
-
-        yPos += 45;
-
-        // KPIs Executivos em grid 3x3 (SEM emojis - incompatíveis com jsPDF)
-        const kpis = [
-            { label: 'Total de RNCs', value: stats.total || 0, unit: '' },
-            { label: 'Custo Total', value: (stats.custoTotal || 0).toFixed(2), unit: 'R$' },
-            { label: 'Custo Medio/RNC', value: (stats.custoMedioPorRnc || 0).toFixed(2), unit: 'R$' },
-            { label: 'Taxa Efetividade', value: stats.taxaEfetividade || 0, unit: '%' },
-            { label: 'Cumprimento Prazo', value: stats.taxaCumprimentoPrazo || 0, unit: '%' },
-            { label: 'Tempo Medio', value: stats.tempoMedioResolucao || 0, unit: 'dias' },
-            { label: 'Tendencia Mes', value: stats.tendenciaCrescimento || 0, unit: '%' },
-            { label: 'RNCs Vencidas', value: stats.rncsVencidas || 0, unit: '' },
-            { label: 'Setor Critico', value: stats.setorMaisCritico || 'N/A', unit: '', isText: true }
-        ];
-
-        const kpiWidth = 55;
-        const kpiHeight = 25;
-        const kpiSpacing = 5;
-        let kpiX = margin;
-        let kpiY = yPos;
-        let kpiCount = 0;
-
-        kpis.forEach((kpi, index) => {
-            // New row every 3 KPIs
-            if (kpiCount === 3) {
-                kpiX = margin;
-                kpiY += kpiHeight + kpiSpacing;
-                kpiCount = 0;
-            }
-
-            // Box with gradient effect
-            doc.setFillColor(250, 250, 250);
-            doc.roundedRect(kpiX, kpiY, kpiWidth, kpiHeight, 2, 2, 'F');
-            doc.setDrawColor(220, 220, 220);
-            doc.setLineWidth(0.3);
-            doc.roundedRect(kpiX, kpiY, kpiWidth, kpiHeight, 2, 2, 'S');
-
-            // Label
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(80, 80, 80);
-            doc.text(kpi.label, kpiX + kpiWidth / 2, kpiY + 8, { align: 'center' });
-
-            // Value - Handle text vs numeric
-            if (kpi.isText) {
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(0, 150, 136);
-                const shortValue = String(kpi.value).substring(0, 15);
-                doc.text(shortValue, kpiX + kpiWidth / 2, kpiY + 18, { align: 'center' });
-            } else {
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(0, 150, 136);
-                const valueText = kpi.unit === 'R$' ? `${kpi.unit} ${kpi.value}` : `${kpi.value}${kpi.unit}`;
-                doc.text(valueText, kpiX + kpiWidth / 2, kpiY + 19, { align: 'center' });
-            }
-
-            kpiX += kpiWidth + kpiSpacing;
-            kpiCount++;
-        });
-
-        yPos = kpiY + kpiHeight + 15;
-
-        // ANÁLISE DE TENDÊNCIA
-        if (yPos > pageHeight - 50) {
-            doc.addPage();
-            yPos = 20;
-        }
-
-        doc.setFillColor(255, 249, 196);
-        doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 30, 3, 3, 'F');
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(51, 51, 51);
-        doc.text('ANALISE PREDITIVA', margin + 5, yPos + 10);
-
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        const tendenciaText = `Tendencia: ${stats.previsaoTendencia || 'Estavel'} (${stats.tendenciaCrescimento > 0 ? '+' : ''}${stats.tendenciaCrescimento || 0}% vs mes anterior)`;
-        doc.text(tendenciaText, margin + 5, yPos + 20);
-
-        yPos += 40;
-
-        // TOP 5 RNCs MAIS CUSTOSAS
-        if (stats.rncsMaisCaras && stats.rncsMaisCaras.length > 0) {
-            if (yPos > pageHeight - 80) {
-                doc.addPage();
-                yPos = 20;
-            }
-
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 0, 0);
-            doc.text('TOP 5 RNCs MAIS CUSTOSAS', margin, yPos);
-            yPos += 8;
-
-            doc.autoTable({
-                startY: yPos,
-                head: [['Pos', 'ID', 'Descrição', 'Valor', 'Setor']],
-                body: stats.rncsMaisCaras.map((rnc, index) => [
-                    `${index + 1}º`,
-                    rnc.id,
-                    rnc.descricao,
-                    `R$ ${rnc.valor.toFixed(2)}`,
-                    rnc.setor
-                ]),
-                theme: 'striped',
-                headStyles: {
-                    fillColor: [244, 67, 54],
-                    textColor: [255, 255, 255],
-                    fontSize: 10,
-                    fontStyle: 'bold',
-                    halign: 'center'
-                },
-                bodyStyles: {
-                    fontSize: 9,
-                    cellPadding: 3
-                },
-                columnStyles: {
-                    0: { cellWidth: 12, halign: 'center' },
-                    1: { cellWidth: 22, halign: 'center' },
-                    2: { cellWidth: 68 },
-                    3: { cellWidth: 28, halign: 'right' },
-                    4: { cellWidth: 37 }
-                },
-                margin: { left: margin, right: margin }
-            });
-
-            yPos = doc.lastAutoTable.finalY + 15;
-        }
-
-        // ============================================
-        // PAGE 3: DISTRIBUIÇÃO POR STATUS
-        // ============================================
-        yPos = addSectionHeader('DISTRIBUIÇÃO POR STATUS', yPos);
-
-        const statusData = Object.entries(stats.porStatus || {}).map(([status, count]) => ({
-            label: status,
-            value: count
-        }));
-
-        if (statusData.length > 0) {
-            // Tabela
-            doc.autoTable({
-                startY: yPos,
-                head: [['Status', 'Quantidade', 'Percentual']],
-                body: statusData.map(item => [
-                    item.label,
-                    item.value,
-                    `${((item.value / stats.total) * 100).toFixed(1)}%`
-                ]),
-                theme: 'grid',
-                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 9 },
-                margin: { left: margin, right: margin }
-            });
-
-            yPos = doc.lastAutoTable.finalY + 15;
-
-            // Grafico de pizza
-            if (yPos > pageHeight - 35) {
-                doc.addPage();
-                yPos = 20;
-            }
-
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 0, 0);
-            doc.text('Gráfico - Distribuição por Status:', margin, yPos);
-            yPos += 10;
-
-            drawPieChart(statusData.slice(0, 6), pageWidth / 3, yPos + 25, 25);
-            yPos += 60;
-        }
-
-        // ============================================
-        // PAGE 4: DISTRIBUIÇÃO POR RISCO
-        // ============================================
-        // Verificar espaço para seção completa (título + tabela + gráfico = ~90mm)
-        if (yPos > pageHeight - 100) {
-            doc.addPage();
-            yPos = 20;
-        }
-
-        yPos = addSectionHeader('DISTRIBUIÇÃO POR RISCO', yPos);
-
-        const riscoData = Object.entries(stats.porRisco || {}).map(([risco, count]) => ({
-            label: risco,
-            value: count
-        }));
-
-        if (riscoData.length > 0) {
-            doc.autoTable({
-                startY: yPos,
-                head: [['Nível de Risco', 'Quantidade', 'Percentual']],
-                body: riscoData.map(item => [
-                    item.label,
-                    item.value,
-                    `${((item.value / stats.total) * 100).toFixed(1)}%`
-                ]),
-                theme: 'grid',
-                headStyles: { fillColor: [244, 67, 54], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 9 },
-                margin: { left: margin, right: margin }
-            });
-
-            yPos = doc.lastAutoTable.finalY + 15;
-
-            // Grafico de pizza - verificar espaço para gráfico completo (70mm)
-            if (yPos > pageHeight - 75) {
-                doc.addPage();
-                yPos = 20;
-            }
-
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 0, 0);
-            doc.text('Gráfico - Distribuição por Risco:', margin, yPos);
-            yPos += 10;
-
-            drawPieChart(riscoData.slice(0, 5), pageWidth / 3, yPos + 25, 25);
-            yPos += 60;
-        }
-
-        // ============================================
-        // PAGE 5: DISTRIBUIÇÃO POR TIPO
-        // ============================================
-        // Verificar espaço para seção completa (título + tabela + gráfico = ~130mm)
-        if (yPos > pageHeight - 140) {
-            doc.addPage();
-            yPos = 20;
-        }
-        yPos = addSectionHeader('DISTRIBUIÇÃO POR TIPO DE RNC', yPos);
-
-        const tipoData = Object.entries(stats.porTipo || {})
-            .sort((a, b) => b[1] - a[1])
-            .map(([tipo, count]) => ({
-                label: tipo,
-                value: count
-            }));
-
-        if (tipoData.length > 0) {
-            doc.autoTable({
-                startY: yPos,
-                head: [['Tipo de RNC', 'Quantidade', 'Percentual']],
-                body: tipoData.map(item => [
-                    item.label,
-                    item.value,
-                    `${((item.value / stats.total) * 100).toFixed(1)}%`
-                ]),
-                theme: 'striped',
-                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 9 },
-                margin: { left: margin, right: margin }
-            });
-
-            yPos = doc.lastAutoTable.finalY + 15;
-
-            // Grafico de barras - verificar espaço para gráfico completo (120mm)
-            if (yPos > pageHeight - 125) {
-                doc.addPage();
-                yPos = 20;
-            }
-
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 0, 0);
-            doc.text('Gráfico - Top 10 Tipos:', margin, yPos);
-            yPos += 8;
-
-            yPos = drawBarChart(tipoData.slice(0, 10), yPos, 110);
-        }
-
-        // ============================================
-        // PAGE 6: DISTRIBUIÇÃO POR SETOR
-        // ============================================
-        if (yPos > pageHeight - 30) {
-            doc.addPage();
-            yPos = 20;
-        }
-        yPos = addSectionHeader('DISTRIBUIÇÃO POR SETOR', yPos);
-
-        const setorData = Object.entries(stats.porSetor || {})
-            .sort((a, b) => b[1] - a[1])
-            .map(([setor, count]) => ({
-                label: setor,
-                value: count
-            }));
-
-        if (setorData.length > 0) {
-            doc.autoTable({
-                startY: yPos,
-                head: [['Setor', 'Quantidade', 'Percentual']],
-                body: setorData.slice(0, 15).map(item => [
-                    item.label,
-                    item.value,
-                    `${((item.value / stats.total) * 100).toFixed(1)}%`
-                ]),
-                theme: 'grid',
-                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 9 },
-                margin: { left: margin, right: margin }
-            });
-
-            yPos = doc.lastAutoTable.finalY + 15;
-
-            // Grafico de barras
-            if (yPos > pageHeight - 35) {
-                doc.addPage();
-                yPos = 20;
-            }
-
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 0, 0);
-            doc.text('Gráfico - Top 10 Setores:', margin, yPos);
-            yPos += 8;
-
-            yPos = drawBarChart(setorData.slice(0, 10), yPos, 110);
-        }
-
-        // ============================================
-        // PAGE 7: ANÁLISE DE CUSTOS
-        // ============================================
-        if (yPos > pageHeight - 30) {
-            doc.addPage();
-            yPos = 20;
-        }
-        yPos = addSectionHeader('ANÁLISE DETALHADA DE CUSTOS', yPos);
-
-        if (Object.keys(stats.custoMedioPorTipo || {}).length > 0) {
-            const custoData = Object.entries(stats.custoMedioPorTipo)
-                .sort((a, b) => b[1].soma - a[1].soma);
-
-            doc.autoTable({
-                startY: yPos,
-                head: [['Tipo', 'Qtd', 'Custo Total', 'Custo Médio', '% Total']],
-                body: custoData.map(([tipo, dados]) => [
-                    tipo,
-                    dados.count,
-                    `R$ ${dados.soma.toFixed(2)}`,
-                    `R$ ${dados.media.toFixed(2)}`,
-                    `${((dados.soma / stats.custoTotal) * 100).toFixed(1)}%`
-                ]),
-                theme: 'striped',
-                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 8 },
-                margin: { left: margin, right: margin }
-            });
-
-            yPos = doc.lastAutoTable.finalY + 15;
-
-            // Grafico de custos
-            if (yPos > pageHeight - 35) {
-                doc.addPage();
-                yPos = 20;
-            }
-
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 0, 0);
-            doc.text('Gráfico - Top 8 Maiores Custos:', margin, yPos);
-            yPos += 8;
-
-            const custoChartData = custoData.slice(0, 8).map(([tipo, dados]) => ({
-                label: tipo,
-                value: dados.soma
-            }));
-
-            yPos = drawBarChart(custoChartData, yPos, 110);
-        }
-
-        // ============================================
-        // PAGE 8: TOP 5 SETORES COM MAIS RNCs
-        // ============================================
-        if (yPos > pageHeight - 30) {
-            doc.addPage();
-            yPos = 20;
-        }
-        yPos = addSectionHeader('TOP 5 SETORES COM MAIS RNCs', yPos);
-
-        if (stats.top5Setores && stats.top5Setores.length > 0) {
-            doc.autoTable({
-                startY: yPos,
-                head: [['Posição', 'Setor', 'Quantidade', 'Percentual']],
-                body: stats.top5Setores.map((setor, index) => [
-                    `${index + 1}o`,
-                    setor.nome,
-                    setor.total,
-                    `${Math.round((setor.total / stats.total) * 100)}%`
-                ]),
-                theme: 'grid',
-                headStyles: { fillColor: [244, 67, 54], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 9 },
-                margin: { left: margin, right: margin }
-            });
-
-            yPos = doc.lastAutoTable.finalY + 15;
-
-            // Grafico
-            if (yPos > pageHeight - 35) {
-                doc.addPage();
-                yPos = 20;
-            }
-
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 0, 0);
-            doc.text('Gráfico - Top 5 Setores:', margin, yPos);
-            yPos += 8;
-
-            const top5Data = stats.top5Setores.map(setor => ({
-                label: setor.nome,
-                value: setor.total
-            }));
-
-            yPos = drawBarChart(top5Data, yPos, 120);
-        }
-
-        // ============================================
-        // PAGE 9: TOP 5 TIPOS DE FALHA
-        // ============================================
-        if (yPos > pageHeight - 30) {
-            doc.addPage();
-            yPos = 20;
-        }
-
-        yPos = addSectionHeader('TOP 5 TIPOS DE FALHA', yPos);
-
-        if (stats.top5TiposFalha && stats.top5TiposFalha.length > 0) {
-            doc.autoTable({
-                startY: yPos,
-                head: [['Posição', 'Tipo de Falha', 'Quantidade', 'Percentual']],
-                body: stats.top5TiposFalha.map((tipo, index) => [
-                    `${index + 1}º`,
-                    tipo.nome,
-                    tipo.total,
-                    `${Math.round((tipo.total / stats.total) * 100)}%`
-                ]),
-                theme: 'striped',
-                headStyles: { fillColor: [255, 152, 0], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 9 },
-                margin: { left: margin, right: margin }
-            });
-
-            yPos = doc.lastAutoTable.finalY + 10;
-        }
-
-        // ============================================
-        // PAGE 10: ANÁLISE DE PRAZOS
-        // ============================================
-        if (yPos > pageHeight - 30) {
-            doc.addPage();
-            yPos = 20;
-        }
-        yPos = addSectionHeader('ANÁLISE DE PRAZOS E VENCIMENTOS', yPos);
-
-        doc.autoTable({
-            startY: yPos,
-            head: [['Métrica', 'Valor']],
-            body: [
-                ['RNCs no Prazo', stats.rncsPrazo || 0],
-                ['RNCs Atrasadas', stats.rncsAtrasadas || 0],
-                ['RNCs Vencidas', stats.rncsVencidas || 0],
-                ['Taxa de Cumprimento', `${stats.taxaCumprimentoPrazo || 0}%`],
-                ['Tempo Médio de Resolução', `${stats.tempoMedioResolucao || 0} dias`],
-                ['Maior Tempo de Resolução', `${stats.maiorTempoResolucao || 0} dias`],
-                ['Menor Tempo de Resolução', `${stats.menorTempoResolucao || 0} dias`]
-            ],
-            theme: 'striped',
-            headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-            bodyStyles: { fontSize: 9 },
-            margin: { left: margin, right: margin }
-        });
-
-        yPos = doc.lastAutoTable.finalY + 10;
-
-        // ============================================
-        // PAGE 11: AÇÕES RECOMENDADAS
-        // ============================================
-        if (yPos > pageHeight - 30) {
-            doc.addPage();
-            yPos = 20;
-        }
-
-        yPos = addSectionHeader('AÇÕES RECOMENDADAS PARA GESTÃO', yPos);
-
-        if (stats.acoesRecomendadas && stats.acoesRecomendadas.length > 0) {
-            doc.autoTable({
-                startY: yPos,
-                head: [['Prioridade', 'Problema Identificado', 'Ação Recomendada']],
-                body: stats.acoesRecomendadas.map(acao => [
-                    acao.prioridade,
-                    acao.titulo,
-                    acao.acao
-                ]),
-                theme: 'grid',
-                headStyles: { fillColor: [0, 150, 136], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 9 },
-                columnStyles: {
-                    0: { cellWidth: 25 },
-                    1: { cellWidth: 65 },
-                    2: { cellWidth: 90 }
-                },
-                margin: { left: margin, right: margin }
-            });
-
-            yPos = doc.lastAutoTable.finalY + 10;
-        }
-
-        // ============================================
-        // PAGE 12: RESUMO DE IMPACTO
-        // ============================================
-        if (yPos > pageHeight - 30) {
-            doc.addPage();
-            yPos = 20;
-        }
-        yPos = addSectionHeader('RESUMO DE IMPACTO E TENDÊNCIAS', yPos);
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 150, 136);
-        doc.text('IMPACTO FINANCEIRO', margin, yPos);
-        yPos += 7;
-
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(51, 51, 51);
-        doc.setFontSize(9);
-        doc.text(`Custo Total de Não Conformidades: R$ ${(stats.custoTotal || 0).toFixed(2)}`, margin + 5, yPos);
-        yPos += 5;
-        doc.text(`Custo Médio por RNC: R$ ${((stats.custoTotal / stats.total) || 0).toFixed(2)}`, margin + 5, yPos);
-        yPos += 5;
-        doc.text(`Maior Custo Individual: R$ ${(stats.maiorCusto || 0).toFixed(2)}`, margin + 5, yPos);
-        yPos += 10;
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 150, 136);
-        doc.text('IMPACTO NO CLIENTE', margin, yPos);
-        yPos += 7;
-
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(51, 51, 51);
-        doc.setFontSize(9);
-        doc.text(`RNCs com Impacto ao Cliente: ${stats.impactoClientePercentual || 0}%`, margin + 5, yPos);
-        yPos += 5;
-        doc.text(`Detecção Interna: ${stats.deteccaoInternaPercentual || 0}%`, margin + 5, yPos);
-        yPos += 5;
-        doc.text(`Taxa de Não Procede: ${stats.naoProcedeTaxa || 0}%`, margin + 5, yPos);
-        yPos += 10;
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 150, 136);
-        doc.text('IMPACTO NA QUALIDADE', margin, yPos);
-        yPos += 7;
-
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(51, 51, 51);
-        doc.setFontSize(9);
-        doc.text(`Índice de Severidade Ponderado: ${stats.indiceSeveridadePonderado || 0} pontos`, margin + 5, yPos);
-        yPos += 5;
-        doc.text(`RNCs Críticas: ${stats.criticas || 0}`, margin + 5, yPos);
-        yPos += 5;
-        doc.text(`Taxa de Reincidência: ${stats.taxaReincidencia || 0}%`, margin + 5, yPos);
-        yPos += 10;
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 150, 136);
-        doc.text('TENDÊNCIAS IDENTIFICADAS', margin, yPos);
-        yPos += 7;
-
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(51, 51, 51);
-        doc.setFontSize(9);
-
-        const tendencias = [
-            `Setores com maior incidência precisam de atenção especial`,
-            `Tipos de falha recorrentes devem ser investigados`,
-            `${stats.rncsVencidas > 0 ? 'Atenção: Existem RNCs vencidas!' : 'Todas as RNCs estão dentro do prazo'}`,
-            `Taxa de cumprimento de prazo: ${stats.taxaCumprimentoPrazo >= 80 ? 'Satisfatória' : 'Requer melhoria'}`,
-            `Custo médio por RNC: ${(stats.custoTotal / stats.total) > 100 ? 'Alto' : 'Controlado'}`
-        ];
-
-        tendencias.forEach(tendencia => {
-            doc.text(`- ${tendencia}`, margin + 5, yPos);
-            yPos += 5;
-        });
-
-        // ============================================
-        // RODAPE EM TODAS AS PAGINAS
-        // ============================================
-        const totalPages = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= totalPages; i++) {
-            doc.setPage(i);
-
-            // Linha superior
-            doc.setDrawColor(0, 150, 136);
-            doc.setLineWidth(0.5);
-            doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
-
-            // Texto do rodape
-            doc.setFontSize(8);
-            doc.setTextColor(120, 120, 120);
-            doc.setFont('helvetica', 'normal');
-            doc.text(
-                'Neoformula - Sistema de Gestão de Não Conformidades',
-                pageWidth / 2,
-                pageHeight - 10,
-                { align: 'center' }
-            );
-
-            // Numero da pagina
-            doc.setFont('helvetica', 'bold');
-            doc.text(
-                `Pagina ${i} de ${totalPages}`,
-                pageWidth - margin,
-                pageHeight - 10,
-                { align: 'right' }
-            );
-        }
-
-        // ============================================
-        // SALVAR PDF
-        // ============================================
+        // === GERAR E BAIXAR PDF COM PDFMAKE ===
         const filename = `relatorio_gerencial_rnc_${new Date().toISOString().split('T')[0]}.pdf`;
-        doc.save(filename);
+        pdfMake.createPdf(docDefinition).download(filename);
 
         hideLoading();
-        showSuccess(`PDF Gerencial exportado com sucesso! (${totalPages} páginas)`);
-        debugLog('success', `PDF Gerencial v2.3 - ${totalPages} páginas - Logo otimizado, gráficos limpos, espaçamento reduzido`);
-
+        showSuccess(`PDF Executivo exportado com sucesso!`);
+        debugLog('success', `PDF Executivo gerado com pdfmake - ${rncs.length} RNCs`);
     } catch (error) {
         hideLoading();
         debugLog('error', 'Erro ao exportar PDF v2.3', { error: error.message });
