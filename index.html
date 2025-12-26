@@ -9277,7 +9277,7 @@ function exportToPdf() {
                         widths: [40, '*', '*', 80],
                         body: [
                             [
-                                { text: 'Nº', style: 'tableHeader' },
+                                { text: 'Nº RNC', style: 'tableHeader' },
                                 { text: 'Setor Abertura', style: 'tableHeader' },
                                 { text: 'Setor RNC', style: 'tableHeader' },
                                 { text: 'Valor (R$)', style: 'tableHeader', alignment: 'right' }
@@ -9286,7 +9286,8 @@ function exportToPdf() {
                                 .sort((a, b) => (parseFloat(b['Valor'] || 0)) - (parseFloat(a['Valor'] || 0)))
                                 .slice(0, 5)
                                 .map((rnc, index) => {
-                                    const setorAbertura = rnc['Setor onde foi feita abertura\n'] ||
+                                    const setorAbertura = rnc['Setor onde foi feita abertura'] ||
+                                                         rnc['Setor onde foi feita abertura\n'] ||
                                                          rnc['Setor Abertura'] ||
                                                          rnc['Setor de Abertura'] ||
                                                          'Não informado';
@@ -9294,12 +9295,13 @@ function exportToPdf() {
                                                     rnc['Setor RNC'] ||
                                                     rnc['Setor'] ||
                                                     'Não informado';
-                                    const numero = rnc['Número da RNC'] || rnc['Número RNC'] || rnc['ID'] || (index + 1);
+                                    const numeroRaw = rnc['Número da RNC'] || rnc['Número RNC'] || rnc['Nº RNC'] || rnc['ID'] || (index + 1);
+                                    const numero = numeroRaw.toString().includes('/') ? numeroRaw : `${numeroRaw}/${new Date().getFullYear()}`;
                                     const valor = parseFloat(rnc['Valor'] || 0);
                                     return [
-                                        { text: numero.toString(), fontSize: 9 },
-                                        { text: setorAbertura.substring(0, 30), fontSize: 9 },
-                                        { text: setorRnc.substring(0, 30), fontSize: 9 },
+                                        { text: numero, fontSize: 9 },
+                                        { text: setorAbertura, fontSize: 9 },
+                                        { text: setorRnc, fontSize: 9 },
                                         { text: valor.toFixed(2), alignment: 'right', fontSize: 10, bold: true, color: '#F44336' }
                                     ];
                                 })
@@ -9675,7 +9677,7 @@ function exportToPdf() {
                         widths: [30, 90, 90, 60, 45, 55],
                         body: [
                             [
-                                { text: 'Nº', style: 'tableHeader' },
+                                { text: 'Nº RNC', style: 'tableHeader' },
                                 { text: 'Setor Abertura', style: 'tableHeader' },
                                 { text: 'Setor RNC', style: 'tableHeader' },
                                 { text: 'Tipo', style: 'tableHeader' },
@@ -9683,7 +9685,8 @@ function exportToPdf() {
                                 { text: 'Valor (R$)', style: 'tableHeader', alignment: 'right' }
                             ],
                             ...rncs.slice(0, 50).map((rnc, index) => {
-                                const setorAbertura = rnc['Setor onde foi feita abertura\n'] ||
+                                const setorAbertura = rnc['Setor onde foi feita abertura'] ||
+                                                     rnc['Setor onde foi feita abertura\n'] ||
                                                      rnc['Setor Abertura'] ||
                                                      rnc['Setor de Abertura'] ||
                                                      'Não informado';
@@ -9691,16 +9694,17 @@ function exportToPdf() {
                                                 rnc['Setor RNC'] ||
                                                 rnc['Setor'] ||
                                                 'Não informado';
-                                const numero = rnc['Número da RNC'] || rnc['Número RNC'] || rnc['ID'] || (index + 1);
+                                const numeroRaw = rnc['Número da RNC'] || rnc['Número RNC'] || rnc['Nº RNC'] || rnc['ID'] || (index + 1);
+                                const numero = numeroRaw.toString().includes('/') ? numeroRaw : `${numeroRaw}/${new Date().getFullYear()}`;
                                 const tipo = rnc['Tipo da RNC'] || rnc['Tipo RNC'] || rnc['Tipo'] || 'Não informado';
                                 const risco = rnc['Risco'] || rnc['Nível de Risco'] || 'Baixo';
                                 const valor = parseFloat(rnc['Valor'] || rnc['Custo'] || rnc['Valor (R$)'] || 0);
 
                                 return [
-                                    { text: numero.toString(), fontSize: 8 },
-                                    { text: setorAbertura.substring(0, 25), fontSize: 8 },
-                                    { text: setorRnc.substring(0, 25), fontSize: 8 },
-                                    { text: tipo.substring(0, 20), fontSize: 8 },
+                                    { text: numero, fontSize: 8 },
+                                    { text: setorAbertura, fontSize: 8 },
+                                    { text: setorRnc, fontSize: 8 },
+                                    { text: tipo, fontSize: 8 },
                                     { text: risco, fontSize: 8 },
                                     { text: valor.toFixed(2), alignment: 'right', fontSize: 8 }
                                 ];

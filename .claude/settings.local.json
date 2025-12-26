@@ -40,7 +40,8 @@
       "Bash(clasp version:*)",
       "Bash(node -e:*)",
       "Bash(Conferência Farmacêutica\" aparecendo junto\n- Gráficos TOP 5 com valores concatenados\n\nSOLUÇÃO COMPLETA:\nAplicado split /[,;]/ em AMBAS as funções:\n\n07.Reports.js:1428-1484 - calculateReportStats\\(\\):\n- Por Setor \\(split completo\\)\n- Por Tipo RNC \\(split completo\\)\n- Por Risco \\(split completo\\)  \n- Por Tipo de Falha \\(split completo\\)\n\nAgora TODOS os gráficos \\(Dashboard E Relatórios\\) fazem:\n- Split por vírgula \\(,\\) E ponto e vírgula \\(;\\)\n- Trim de espaços\n- Contagem individual correta\n\nRESULTADO:\n\"TI)",
-      "Bash(Laboratório\" → TI \\(1\\) + Laboratório \\(1\\) ✅\n\"Interna - Neoformula, Externa - Cliente\" → Interna-Neoformula \\(1\\) + Externa-Cliente \\(1\\) ✅\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(Laboratório\" → TI \\(1\\) + Laboratório \\(1\\) ✅\n\"Interna - Neoformula, Externa - Cliente\" → Interna-Neoformula \\(1\\) + Externa-Cliente \\(1\\) ✅\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(Conferência Farma\" → agora mostra completo\n- Setores não são mais divididos por split\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []
