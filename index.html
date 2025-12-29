@@ -8216,6 +8216,7 @@ async function refreshDashboard() {
         if (dashboardCache && dashboardCacheTime && (Date.now() - dashboardCacheTime < CACHE_DURATION)) {
             debugLog('info', '⚡ Usando cache do Dashboard');
             dashboardRncs = dashboardCache.rncs || [];  // ✅ DEPLOY 101: Carregar RNCs do cache
+            console.log('📦 Cache usado - RNCs:', dashboardRncs.length, 'hasRncs:', !!dashboardCache.rncs);
             renderDashboard(dashboardCache);
             hideLoading();
             return;
@@ -8228,9 +8229,24 @@ async function refreshDashboard() {
         
         const stats = await apiCall('getDashboardDataFiltered', [tipoSetor, setor]);
 
+        // ✅ DEPLOY 103: DEBUG Timeline - Verificar estrutura retornada
+        console.log('📊 Stats retornado do servidor:', {
+            hasRncs: !!stats.rncs,
+            rncsLength: stats.rncs ? stats.rncs.length : 0,
+            statsKeys: Object.keys(stats).slice(0, 10),
+            statsTotal: stats.total
+        });
+
         // ✅ DEPLOY 101: Armazenar raw RNCs para Timeline regrouping
         dashboardRncs = stats.rncs || [];
-        console.log('Dashboard RNCs carregadas:', dashboardRncs.length);
+        console.log('✅ Dashboard RNCs armazenadas:', dashboardRncs.length);
+
+        // Verificar se tem dados reais
+        if (dashboardRncs.length > 0) {
+            console.log('📝 Primeira RNC:', dashboardRncs[0]);
+        } else {
+            console.warn('⚠️ AVISO: dashboardRncs está vazio!');
+        }
 
         // ✅ Salvar no cache
         dashboardCache = stats;
@@ -9047,6 +9063,8 @@ function editRncFromReport(rncNumber) {
  * ============================================
  */
 async function renderChartForPdf(type, data, title) {
+    console.log(`🎨 renderChartForPdf iniciado - type: ${type}, title: ${title}, entries: ${Object.keys(data).length}`);
+
     return new Promise((resolve) => {
         // Criar container invisível temporário
         const container = document.createElement('div');
@@ -9060,10 +9078,13 @@ async function renderChartForPdf(type, data, title) {
 
         const entries = Object.entries(data);
         if (entries.length === 0) {
+            console.warn(`⚠️ Sem dados para ${title} - abortando`);
             container.remove();
             resolve(null);
             return;
         }
+
+        console.log(`📊 Criando gráfico ${title} com ${entries.length} itens`);
 
         const colors = type === 'pie' ?
             ['#284179', '#009688', '#FF9800', '#F44336', '#4CAF50', '#9C27B0', '#FFC107', '#00BCD4'] :
@@ -9115,19 +9136,23 @@ async function renderChartForPdf(type, data, title) {
         const chart = new ApexCharts(container, options);
 
         chart.render().then(() => {
+            console.log(`✅ Gráfico ${title} renderizado, aguardando export...`);
             // Aguardar renderização completa
             setTimeout(() => {
                 chart.dataURI().then(({ imgURI }) => {
+                    console.log(`✅ ${title} exportado como Base64:`, imgURI ? `${imgURI.substring(0, 50)}...` : 'null');
                     chart.destroy();
                     container.remove();
                     resolve(imgURI);
-                }).catch(() => {
+                }).catch((err) => {
+                    console.error(`❌ Erro ao exportar ${title}:`, err);
                     chart.destroy();
                     container.remove();
                     resolve(null);
                 });
             }, 500);
-        }).catch(() => {
+        }).catch((err) => {
+            console.error(`❌ Erro ao renderizar ${title}:`, err);
             container.remove();
             resolve(null);
         });
@@ -9152,15 +9177,86 @@ async function exportToPdf() {
         const stats = reportData.stats;
         const rncs = reportData.rncs;
 
-        // === DEPLOY 102: Renderizar gráficos para PDF ===
-        console.log('📊 Renderizando gráficos para PDF...');
-        const chartTipo = await renderChartForPdf('donut', stats.porTipo || {}, 'Por Tipo de RNC');
-        const chartRisco = await renderChartForPdf('donut', stats.porRisco || {}, 'Por Nível de Risco');
-        const chartSetorAbertura = await renderChartForPdf('bar', stats.porSetorAbertura || {}, 'Por Setor de Abertura');
-        console.log('✅ Gráficos renderizados:', {
+        // === DEPLOY 103: Renderizar gráficos para PDF com error handling ===
+        console.log('📊 INICIANDO renderização de gráficos para PDF...');
+        console.log('📊 Dados disponíveis:', {
+            porTipo: Object.keys(stats.porTipo || {}).length,
+            porRisco: Object.keys(stats.porRisco || {}).length,
+            porSetorAbertura: Object.keys(stats.porSetorAbertura || {}).length
+        });
+
+        let chartTipo, chartRisco, chartSetorAbertura;
+
+        try {
+            chartTipo = await renderChartForPdf('donut', stats.porTipo || {}, 'Por Tipo de RNC');
+            console.log('✅ chartTipo renderizado:', !!chartTipo, chartTipo ? `${chartTipo.substring(0, 50)}...` : 'null');
+        } catch (e) {
+            console.error('❌ Erro ao renderizar chartTipo:', e);
+            chartTipo = null;
+        }
+
+        try {
+            chartRisco = await renderChartForPdf('donut', stats.porRisco || {}, 'Por Nível de Risco');
+            console.log('✅ chartRisco renderizado:', !!chartRisco, chartRisco ? `${chartRisco.substring(0, 50)}...` : 'null');
+        } catch (e) {
+            console.error('❌ Erro ao renderizar chartRisco:', e);
+            chartRisco = null;
+        }
+
+        try {
+            chartSetorAbertura = await renderChartForPdf('bar', stats.porSetorAbertura || {}, 'Por Setor de Abertura');
+            console.log('✅ chartSetorAbertura renderizado:', !!chartSetorAbertura, chartSetorAbertura ? `${chartSetorAbertura.substring(0, 50)}...` : 'null');
+        } catch (e) {
+            console.error('❌ Erro ao renderizar chartSetorAbertura:', e);
+            chartSetorAbertura = null;
+        }
+
+        // ✅ DEPLOY 103 - OPÇÃO A: Mais gráficos
+        let chartTimeline, chartTop5, chartImpactoFinanceiro;
+
+        try {
+            chartTimeline = await renderChartForPdf('line', stats.porMes || {}, 'Timeline de Tendências');
+            console.log('✅ chartTimeline renderizado:', !!chartTimeline);
+        } catch (e) {
+            console.error('❌ Erro ao renderizar chartTimeline:', e);
+            chartTimeline = null;
+        }
+
+        try {
+            // TOP 5 Mais Custosas - pegar as 5 primeiras do top5MaisCustosas
+            const top5Data = {};
+            (stats.top5MaisCustosas || []).forEach((rnc, i) => {
+                const numero = rnc['Número da RNC'] || rnc['Número RNC'] || `RNC ${i+1}`;
+                const custo = parseFloat(rnc['Valor'] || 0);
+                top5Data[numero] = custo;
+            });
+            chartTop5 = await renderChartForPdf('bar', top5Data, 'TOP 5 Mais Custosas');
+            console.log('✅ chartTop5 renderizado:', !!chartTop5);
+        } catch (e) {
+            console.error('❌ Erro ao renderizar chartTop5:', e);
+            chartTop5 = null;
+        }
+
+        try {
+            // Impacto Financeiro por Tipo
+            const impactoData = {};
+            Object.entries(stats.porTipo || {}).forEach(([tipo, qtd]) => {
+                impactoData[tipo] = stats.custoTotal ? (stats.custoTotal / stats.total * qtd) : 0;
+            });
+            chartImpactoFinanceiro = await renderChartForPdf('bar', impactoData, 'Impacto Financeiro por Tipo');
+            console.log('✅ chartImpactoFinanceiro renderizado:', !!chartImpactoFinanceiro);
+        } catch (e) {
+            console.error('❌ Erro ao renderizar chartImpactoFinanceiro:', e);
+            chartImpactoFinanceiro = null;
+        }
+
+        console.log('📊 RESUMO TODOS os gráficos:', {
             chartTipo: !!chartTipo,
             chartRisco: !!chartRisco,
-            chartSetorAbertura: !!chartSetorAbertura
+            chartSetorAbertura: !!chartSetorAbertura,
+            chartTimeline: !!chartTimeline,
+            chartTop5: !!chartTop5,
+            chartImpactoFinanceiro: !!chartImpactoFinanceiro
         });
 
         // === DEFINIÇÃO DO DOCUMENTO PDF COM PDFMAKE ===
@@ -9528,6 +9624,14 @@ async function exportToPdf() {
                     margin: [0, 0, 0, 30]
                 },
 
+                // ✅ DEPLOY 103 - OPÇÃO A: Gráfico TOP 5 Mais Custosas
+                ...(chartTop5 ? [{
+                    image: chartTop5,
+                    width: 480,
+                    alignment: 'center',
+                    margin: [0, 10, 0, 30]
+                }] : []),
+
                 // === ANÁLISE DE TENDÊNCIAS TEMPORAIS ===
                 { text: '4. ANÁLISE DE TENDÊNCIAS TEMPORAIS', style: 'sectionTitle', margin: [0, 20, 0, 15] },
 
@@ -9582,6 +9686,14 @@ async function exportToPdf() {
                     },
                     margin: [0, 0, 0, 20]
                 },
+
+                // ✅ DEPLOY 103 - OPÇÃO A: Gráfico de Linha - Timeline
+                ...(chartTimeline ? [{
+                    image: chartTimeline,
+                    width: 500,
+                    alignment: 'center',
+                    margin: [0, 10, 0, 30]
+                }] : []),
 
                 // === ANÁLISE DE IMPACTO FINANCEIRO ===
                 { text: '5. ANÁLISE DE IMPACTO FINANCEIRO', style: 'sectionTitle', margin: [0, 20, 0, 15] },
@@ -9639,6 +9751,14 @@ async function exportToPdf() {
                     },
                     margin: [0, 0, 0, 20]
                 },
+
+                // ✅ DEPLOY 103 - OPÇÃO A: Gráfico Impacto Financeiro
+                ...(chartImpactoFinanceiro ? [{
+                    image: chartImpactoFinanceiro,
+                    width: 480,
+                    alignment: 'center',
+                    margin: [0, 10, 0, 20]
+                }] : []),
 
                 // ✅ DEPLOY 101: Page break antes da seção de Criticidade
                 { text: '', pageBreak: 'after' },
