@@ -9043,11 +9043,104 @@ function editRncFromReport(rncNumber) {
         
 /**
  * ============================================
+ * DEPLOY 102: HELPER - Renderizar gráfico para PDF
+ * ============================================
+ */
+async function renderChartForPdf(type, data, title) {
+    return new Promise((resolve) => {
+        // Criar container invisível temporário
+        const container = document.createElement('div');
+        container.id = 'temp_chart_' + Date.now();
+        container.style.width = '500px';
+        container.style.height = '300px';
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.top = '-9999px';
+        document.body.appendChild(container);
+
+        const entries = Object.entries(data);
+        if (entries.length === 0) {
+            container.remove();
+            resolve(null);
+            return;
+        }
+
+        const colors = type === 'pie' ?
+            ['#284179', '#009688', '#FF9800', '#F44336', '#4CAF50', '#9C27B0', '#FFC107', '#00BCD4'] :
+            ['#009688'];
+
+        const options = {
+            series: type === 'pie' ?
+                entries.map(([, value]) => value) :
+                [{
+                    name: title,
+                    data: entries.map(([, value]) => value)
+                }],
+            chart: {
+                type: type,
+                height: 300,
+                fontFamily: 'Inter, sans-serif',
+                toolbar: { show: false },
+                animations: { enabled: false }
+            },
+            labels: type === 'pie' ? entries.map(([label]) => label) : undefined,
+            xaxis: type !== 'pie' ? {
+                categories: entries.map(([label]) => label),
+                labels: { style: { fontSize: '10px' } }
+            } : undefined,
+            colors: colors,
+            dataLabels: {
+                enabled: true,
+                style: { fontSize: '11px', fontWeight: 'bold' }
+            },
+            legend: {
+                show: type === 'pie',
+                position: 'bottom',
+                fontSize: '10px'
+            },
+            plotOptions: type === 'pie' ? {
+                pie: {
+                    donut: {
+                        size: '65%'
+                    }
+                }
+            } : {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '70%'
+                }
+            }
+        };
+
+        const chart = new ApexCharts(container, options);
+
+        chart.render().then(() => {
+            // Aguardar renderização completa
+            setTimeout(() => {
+                chart.dataURI().then(({ imgURI }) => {
+                    chart.destroy();
+                    container.remove();
+                    resolve(imgURI);
+                }).catch(() => {
+                    chart.destroy();
+                    container.remove();
+                    resolve(null);
+                });
+            }, 500);
+        }).catch(() => {
+            container.remove();
+            resolve(null);
+        });
+    });
+}
+
+/**
+ * ============================================
  * DEPLOY 95: RELATÓRIO PDF EXECUTIVO COM PDFMAKE
  * Ultra-Professional Report - Board Ready
  * ============================================
  */
-function exportToPdf() {
+async function exportToPdf() {
     if (!reportData || !reportData.rncs || reportData.rncs.length === 0) {
         showError('Nenhum dado para exportar');
         return;
@@ -9058,6 +9151,17 @@ function exportToPdf() {
 
         const stats = reportData.stats;
         const rncs = reportData.rncs;
+
+        // === DEPLOY 102: Renderizar gráficos para PDF ===
+        console.log('📊 Renderizando gráficos para PDF...');
+        const chartTipo = await renderChartForPdf('donut', stats.porTipo || {}, 'Por Tipo de RNC');
+        const chartRisco = await renderChartForPdf('donut', stats.porRisco || {}, 'Por Nível de Risco');
+        const chartSetorAbertura = await renderChartForPdf('bar', stats.porSetorAbertura || {}, 'Por Setor de Abertura');
+        console.log('✅ Gráficos renderizados:', {
+            chartTipo: !!chartTipo,
+            chartRisco: !!chartRisco,
+            chartSetorAbertura: !!chartSetorAbertura
+        });
 
         // === DEFINIÇÃO DO DOCUMENTO PDF COM PDFMAKE ===
         const docDefinition = {
@@ -9283,6 +9387,14 @@ function exportToPdf() {
                     margin: [0, 0, 0, 20]
                 },
 
+                // ✅ DEPLOY 102: Gráfico de Distribuição por Tipo
+                ...(chartTipo ? [{
+                    image: chartTipo,
+                    width: 450,
+                    alignment: 'center',
+                    margin: [0, 10, 0, 30]
+                }] : []),
+
                 // === ANÁLISE POR RISCO ===
                 { text: '2.1. ANÁLISE POR NÍVEL DE RISCO', style: 'sectionTitle', margin: [0, 20, 0, 15] },
 
@@ -9315,6 +9427,14 @@ function exportToPdf() {
                     margin: [0, 0, 0, 30]
                 },
 
+                // ✅ DEPLOY 102: Gráfico de Análise por Risco
+                ...(chartRisco ? [{
+                    image: chartRisco,
+                    width: 450,
+                    alignment: 'center',
+                    margin: [0, 10, 0, 30]
+                }] : []),
+
                 // === ANÁLISE POR SETOR ===
                 { text: '2.2. DISTRIBUIÇÃO POR SETOR', style: 'sectionTitle', margin: [0, 30, 0, 15] },
 
@@ -9346,6 +9466,14 @@ function exportToPdf() {
                     },
                     margin: [0, 0, 0, 30]
                 },
+
+                // ✅ DEPLOY 102: Gráfico de Barras - Distribuição por Setor
+                ...(chartSetorAbertura ? [{
+                    image: chartSetorAbertura,
+                    width: 480,
+                    alignment: 'center',
+                    margin: [0, 10, 0, 20]
+                }] : []),
 
                 { text: '', pageBreak: 'after' },
 
