@@ -9139,18 +9139,39 @@ async function renderChartForPdf(type, data, title) {
         const isLine = (type === 'line');
         const isBar = (type === 'bar');
 
+        // ✅ DEPLOY 106: Debug detalhado antes de criar gráfico
+        console.log(`📊 DEBUG ${title}:`, {
+            type,
+            isPieDonut,
+            isLine,
+            isBar,
+            entries: entries.slice(0, 3), // Primeiras 3 entradas
+            entriesCount: entries.length
+        });
+
         // ✅ Paleta de cores mais rica
         const colors = isPieDonut ?
             ['#284179', '#009688', '#FF9800', '#F44336', '#4CAF50', '#9C27B0', '#FFC107', '#00BCD4', '#E91E63', '#3F51B5'] :
             ['#009688', '#284179', '#FF9800', '#F44336', '#4CAF50'];
 
+        // ✅ DEPLOY 106: Preparar dados com validação extra
+        const seriesData = entries.map(([, value]) => value);
+        const categories = entries.map(([label]) => String(label).trim()); // Garantir string limpa
+
+        console.log(`📊 Series/Categories preparadas:`, {
+            seriesData,
+            categories,
+            seriesDataTypes: seriesData.map(v => typeof v),
+            categoriesTypes: categories.map(v => typeof v)
+        });
+
         // ✅ Configuração correta por tipo
         const options = {
             series: isPieDonut ?
-                entries.map(([, value]) => value) :  // Donut/Pie: array simples
+                seriesData :  // Donut/Pie: array simples
                 [{
-                    name: title,
-                    data: entries.map(([, value]) => value)  // Bar/Line: array de objetos
+                    name: String(title).substring(0, 50), // Limitar tamanho do nome
+                    data: seriesData
                 }],
             chart: {
                 type: type === 'donut' ? 'donut' : type,  // ✅ Manter 'donut' como donut
@@ -9160,16 +9181,17 @@ async function renderChartForPdf(type, data, title) {
                 toolbar: { show: false },
                 animations: { enabled: false }
             },
-            labels: isPieDonut ? entries.map(([label]) => label) : undefined,  // ✅ Labels para donut/pie
+            labels: isPieDonut ? categories : undefined,  // ✅ Labels para donut/pie
             xaxis: !isPieDonut ? {
-                categories: entries.map(([label]) => label),
+                categories: categories,
                 labels: {
                     style: {
                         fontSize: '12px',
                         fontWeight: 600
                     },
                     rotate: isBar ? -45 : 0,  // ✅ Rotacionar labels em gráficos de barra
-                    trim: false
+                    trim: true,
+                    hideOverlappingLabels: false
                 }
             } : undefined,
             yaxis: !isPieDonut ? {
@@ -9385,7 +9407,8 @@ async function exportToPdf() {
             });
 
             console.log('📊 ImpactoData preparado:', impactoData);
-            chartImpactoFinanceiro = await renderChartForPdf('bar', impactoData, 'Impacto Financeiro por Tipo');
+            // ✅ DEPLOY 106: Mudar para 'donut' temporariamente (bar tem problemas com labels)
+            chartImpactoFinanceiro = await renderChartForPdf('donut', impactoData, 'Impacto Financeiro por Tipo');
             console.log('✅ chartImpactoFinanceiro renderizado:', !!chartImpactoFinanceiro);
         } catch (e) {
             console.error('❌ Erro ao renderizar chartImpactoFinanceiro:', e);
