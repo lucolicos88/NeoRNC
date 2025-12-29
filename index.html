@@ -9100,6 +9100,30 @@ function exportToPdf() {
 
                 { text: '', pageBreak: 'after' },
 
+                // === ÍNDICE ===
+                { text: 'ÍNDICE', style: 'sectionTitle', margin: [0, 0, 0, 20] },
+                {
+                    ul: [
+                        '1. KPIs Estratégicos',
+                        '2. Distribuição das RNCs',
+                        '   • Por Tipo de RNC',
+                        '   • Por Nível de Risco',
+                        '   • Por Setor',
+                        '3. TOP 5 RNCs Mais Custosas',
+                        '4. Análise de Tendências Temporais',
+                        '5. Análise de Impacto Financeiro',
+                        '6. Análise por Nível de Criticidade',
+                        '7. Conclusão Preditiva',
+                        '8. Recomendações Estratégicas para a Diretoria',
+                        '9. Investimentos Sugeridos',
+                        '10. Detalhamento Completo das RNCs'
+                    ],
+                    style: 'indexList',
+                    margin: [0, 0, 0, 30]
+                },
+
+                { text: '', pageBreak: 'after' },
+
                 // === KPIs EXECUTIVOS (LINHA 1) ===
                 { text: 'KPIs ESTRATÉGICOS', style: 'sectionTitle', margin: [0, 0, 0, 20] },
 
@@ -9268,13 +9292,15 @@ function exportToPdf() {
                     margin: [0, 0, 0, 30]
                 },
 
+                { text: '', pageBreak: 'after' },
+
                 // === TOP 5 RNCs MAIS CUSTOSAS ===
-                { text: 'TOP 5 RNCs MAIS CUSTOSAS', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+                { text: 'TOP 5 RNCs MAIS CUSTOSAS', style: 'sectionTitle', margin: [0, 0, 0, 15] },
 
                 {
                     table: {
                         headerRows: 1,
-                        widths: [40, '*', '*', 80],
+                        widths: [60, '*', '*', 80],
                         body: [
                             [
                                 { text: 'Nº RNC', style: 'tableHeader' },
@@ -9674,7 +9700,7 @@ function exportToPdf() {
                 {
                     table: {
                         headerRows: 1,
-                        widths: [30, 90, 90, 60, 45, 55],
+                        widths: [50, 85, 85, 60, 45, 55],
                         body: [
                             [
                                 { text: 'Nº RNC', style: 'tableHeader' },
@@ -9771,6 +9797,13 @@ function exportToPdf() {
                     fontSize: 16,
                     bold: true,
                     color: '#284179'
+                },
+
+                // Índice
+                indexList: {
+                    fontSize: 11,
+                    color: '#333',
+                    lineHeight: 1.5
                 },
 
                 // KPIs
