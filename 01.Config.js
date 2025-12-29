@@ -350,17 +350,8 @@ function isValidDate(dateValue) {
 // ✅ NOVO: Validações de Entrada (Problema #12)
 // ============================================
 
-/**
- * Valida formato de email
- * @param {string} email - Email a validar
- * @return {boolean} True se válido
- */
-function isValidEmail(email) {
-  if (!email || typeof email !== 'string') return false;
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
-}
+// ✅ DEPLOY 115 - FASE 4: Função isValidEmail() removida (duplicada)
+// Use a versão unificada mais abaixo (linha ~870) que suporta ambos os modos de retorno
 
 /**
  * Sanitiza string removendo caracteres perigosos
@@ -863,26 +854,38 @@ function formatErrorForUser(error, context) {
  */
 
 /**
- * Validates email format
+ * ✅ DEPLOY 115 - FASE 4: Validates email format (versão unificada)
  * @param {string} email - Email to validate
- * @return {Object} - { valid: boolean, error: string }
+ * @param {boolean} simpleReturn - Se true, retorna boolean; se false/undefined, retorna objeto
+ * @return {boolean|Object} - Boolean OU { valid: boolean, error: string }
+ *
+ * @example
+ * isValidEmail('user@example.com')        // { valid: true, error: null }
+ * isValidEmail('invalid')                 // { valid: false, error: 'Email inválido...' }
+ * isValidEmail('user@example.com', true)  // true
+ * isValidEmail('invalid', true)           // false
  */
-function isValidEmail(email) {
-  if (!email || email.trim() === '') {
-    return { valid: false, error: 'Email não pode estar vazio' };
+function isValidEmail(email, simpleReturn) {
+  // Validação: email vazio
+  if (!email || typeof email !== 'string' || email.trim() === '') {
+    return simpleReturn ? false : { valid: false, error: 'Email não pode estar vazio' };
   }
 
+  // Regex mais rigoroso: permite apenas letras, números, . _ - no local e domínio
   var emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-  if (!emailRegex.test(email)) {
-    return { valid: false, error: 'Email inválido. Use o formato: exemplo@dominio.com' };
+  // Validação: formato inválido
+  if (!emailRegex.test(email.trim())) {
+    return simpleReturn ? false : { valid: false, error: 'Email inválido. Use o formato: exemplo@dominio.com' };
   }
 
+  // Validação: comprimento máximo
   if (email.length > 100) {
-    return { valid: false, error: 'Email muito longo (máximo 100 caracteres)' };
+    return simpleReturn ? false : { valid: false, error: 'Email muito longo (máximo 100 caracteres)' };
   }
 
-  return { valid: true, error: null };
+  // Email válido
+  return simpleReturn ? true : { valid: true, error: null };
 }
 
 /**
