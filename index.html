@@ -9120,20 +9120,60 @@ function exportToPdf() {
                 // === ÍNDICE ===
                 { text: 'ÍNDICE', style: 'sectionTitle', margin: [0, 0, 0, 20] },
                 {
-                    stack: [
-                        { text: '1. KPIs Estratégicos', style: 'indexItem' },
-                        { text: '2. Distribuição das RNCs', style: 'indexItem' },
-                        { text: '   2.1. Por Nível de Risco', style: 'indexSubItem' },
-                        { text: '   2.2. Por Setor', style: 'indexSubItem' },
-                        { text: '3. TOP 5 RNCs Mais Custosas', style: 'indexItem' },
-                        { text: '4. Análise de Tendências Temporais', style: 'indexItem' },
-                        { text: '5. Análise de Impacto Financeiro', style: 'indexItem' },
-                        { text: '6. Análise por Nível de Criticidade', style: 'indexItem' },
-                        { text: '7. Conclusão Preditiva', style: 'indexItem' },
-                        { text: '8. Recomendações Estratégicas para a Diretoria', style: 'indexItem' },
-                        { text: '9. Investimentos Sugeridos', style: 'indexItem' },
-                        { text: '10. Detalhamento Completo das RNCs', style: 'indexItem' }
-                    ],
+                    table: {
+                        widths: ['*', 40],
+                        body: [
+                            [
+                                { text: '1. KPIs Estratégicos', style: 'indexItem', border: [false, false, false, false] },
+                                { text: '3', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '2. Distribuição das RNCs', style: 'indexItem', border: [false, false, false, false] },
+                                { text: '4', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '   2.1. Por Nível de Risco', style: 'indexSubItem', border: [false, false, false, false] },
+                                { text: '4', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '   2.2. Por Setor', style: 'indexSubItem', border: [false, false, false, false] },
+                                { text: '4', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '3. TOP 5 RNCs Mais Custosas', style: 'indexItem', border: [false, false, false, false] },
+                                { text: '5', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '4. Análise de Tendências Temporais', style: 'indexItem', border: [false, false, false, false] },
+                                { text: '5', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '5. Análise de Impacto Financeiro', style: 'indexItem', border: [false, false, false, false] },
+                                { text: '6', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '6. Análise por Nível de Criticidade', style: 'indexItem', border: [false, false, false, false] },
+                                { text: '7', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '7. Conclusão Preditiva', style: 'indexItem', border: [false, false, false, false] },
+                                { text: '7', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '8. Recomendações Estratégicas para a Diretoria', style: 'indexItem', border: [false, false, false, false] },
+                                { text: '8', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '9. Investimentos Sugeridos', style: 'indexItem', border: [false, false, false, false] },
+                                { text: '9', style: 'indexPage', border: [false, false, false, false] }
+                            ],
+                            [
+                                { text: '10. Detalhamento Completo das RNCs', style: 'indexItem', border: [false, false, false, false] },
+                                { text: '10', style: 'indexPage', border: [false, false, false, false] }
+                            ]
+                        ]
+                    },
+                    layout: 'noBorders',
                     margin: [0, 0, 0, 30]
                 },
 
@@ -9835,6 +9875,13 @@ function exportToPdf() {
                     color: '#666',
                     lineHeight: 1.5,
                     margin: [0, 2, 0, 2]
+                },
+                indexPage: {
+                    fontSize: 11,
+                    color: '#284179',
+                    bold: true,
+                    alignment: 'right',
+                    margin: [0, 3, 0, 3]
                 },
 
                 // KPIs

@@ -725,7 +725,7 @@ var Reports = (function() {
   function getDashboardFromCache() {
     try {
       var cache = CacheService.getScriptCache();
-      var cacheKey = 'dashboard_data_v1';
+      var cacheKey = 'dashboard_data_v2'; // ✅ DEPLOY 101: v2 inclui raw RNCs
       var cached = cache.get(cacheKey);
 
       if (cached) {
@@ -764,7 +764,7 @@ var Reports = (function() {
   function saveDashboardToCache(stats) {
     try {
       var cache = CacheService.getScriptCache();
-      var cacheKey = 'dashboard_data_v1';
+      var cacheKey = 'dashboard_data_v2'; // ✅ DEPLOY 101: v2 inclui raw RNCs
       var cacheData = {
         stats: stats,
         timestamp: new Date().getTime()
