@@ -700,7 +700,18 @@ var Reports = (function() {
 
     // ✅ DEPLOY 101: Retornar stats + raw RNCs para permitir regroupamento no Timeline
     // Spread stats mantém compatibilidade com código existente
-    return Object.assign({}, stats, { rncs: rncs });
+    var result = Object.assign({}, stats, { rncs: rncs });
+
+    // ✅ DEPLOY 108: Log detalhado do retorno
+    Logger.logInfo('getDashboardData_RETURN', {
+      hasRncs: !!result.rncs,
+      rncsLength: result.rncs ? result.rncs.length : 0,
+      rncsIsArray: Array.isArray(result.rncs),
+      statsTotal: result.total,
+      resultKeys: Object.keys(result).slice(0, 15)
+    });
+
+    return result;
 
   } catch (error) {
     Logger.logError('getDashboardData_ERROR', error);
