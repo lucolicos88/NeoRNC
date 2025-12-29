@@ -4286,8 +4286,8 @@ window.NeoRNC.constants = {
     PDF_PAGE_HEIGHT: 297,           // Altura da página A4 (mm)
     PDF_FOOTER_MARGIN: 80,          // Margem do rodapé
 
-    // Cache TTL
-    CACHE_TTL: 5 * 60 * 1000        // 5 minutos
+    // ✅ DEPLOY 116 - FASE 5: Cache TTL (estratégia unificada - 5 minutos)
+    CACHE_TTL: 5 * 60 * 1000        // 5 minutos (CONFIG.CACHE.MEDIUM em ms)
 };
 
 // Estado global da aplicação
@@ -4443,7 +4443,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
         
         // === SISTEMA DE COMUNICAÇÃO COM BACKEND ===
         async function apiCall(funcName, params = [], maxRetries = 1, timeout = 90000) {
-            debugLog('info', `📡 API Call Deploy 108: ${funcName}`, { params, maxRetries });
+            debugLog('info', `📡 API Call Deploy 113: ${funcName}`, { params, maxRetries });
             
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
@@ -8208,7 +8208,8 @@ function renderDashboard(stats) {
         
 var dashboardCache = null;
 var dashboardCacheTime = null;
-var CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+// ✅ DEPLOY 116 - FASE 5: Cache Duration (estratégia unificada - 5 minutos)
+var CACHE_DURATION = 5 * 60 * 1000; // 5 minutos (CONFIG.CACHE.MEDIUM em ms)
 
 async function refreshDashboard(retryCount = 0, forceRefresh = false) {
     try {
@@ -8371,8 +8372,10 @@ function groupRncsByGranularity(rncs, granularity) {
     const grouped = {};
 
     rncs.forEach(rnc => {
-        // Tentar múltiplos campos de data
-        const dataAbertura = rnc['Data de Abertura'] ||
+        // ✅ DEPLOY 112: Tentar múltiplos campos de data (incluindo campo simplificado 'data')
+        const dataAbertura = rnc.data ||  // <- RNCs simplificadas do backend
+                            rnc['data'] ||
+                            rnc['Data de Abertura'] ||
                             rnc['Data Abertura'] ||
                             rnc['Data Criação'] ||
                             rnc['Data de Criação'];
@@ -12507,7 +12510,8 @@ var appCache = {
     timestamp: {}
 };
 
-var CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+// ✅ DEPLOY 116 - FASE 5: Cache Duration (estratégia unificada - 5 minutos)
+var CACHE_DURATION = 5 * 60 * 1000; // 5 minutos (CONFIG.CACHE.MEDIUM em ms)
 
 function isCacheValid(key) {
     if (!appCache[key]) return false;

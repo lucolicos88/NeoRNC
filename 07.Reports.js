@@ -699,16 +699,35 @@ var Reports = (function() {
     }
 
     // ✅ DEPLOY 101: Retornar stats + raw RNCs para permitir regroupamento no Timeline
-    // Spread stats mantém compatibilidade com código existente
-    var result = Object.assign({}, stats, { rncs: rncs });
+    // ✅ DEPLOY 110: Simplificar RNCs retornadas (apenas campos essenciais para Timeline)
+    // ✅ DEPLOY 111: Corrigir campos de data (tentar todas as variações)
+    // Isso reduz drasticamente o tamanho do objeto retornado, evitando limites do Google Apps Script
+    var rncsSimplified = rncs.map(function(rnc) {
+      return {
+        id: rnc['ID'] || rnc['Número RNC'] || rnc['N\u00famero RNC'] || '',
+        data: rnc['Data Criação'] || rnc['Data de Abertura'] || rnc['Data de abertura'] || rnc['Data Abertura'] || rnc['Data'] || '',
+        status: rnc['Status'] || '',
+        tipo: rnc['Tipo da RNC'] || '',
+        setor: rnc['Setor onde foi feita abertura'] || rnc['Setor onde foi feita abertura\n'] || '',
+        risco: rnc['Risco'] || '',
+        valor: rnc['Valor'] || 0
+      };
+    });
+
+    var result = Object.assign({}, stats, { rncs: rncsSimplified });
 
     // ✅ DEPLOY 108: Log detalhado do retorno
+    // ✅ DEPLOY 111: Log de debug para verificar datas
+    var rncsComData = rncsSimplified.filter(function(r) { return r.data && r.data !== ''; }).length;
     Logger.logInfo('getDashboardData_RETURN', {
       hasRncs: !!result.rncs,
       rncsLength: result.rncs ? result.rncs.length : 0,
       rncsIsArray: Array.isArray(result.rncs),
       statsTotal: result.total,
-      resultKeys: Object.keys(result).slice(0, 15)
+      resultKeys: Object.keys(result).slice(0, 15),
+      rncsSimplified: true,
+      rncsComData: rncsComData,
+      primeiraRncData: rncsSimplified.length > 0 ? rncsSimplified[0].data : 'N/A'
     });
 
     return result;
@@ -783,7 +802,8 @@ var Reports = (function() {
         timestamp: new Date().getTime()
       };
 
-      var cacheTTL = 900; // ✅ Deploy 34: 15 minutos (otimizado para +1000 RNCs)
+      // ✅ DEPLOY 116 - FASE 5: Usar CONFIG.CACHE.LONG (estratégia unificada)
+      var cacheTTL = CONFIG.CACHE.LONG; // 15 minutos (otimizado para +1000 RNCs)
       cache.put(cacheKey, JSON.stringify(cacheData), cacheTTL);
 
       Logger.logDebug('saveDashboardToCache_SUCCESS', {

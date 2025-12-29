@@ -65,9 +65,16 @@ const CONFIG = {
     MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
     ALLOWED_FILE_TYPES: ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png'],
     MAX_LOG_ENTRIES: 1000,
-    CACHE_DURATION: 300, // 5 minutos
     MAX_RETRIES: 3,
     RETRY_DELAY: 1000 // 1 segundo
+  },
+
+  // ✅ DEPLOY 116 - FASE 5: Estratégia Unificada de Cache TTLs
+  CACHE: {
+    SHORT: 60,       // 1 minuto - Rate limits e operações rápidas
+    MEDIUM: 300,     // 5 minutos - Configs, listas, dados moderados
+    LONG: 900,       // 15 minutos - Dashboard, relatórios pesados
+    VERY_LONG: 3600  // 1 hora - Estruturas, dados raramente alterados
   },
 
   // ✅ CORRIGIDO: Timeouts e Limites (Problema #5 - Deploy 31)

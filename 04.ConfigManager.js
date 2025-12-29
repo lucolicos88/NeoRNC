@@ -12,10 +12,11 @@ var ConfigManager = (function() {
   /**
    * ============================================
    * DEPLOY 33: Cache de Configuração
+   * ✅ DEPLOY 116 - FASE 5: Atualizado para usar CONFIG.CACHE.MEDIUM
    * ============================================
    */
 
-  var CACHE_TTL = 600; // 10 minutos
+  var CACHE_TTL = CONFIG.CACHE.MEDIUM; // 5 minutos (estratégia unificada)
   var CACHE_PREFIX = 'config_';
 
   /**
