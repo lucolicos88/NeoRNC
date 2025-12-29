@@ -698,7 +698,9 @@ var Reports = (function() {
       saveDashboardToCache(stats);
     }
 
-    return stats;
+    // ✅ DEPLOY 101: Retornar stats + raw RNCs para permitir regroupamento no Timeline
+    // Spread stats mantém compatibilidade com código existente
+    return Object.assign({}, stats, { rncs: rncs });
 
   } catch (error) {
     Logger.logError('getDashboardData_ERROR', error);

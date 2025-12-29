@@ -4307,6 +4307,7 @@ let appContext = null;  // Será sincronizado via getter/setter
 let currentRnc = null;
 let availableRncs = window.NeoRNC.state.availableRncs;
 let reportData = null;
+let dashboardRncs = [];  // ✅ DEPLOY 101: Raw RNCs para regroupamento do Timeline
 let selectedFiles = window.NeoRNC.state.selectedFiles;
 
 // === INICIALIZAÇÃO SEGURA ===
@@ -8214,6 +8215,7 @@ async function refreshDashboard() {
         // ✅ Verificar cache
         if (dashboardCache && dashboardCacheTime && (Date.now() - dashboardCacheTime < CACHE_DURATION)) {
             debugLog('info', '⚡ Usando cache do Dashboard');
+            dashboardRncs = dashboardCache.rncs || [];  // ✅ DEPLOY 101: Carregar RNCs do cache
             renderDashboard(dashboardCache);
             hideLoading();
             return;
@@ -8225,11 +8227,15 @@ async function refreshDashboard() {
         showLoading('Carregando Dashboard...');
         
         const stats = await apiCall('getDashboardDataFiltered', [tipoSetor, setor]);
-        
+
+        // ✅ DEPLOY 101: Armazenar raw RNCs para Timeline regrouping
+        dashboardRncs = stats.rncs || [];
+        console.log('Dashboard RNCs carregadas:', dashboardRncs.length);
+
         // ✅ Salvar no cache
         dashboardCache = stats;
         dashboardCacheTime = Date.now();
-        
+
         renderDashboard(stats);
         hideLoading();
         
@@ -8291,11 +8297,22 @@ function changeTimelineGranularity(granularity, buttonElement) {
         buttonElement.style.color = 'white';
     }
 
-    // Reagrupar dados e re-renderizar
-    if (reportData && reportData.rncs) {
-        const newData = groupRncsByGranularity(reportData.rncs, granularity);
+    // ✅ DEPLOY 101: Usar dashboardRncs (Dashboard) ou reportData.rncs (Relatório)
+    const rncsToUse = dashboardRncs.length > 0 ? dashboardRncs : (reportData && reportData.rncs ? reportData.rncs : []);
+
+    console.log('changeTimelineGranularity:', {
+        granularity: granularity,
+        dashboardRncsCount: dashboardRncs.length,
+        reportDataRncsCount: reportData && reportData.rncs ? reportData.rncs.length : 0,
+        usingSource: dashboardRncs.length > 0 ? 'Dashboard' : 'Report'
+    });
+
+    if (rncsToUse.length > 0) {
+        const newData = groupRncsByGranularity(rncsToUse, granularity);
         renderLineChart('timelineChart', newData);
         debugLog('info', `Timeline alterado para: ${granularity}`);
+    } else {
+        console.warn('Nenhuma RNC disponível para regroupamento do Timeline');
     }
 }
 
@@ -9103,29 +9120,27 @@ function exportToPdf() {
                 // === ÍNDICE ===
                 { text: 'ÍNDICE', style: 'sectionTitle', margin: [0, 0, 0, 20] },
                 {
-                    ul: [
-                        '1. KPIs Estratégicos',
-                        '2. Distribuição das RNCs',
-                        '   • Por Tipo de RNC',
-                        '   • Por Nível de Risco',
-                        '   • Por Setor',
-                        '3. TOP 5 RNCs Mais Custosas',
-                        '4. Análise de Tendências Temporais',
-                        '5. Análise de Impacto Financeiro',
-                        '6. Análise por Nível de Criticidade',
-                        '7. Conclusão Preditiva',
-                        '8. Recomendações Estratégicas para a Diretoria',
-                        '9. Investimentos Sugeridos',
-                        '10. Detalhamento Completo das RNCs'
+                    stack: [
+                        { text: '1. KPIs Estratégicos', style: 'indexItem' },
+                        { text: '2. Distribuição das RNCs', style: 'indexItem' },
+                        { text: '   2.1. Por Nível de Risco', style: 'indexSubItem' },
+                        { text: '   2.2. Por Setor', style: 'indexSubItem' },
+                        { text: '3. TOP 5 RNCs Mais Custosas', style: 'indexItem' },
+                        { text: '4. Análise de Tendências Temporais', style: 'indexItem' },
+                        { text: '5. Análise de Impacto Financeiro', style: 'indexItem' },
+                        { text: '6. Análise por Nível de Criticidade', style: 'indexItem' },
+                        { text: '7. Conclusão Preditiva', style: 'indexItem' },
+                        { text: '8. Recomendações Estratégicas para a Diretoria', style: 'indexItem' },
+                        { text: '9. Investimentos Sugeridos', style: 'indexItem' },
+                        { text: '10. Detalhamento Completo das RNCs', style: 'indexItem' }
                     ],
-                    style: 'indexList',
                     margin: [0, 0, 0, 30]
                 },
 
                 { text: '', pageBreak: 'after' },
 
                 // === KPIs EXECUTIVOS (LINHA 1) ===
-                { text: 'KPIs ESTRATÉGICOS', style: 'sectionTitle', margin: [0, 0, 0, 20] },
+                { text: '1. KPIs ESTRATÉGICOS', style: 'sectionTitle', margin: [0, 0, 0, 20] },
 
                 {
                     columns: [
@@ -9197,7 +9212,7 @@ function exportToPdf() {
                 },
 
                 // === DISTRIBUIÇÃO POR TIPO ===
-                { text: 'DISTRIBUIÇÃO DAS RNCs', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+                { text: '2. DISTRIBUIÇÃO DAS RNCs', style: 'sectionTitle', margin: [0, 20, 0, 15] },
 
                 {
                     table: {
@@ -9229,7 +9244,7 @@ function exportToPdf() {
                 },
 
                 // === ANÁLISE POR RISCO ===
-                { text: 'ANÁLISE POR NÍVEL DE RISCO', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+                { text: '2.1. ANÁLISE POR NÍVEL DE RISCO', style: 'sectionTitle', margin: [0, 20, 0, 15] },
 
                 {
                     table: {
@@ -9261,7 +9276,7 @@ function exportToPdf() {
                 },
 
                 // === ANÁLISE POR SETOR ===
-                { text: 'DISTRIBUIÇÃO POR SETOR', style: 'sectionTitle', margin: [0, 30, 0, 15] },
+                { text: '2.2. DISTRIBUIÇÃO POR SETOR', style: 'sectionTitle', margin: [0, 30, 0, 15] },
 
                 {
                     table: {
@@ -9295,7 +9310,7 @@ function exportToPdf() {
                 { text: '', pageBreak: 'after' },
 
                 // === TOP 5 RNCs MAIS CUSTOSAS ===
-                { text: 'TOP 5 RNCs MAIS CUSTOSAS', style: 'sectionTitle', margin: [0, 0, 0, 15] },
+                { text: '3. TOP 5 RNCs MAIS CUSTOSAS', style: 'sectionTitle', margin: [0, 0, 0, 15] },
 
                 {
                     table: {
@@ -9346,7 +9361,7 @@ function exportToPdf() {
                 },
 
                 // === ANÁLISE DE TENDÊNCIAS TEMPORAIS ===
-                { text: 'ANÁLISE DE TENDÊNCIAS TEMPORAIS', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+                { text: '4. ANÁLISE DE TENDÊNCIAS TEMPORAIS', style: 'sectionTitle', margin: [0, 20, 0, 15] },
 
                 {
                     table: {
@@ -9401,7 +9416,7 @@ function exportToPdf() {
                 },
 
                 // === ANÁLISE DE IMPACTO FINANCEIRO ===
-                { text: 'ANÁLISE DE IMPACTO FINANCEIRO', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+                { text: '5. ANÁLISE DE IMPACTO FINANCEIRO', style: 'sectionTitle', margin: [0, 20, 0, 15] },
 
                 {
                     table: {
@@ -9457,8 +9472,11 @@ function exportToPdf() {
                     margin: [0, 0, 0, 20]
                 },
 
+                // ✅ DEPLOY 101: Page break antes da seção de Criticidade
+                { text: '', pageBreak: 'after' },
+
                 // === ANÁLISE POR CRITICIDADE ===
-                { text: 'ANÁLISE POR NÍVEL DE CRITICIDADE', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+                { text: '6. ANÁLISE POR NÍVEL DE CRITICIDADE', style: 'sectionTitle', margin: [0, 20, 0, 15] },
 
                 {
                     table: {
@@ -9513,7 +9531,7 @@ function exportToPdf() {
                 { text: '', pageBreak: 'after' },
 
                 // === CONCLUSÃO PREDITIVA ===
-                { text: 'CONCLUSÃO PREDITIVA', style: 'sectionTitle', margin: [0, 0, 0, 15] },
+                { text: '7. CONCLUSÃO PREDITIVA', style: 'sectionTitle', margin: [0, 0, 0, 15] },
 
                 {
                     table: {
@@ -9574,8 +9592,11 @@ function exportToPdf() {
                     margin: [0, 0, 0, 25]
                 },
 
+                // ✅ DEPLOY 101: Page break antes das Recomendações Estratégicas
+                { text: '', pageBreak: 'after' },
+
                 // === RECOMENDAÇÕES ESTRATÉGICAS ===
-                { text: 'RECOMENDAÇÕES ESTRATÉGICAS PARA A DIRETORIA', style: 'sectionTitle', margin: [0, 20, 0, 15] },
+                { text: '8. RECOMENDAÇÕES ESTRATÉGICAS PARA A DIRETORIA', style: 'sectionTitle', margin: [0, 20, 0, 15] },
 
                 {
                     table: {
@@ -9638,8 +9659,11 @@ function exportToPdf() {
                     margin: [0, 0, 0, 25]
                 },
 
+                // ✅ DEPLOY 101: Page break antes dos Investimentos Sugeridos
+                { text: '', pageBreak: 'after' },
+
                 // === INVESTIMENTOS SUGERIDOS ===
-                { text: 'INVESTIMENTOS SUGERIDOS', style: 'sectionTitle', margin: [0, 15, 0, 15] },
+                { text: '9. INVESTIMENTOS SUGERIDOS', style: 'sectionTitle', margin: [0, 15, 0, 15] },
 
                 {
                     table: {
@@ -9695,7 +9719,7 @@ function exportToPdf() {
                 { text: '', pageBreak: 'after' },
 
                 // === LISTAGEM DETALHADA ===
-                { text: 'DETALHAMENTO COMPLETO DAS RNCs', style: 'sectionTitle', margin: [0, 0, 0, 15] },
+                { text: '10. DETALHAMENTO COMPLETO DAS RNCs', style: 'sectionTitle', margin: [0, 0, 0, 15] },
 
                 {
                     table: {
@@ -9800,10 +9824,17 @@ function exportToPdf() {
                 },
 
                 // Índice
-                indexList: {
+                indexItem: {
                     fontSize: 11,
                     color: '#333',
-                    lineHeight: 1.5
+                    lineHeight: 1.6,
+                    margin: [0, 3, 0, 3]
+                },
+                indexSubItem: {
+                    fontSize: 10,
+                    color: '#666',
+                    lineHeight: 1.5,
+                    margin: [0, 2, 0, 2]
                 },
 
                 // KPIs
