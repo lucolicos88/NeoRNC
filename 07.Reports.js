@@ -704,8 +704,10 @@ var Reports = (function() {
 
   } catch (error) {
     Logger.logError('getDashboardData_ERROR', error);
+    // ✅ DEPLOY 105: SEMPRE retornar rncs, mesmo em caso de erro (array vazio)
     return {
       total: 0,
+      rncs: [], // Garantir que rncs sempre existe
       error: error.toString()
     };
   }

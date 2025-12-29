@@ -9114,15 +9114,25 @@ async function renderChartForPdf(type, data, title) {
         container.style.top = '-9999px';
         document.body.appendChild(container);
 
-        const entries = Object.entries(data);
+        // ✅ DEPLOY 105: Filtrar e validar dados antes de criar gráfico
+        const entries = Object.entries(data)
+            .filter(([label, value]) => {
+                // Filtrar labels vazias e valores inválidos
+                const isValidLabel = label && label.trim() !== '';
+                const numValue = parseFloat(value);
+                const isValidValue = !isNaN(numValue) && isFinite(numValue);
+                return isValidLabel && isValidValue;
+            })
+            .map(([label, value]) => [label, parseFloat(value)]); // Garantir que valores são números
+
         if (entries.length === 0) {
-            console.warn(`⚠️ Sem dados para ${title} - abortando`);
+            console.warn(`⚠️ Sem dados válidos para ${title} - abortando`);
             container.remove();
             resolve(null);
             return;
         }
 
-        console.log(`📊 Criando gráfico ${title} com ${entries.length} itens`);
+        console.log(`📊 Criando gráfico ${title} com ${entries.length} itens válidos`);
 
         // ✅ Definir se é gráfico de pizza/donut ou não
         const isPieDonut = (type === 'pie' || type === 'donut');
@@ -9361,11 +9371,20 @@ async function exportToPdf() {
         }
 
         try {
-            // Impacto Financeiro por Tipo
+            // ✅ DEPLOY 105: Impacto Financeiro por Tipo (FIX validação)
             const impactoData = {};
+            const custoTotal = parseFloat(stats.custoTotal) || 0;
+            const total = parseInt(stats.total) || 1; // Evitar divisão por zero
+
             Object.entries(stats.porTipo || {}).forEach(([tipo, qtd]) => {
-                impactoData[tipo] = stats.custoTotal ? (stats.custoTotal / stats.total * qtd) : 0;
+                const quantidade = parseInt(qtd) || 0;
+                const custoMedio = custoTotal > 0 ? (custoTotal / total) : 0;
+                const valorImpacto = custoMedio * quantidade;
+                // ✅ Validar que é um número válido
+                impactoData[tipo] = isFinite(valorImpacto) ? Math.round(valorImpacto * 100) / 100 : 0;
             });
+
+            console.log('📊 ImpactoData preparado:', impactoData);
             chartImpactoFinanceiro = await renderChartForPdf('bar', impactoData, 'Impacto Financeiro por Tipo');
             console.log('✅ chartImpactoFinanceiro renderizado:', !!chartImpactoFinanceiro);
         } catch (e) {
