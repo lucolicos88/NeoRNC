@@ -1481,9 +1481,12 @@ function getKanbanDataFiltered(tipoSetor, setor) {
  */
 function getDashboardDataFiltered(tipoSetor, setor) {
   try {
+    // ✅ DEPLOY 109: FORCE REFRESH para limpar cache antigo (temporário)
+    var forceRefresh = true;
+
     // ✅ DEPLOY 72.4: Se não houver filtro, retornar dados completos
     if (!setor || setor === 'Todos') {
-      return Reports.getDashboardData();
+      return Reports.getDashboardData(forceRefresh);
     }
 
     var allRncs = RncOperations.getAllRncs();
@@ -1514,7 +1517,8 @@ function getDashboardDataFiltered(tipoSetor, setor) {
 
     // ✅ DEPLOY 72.4: Usar a função completa do Reports passando RNCs filtradas
     // Isso garante que TODOS os gráficos sejam calculados corretamente
-    return Reports.getDashboardData(false, filteredRncs);
+    // ✅ DEPLOY 109: Force refresh para limpar cache antigo
+    return Reports.getDashboardData(forceRefresh, filteredRncs);
 
   } catch (error) {
     Logger.logError('getDashboardDataFiltered', error);

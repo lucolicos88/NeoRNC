@@ -8210,10 +8210,10 @@ var dashboardCache = null;
 var dashboardCacheTime = null;
 var CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
-async function refreshDashboard(retryCount = 0) {
+async function refreshDashboard(retryCount = 0, forceRefresh = false) {
     try {
-        // ✅ Verificar cache
-        if (dashboardCache && dashboardCacheTime && (Date.now() - dashboardCacheTime < CACHE_DURATION)) {
+        // ✅ Verificar cache (SKIP se forceRefresh = true)
+        if (!forceRefresh && dashboardCache && dashboardCacheTime && (Date.now() - dashboardCacheTime < CACHE_DURATION)) {
             debugLog('info', '⚡ Usando cache do Dashboard');
             dashboardRncs = dashboardCache.rncs || [];  // ✅ DEPLOY 101: Carregar RNCs do cache
             console.log('📦 Cache usado - RNCs:', dashboardRncs.length, 'hasRncs:', !!dashboardCache.rncs);
@@ -12552,11 +12552,15 @@ async function forceReloadKanban() {
 }
 
 async function forceReloadDashboard() {
-    debugLog('info', '🔄 Recarga forçada do Dashboard');
+    debugLog('info', '🔄 Recarga forçada do Dashboard (BYPASS CACHE BACKEND)');
+    // ✅ DEPLOY 109: Limpar cache frontend E backend
     clearCache('dashboard');
+    dashboardCache = null;
+    dashboardCacheTime = null;
     loadedTabs.dashboard = false;
-    await loadDashboard();
-    showSuccess('Dashboard atualizado!');
+    // Passar forceRefresh=true para bypass cache do backend
+    await refreshDashboard(0, true);
+    showSuccess('Dashboard atualizado! Cache limpo.');
 }
 
 // === SISTEMA DE INVALIDAÇÃO DE CACHE (Deploy 30) ===
