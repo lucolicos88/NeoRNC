@@ -1363,12 +1363,77 @@ function debug_MostrarEstrutuRA(rncNumber) {
     var value = rncData[field];
     var type = typeof value;
     var preview = String(value).substring(0, 50);
-    
+
     console.log('  -', field);
     console.log('    Tipo:', type);
     console.log('    Valor:', preview);
     console.log('');
   }
+}
+
+/**
+ * ✅ DEPLOY 115 - FASE 4: Teste da função isValidEmail() unificada
+ * Execute este teste para validar a função após Deploy 115
+ */
+function testIsValidEmail() {
+  console.log('========================================');
+  console.log('TESTE: isValidEmail() - Versão Unificada');
+  console.log('========================================\n');
+
+  // Caso 1: Email válido - retorno objeto
+  var test1 = isValidEmail('user@example.com');
+  console.log('Teste 1 - Email válido (objeto):');
+  console.log('  Input: "user@example.com"');
+  console.log('  Output:', JSON.stringify(test1));
+  console.log('  ✅ Esperado: { valid: true, error: null }\n');
+
+  // Caso 2: Email inválido - retorno objeto
+  var test2 = isValidEmail('invalid-email');
+  console.log('Teste 2 - Email inválido (objeto):');
+  console.log('  Input: "invalid-email"');
+  console.log('  Output:', JSON.stringify(test2));
+  console.log('  ✅ Esperado: { valid: false, error: "..." }\n');
+
+  // Caso 3: Email válido - retorno boolean
+  var test3 = isValidEmail('user@example.com', true);
+  console.log('Teste 3 - Email válido (boolean):');
+  console.log('  Input: "user@example.com", true');
+  console.log('  Output:', test3);
+  console.log('  ✅ Esperado: true\n');
+
+  // Caso 4: Email inválido - retorno boolean
+  var test4 = isValidEmail('invalid', true);
+  console.log('Teste 4 - Email inválido (boolean):');
+  console.log('  Input: "invalid", true');
+  console.log('  Output:', test4);
+  console.log('  ✅ Esperado: false\n');
+
+  // Caso 5: Email vazio - retorno objeto
+  var test5 = isValidEmail('');
+  console.log('Teste 5 - Email vazio (objeto):');
+  console.log('  Input: ""');
+  console.log('  Output:', JSON.stringify(test5));
+  console.log('  ✅ Esperado: { valid: false, error: "Email não pode estar vazio" }\n');
+
+  // Caso 6: Email muito longo - retorno objeto
+  var longEmail = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com';
+  var test6 = isValidEmail(longEmail);
+  console.log('Teste 6 - Email muito longo (objeto):');
+  console.log('  Input: "' + longEmail.substring(0, 20) + '..." (' + longEmail.length + ' chars)');
+  console.log('  Output:', JSON.stringify(test6));
+  console.log('  ✅ Esperado: { valid: false, error: "Email muito longo..." }\n');
+
+  // Caso 7: Email com caracteres especiais inválidos
+  var test7 = isValidEmail('user#invalid@example.com', true);
+  console.log('Teste 7 - Caracteres inválidos (boolean):');
+  console.log('  Input: "user#invalid@example.com", true');
+  console.log('  Output:', test7);
+  console.log('  ✅ Esperado: false\n');
+
+  console.log('========================================');
+  console.log('TESTES CONCLUÍDOS!');
+  console.log('Verifique se todos os outputs correspondem aos esperados.');
+  console.log('========================================');
 }
 
 
