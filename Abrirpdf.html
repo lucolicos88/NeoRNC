@@ -5,7 +5,13 @@
   </head>
   <body>
     <script>
-      window.open('<?= url ?>', '_blank', 'width=1200, height=800');
+      // ✅ DEPLOY 114 - FASE 1: Validar URL para prevenir XSS Template Injection
+      var url = '<?= url ?>';
+      if (url.match(/^https?:\/\//)) {
+        window.open(url, '_blank', 'width=1200, height=800');
+      } else {
+        console.error('URL inválida bloqueada por segurança');
+      }
       google.script.host.close();
     </script>
   </body>

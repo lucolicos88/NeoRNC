@@ -275,7 +275,14 @@ var PrintManager = (function() {
     if (result.success) {
       // ✅ ABRIR PREVIEW DO PDF EM NOVA ABA
       var htmlTemplate = HtmlService.createTemplateFromFile('Abrirpdf');
-      htmlTemplate.url = result.printUrl;
+
+      // ✅ DEPLOY 114 - FASE 1: Sanitizar URL para prevenir XSS Template Injection
+      var sanitizedUrl = encodeURI(result.printUrl)
+        .replace(/javascript:/gi, '')
+        .replace(/data:/gi, '')
+        .replace(/vbscript:/gi, '');
+
+      htmlTemplate.url = sanitizedUrl;
       
       ui.showModalDialog(
         htmlTemplate.evaluate().setHeight(10).setWidth(100), 
