@@ -485,7 +485,8 @@ function getSystemConfig(key, defaultValue) {
         if (value && typeof value === 'string' && value.charAt(0) === "'") {
           value = value.substring(1);
         }
-        cache.put(cacheKey, JSON.stringify(value), CONFIG.SYSTEM.CACHE_DURATION);
+        // ✅ DEPLOY 117 - HOTFIX: Usar CONFIG.CACHE.MEDIUM (FASE 5 removeu SYSTEM.CACHE_DURATION)
+        cache.put(cacheKey, JSON.stringify(value), CONFIG.CACHE.MEDIUM);
         return value;
       }
     }
