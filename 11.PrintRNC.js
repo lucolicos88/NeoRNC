@@ -1,5 +1,34 @@
 /**
- * Converte objeto para query string
+ * 11.PrintRNC.js - Sistema de Impressão de RNC em PDF
+ *
+ * Módulo responsável por gerar PDFs de RNCs preenchendo templates dinâmicos.
+ * Gerencia a aba "Print", configurações de impressão, menu RNC e funções de manutenção.
+ *
+ * Funcionalidades principais:
+ * - Preenchimento dinâmico de templates de impressão
+ * - Geração de URLs de PDF com configurações personalizadas
+ * - Menu RNC com opções de impressão e manutenção
+ * - Funções de diagnóstico e debug do sistema
+ *
+ * @module PrintRNC
+ * @since Deploy 37
+ */
+
+/**
+ * Converte objeto JavaScript para query string para URL
+ *
+ * Transforma um objeto em parâmetros de URL no formato &key=value.
+ * Usado principalmente para construir URLs de exportação de PDF do Google Sheets.
+ *
+ * @param {Object} obj - Objeto com pares chave-valor
+ * @return {string} Query string formatada (ex: "&size=7&portrait=true")
+ *
+ * @example
+ * var params = { size: 7, portrait: true };
+ * var query = objectToQueryString(params);
+ * // Retorna: "&size=7&portrait=true"
+ *
+ * @since Deploy 37
  */
 function objectToQueryString(obj) {
   return Object.keys(obj).map(function(key) {
@@ -8,10 +37,38 @@ function objectToQueryString(obj) {
 }
 
 /**
- * Configurações de impressão PDF
- */
-/**
- * Configurações de impressão PDF
+ * Configurações de impressão PDF para exportação do Google Sheets
+ *
+ * Define todos os parâmetros de formatação e layout para geração de PDF.
+ * Essas configurações são convertidas em query string e anexadas à URL de exportação.
+ *
+ * Propriedades principais:
+ * - size: 7 (A4)
+ * - portrait: true (orientação retrato)
+ * - fitw: true (ajustar à largura)
+ * - scale: 2 (2 = ajustar à largura, 1 = tamanho real, 0 = ajustar à página)
+ * - margens: 0.25 polegadas em todos os lados
+ * - gridlines: false (não exibir linhas de grade)
+ *
+ * @constant {Object}
+ * @property {number} size - Tamanho do papel (7 = A4)
+ * @property {boolean} fzr - Congelar linhas (false = não congelar)
+ * @property {boolean} portrait - Orientação retrato (true) ou paisagem (false)
+ * @property {boolean} fitw - Ajustar à largura da página
+ * @property {boolean} gridlines - Exibir linhas de grade
+ * @property {boolean} printtitle - Imprimir título
+ * @property {boolean} sheetnames - Imprimir nome das abas
+ * @property {string} pagenum - Numeração de páginas
+ * @property {boolean} attachment - Tratar como anexo para download
+ * @property {number} top_margin - Margem superior em polegadas
+ * @property {number} bottom_margin - Margem inferior em polegadas
+ * @property {number} left_margin - Margem esquerda em polegadas
+ * @property {number} right_margin - Margem direita em polegadas
+ * @property {string} horizontal_alignment - Alinhamento horizontal (CENTER, LEFT, RIGHT)
+ * @property {string} vertical_alignment - Alinhamento vertical (TOP, MIDDLE, BOTTOM)
+ * @property {number} scale - Escala de impressão (0=ajustar página, 1=real, 2=ajustar largura)
+ *
+ * @since Deploy 37
  */
 var PRINT_OPTIONS = {
   'size': 7,
@@ -35,7 +92,25 @@ var PRINT_OPTIONS = {
 };
 
 /**
- * Gera URL do PDF com preview de impressão
+ * Gera URL de exportação PDF da aba Print com todas as configurações
+ *
+ * Constrói a URL completa para exportar a aba Print como PDF, incluindo:
+ * - Configurações de impressão (PRINT_OPTIONS)
+ * - Range específico configurado (CONFIG.PRINT.RANGE_START:RANGE_END)
+ * - ID da aba (gid)
+ *
+ * A URL gerada pode ser usada para preview ou download direto do PDF.
+ *
+ * @param {string} rncNumber - Número da RNC (ex: "0001/2025")
+ * @return {string} URL completa para exportação do PDF
+ *
+ * @throws {Error} Se a aba "Print" não for encontrada
+ *
+ * @example
+ * var pdfUrl = getPrintPdfUrl('0001/2025');
+ * // Retorna: https://docs.google.com/.../export?format=pdf&size=7&portrait=true...
+ *
+ * @since Deploy 37
  */
 function getPrintPdfUrl(rncNumber) {
   try {
@@ -87,11 +162,55 @@ function getPrintPdfUrl(rncNumber) {
 
 
 /**
- * PrintRNC.gs - Módulo de Impressão
+ * PrintManager - Módulo de Gerenciamento de Impressão
+ *
+ * Padrão Module Pattern que encapsula todas as funções de impressão e gerenciamento do menu RNC.
+ * Expõe apenas as funções necessárias através do objeto de retorno.
+ *
+ * @namespace PrintManager
+ * @since Deploy 37
  */
 
 var PrintManager = (function() {
-  
+
+  /**
+   * Preenche template de impressão com dados da RNC e retorna URL do PDF
+   *
+   * Processo completo:
+   * 1. Busca dados da RNC pelo número
+   * 2. Limpa ranges anteriores da aba Print
+   * 3. Preenche campos configurados em ConfigCampos
+   * 4. Formata datas (DD/MM/YYYY) e números (formato brasileiro)
+   * 5. Gera URL do PDF para preview/download
+   *
+   * Formatações aplicadas:
+   * - Datas: Convertidas para DD/MM/YYYY
+   * - Números: Formato brasileiro (vírgula como decimal)
+   * - Valores vazios: Preenchidos com string vazia
+   *
+   * @param {string} rncNumber - Número da RNC (ex: "0001/2025")
+   * @return {Object} Objeto com resultado da operação
+   * @return {boolean} return.success - True se operação bem-sucedida
+   * @return {string} return.rncNumber - Número da RNC processada
+   * @return {string} return.printUrl - URL do PDF gerado
+   * @return {number} return.printSheetId - ID da aba Print
+   * @return {string} return.printSheetUrl - URL da aba Print
+   * @return {number} return.fieldsProcessed - Quantidade de campos preenchidos
+   * @return {number} return.fieldsSkipped - Quantidade de campos ignorados
+   * @return {string} return.message - Mensagem descritiva do resultado
+   * @return {string} [return.error] - Mensagem de erro (se houver)
+   *
+   * @example
+   * var result = fillPrintTemplateAndGetUrl('0001/2025');
+   * if (result.success) {
+   *   console.log('PDF gerado: ' + result.printUrl);
+   *   console.log('Campos preenchidos: ' + result.fieldsProcessed);
+   * } else {
+   *   console.error('Erro: ' + result.error);
+   * }
+   *
+   * @since Deploy 37
+   */
   function fillPrintTemplateAndGetUrl(rncNumber) {
   try {
     Logger.logInfo('PRINT_START', { rncNumber: rncNumber });
@@ -248,6 +367,26 @@ var PrintManager = (function() {
   }
 }
   
+  /**
+   * Solicita número da RNC via prompt e abre preview de impressão
+   *
+   * Interface interativa que:
+   * 1. Exibe prompt solicitando número da RNC
+   * 2. Valida entrada do usuário
+   * 3. Preenche template de impressão
+   * 4. Abre preview do PDF em modal (via Abrirpdf.html)
+   * 5. Sanitiza URL para prevenir XSS (Deploy 114)
+   *
+   * Exibe alertas de sucesso/erro conforme resultado.
+   *
+   * @return {void}
+   *
+   * @example
+   * // Chamado via menu: RNC > Imprimir RNC...
+   * printCurrentRncFromSheet();
+   *
+   * @since Deploy 37
+   */
   function printCurrentRncFromSheet() {
   try {
     var ui = SpreadsheetApp.getUi();
@@ -305,8 +444,29 @@ var PrintManager = (function() {
 }
   
   /**
-   * Deploy 74.5.2: Menu RNC melhorado
-   * Cria menu completo com opções de impressão, manutenção e diagnóstico
+   * Cria menu completo RNC na interface do Google Sheets
+   *
+   * Estrutura do menu:
+   * - RNC (principal)
+   *   - Imprimir RNC...
+   *   - Manutenção (submenu)
+   *     - Limpar Cache do Sistema
+   *     - Limpar Aba de Logs
+   *     - Mapear Colunas da Aba RNC
+   *     - Pintar Colunas por Seção
+   *     - Formatar Aba RNC
+   *   - Diagnóstico (submenu)
+   *     - Verificar Sistema
+   *     - Mostrar Informações
+   *     - Debug Setores
+   *
+   * @return {void}
+   *
+   * @example
+   * // Chamado automaticamente no onOpen
+   * createPrintMenu();
+   *
+   * @since Deploy 74.5.2
    */
   function createPrintMenu() {
     try {
@@ -341,22 +501,53 @@ var PrintManager = (function() {
     }
   }
   
+  // Expõe funções públicas do módulo
   return {
     fillPrintTemplateAndGetUrl: fillPrintTemplateAndGetUrl,
     printCurrentRncFromSheet: printCurrentRncFromSheet,
     createPrintMenu: createPrintMenu
   };
-  
+
 })();
 
+/**
+ * Função wrapper para fillPrintTemplateAndGetUrl do PrintManager
+ *
+ * Permite chamada direta sem precisar acessar PrintManager.
+ *
+ * @param {string} rncNumber - Número da RNC (ex: "0001/2025")
+ * @return {Object} Resultado da operação de impressão
+ *
+ * @since Deploy 37
+ */
 function fillPrintTemplateAndGetUrl(rncNumber) {
   return PrintManager.fillPrintTemplateAndGetUrl(rncNumber);
 }
 
+/**
+ * Função wrapper para printCurrentRncFromSheet do PrintManager
+ *
+ * Permite chamada direta sem precisar acessar PrintManager.
+ *
+ * @return {void}
+ *
+ * @since Deploy 37
+ */
 function printCurrentRncFromSheet() {
   return PrintManager.printCurrentRncFromSheet();
 }
 
+/**
+ * Trigger onOpen - Executado automaticamente ao abrir a planilha
+ *
+ * Cria o menu RNC com todas as opções de impressão e manutenção.
+ * Tratamento de erros com log para garantir que falhas não afetem a abertura da planilha.
+ *
+ * @param {Object} e - Objeto de evento do trigger
+ * @return {void}
+ *
+ * @since Deploy 37
+ */
 function onOpen(e) {
   try {
     PrintManager.createPrintMenu();
@@ -369,6 +560,23 @@ function onOpen(e) {
 
 /**
  * Menu: Limpar Cache do Sistema
+ *
+ * Limpa todos os caches do sistema (RNC, Dashboard, Script).
+ * Solicita confirmação antes de executar.
+ * Exibe resultado detalhado da limpeza.
+ *
+ * Caches limpos:
+ * - Cache de RNCs (CacheService)
+ * - Cache do Dashboard (CacheService)
+ * - Cache do Script (ScriptCache)
+ *
+ * @return {void}
+ *
+ * @example
+ * // Chamado via menu: RNC > Manutenção > Limpar Cache do Sistema
+ * menuLimparCache();
+ *
+ * @since Deploy 74.5.2
  */
 function menuLimparCache() {
   try {
@@ -402,6 +610,20 @@ function menuLimparCache() {
 
 /**
  * Menu: Limpar Aba de Logs
+ *
+ * Remove todos os registros de log da aba Logs (exceto cabeçalho).
+ * Solicita DUPLA confirmação devido à natureza irreversível da operação.
+ * Exibe quantidade de logs removidos.
+ *
+ * ATENÇÃO: Esta operação não pode ser desfeita!
+ *
+ * @return {void}
+ *
+ * @example
+ * // Chamado via menu: RNC > Manutenção > Limpar Aba de Logs
+ * menuLimparLogs();
+ *
+ * @since Deploy 74.5.2
  */
 function menuLimparLogs() {
   try {
@@ -442,6 +664,24 @@ function menuLimparLogs() {
 
 /**
  * Menu: Verificar Sistema
+ *
+ * Executa verificação de todos os componentes críticos do sistema.
+ * Verifica disponibilidade dos módulos:
+ * - CONFIG
+ * - Database
+ * - Logger
+ * - RncOperations
+ * - Reports
+ *
+ * Exibe status de cada componente e resultado geral.
+ *
+ * @return {void}
+ *
+ * @example
+ * // Chamado via menu: RNC > Diagnóstico > Verificar Sistema
+ * menuVerificarSistema();
+ *
+ * @since Deploy 74.5.2
  */
 function menuVerificarSistema() {
   try {
@@ -474,7 +714,22 @@ function menuVerificarSistema() {
 }
 
 /**
- * Menu: Mostrar Informações
+ * Menu: Mostrar Informações do Sistema
+ *
+ * Exibe informações técnicas do sistema:
+ * - Versão atual
+ * - Data do build
+ * - ID da planilha
+ * - Usuário logado
+ * - Timezone do script
+ *
+ * @return {void}
+ *
+ * @example
+ * // Chamado via menu: RNC > Diagnóstico > Mostrar Informações
+ * menuMostrarInfo();
+ *
+ * @since Deploy 74.5.2
  */
 function menuMostrarInfo() {
   try {
@@ -496,7 +751,23 @@ function menuMostrarInfo() {
 
 /**
  * Menu: Debug Setores
- * Deploy 74.7: Função para debugar separação de setores
+ *
+ * Executa diagnóstico completo sobre os setores registrados nas RNCs.
+ * Útil para identificar problemas com separação de múltiplos setores.
+ *
+ * Informações coletadas:
+ * - Total de RNCs
+ * - Lista de setores únicos
+ * - Teste de split com diferentes separadores (ponto-vírgula, vírgula)
+ * - Logs detalhados na aba Logs
+ *
+ * @return {void}
+ *
+ * @example
+ * // Chamado via menu: RNC > Diagnóstico > Debug Setores
+ * menuDebugSetores();
+ *
+ * @since Deploy 74.7
  */
 function menuDebugSetores() {
   try {
@@ -532,7 +803,29 @@ function menuDebugSetores() {
 
 /**
  * Menu: Mapear Colunas da Aba RNC
- * Deploy 75: Organização da base de dados
+ *
+ * Sincroniza ConfigCampos com a estrutura real da aba RNC.
+ * Para cada campo em ConfigCampos, encontra sua posição (coluna) na aba RNC
+ * e preenche a coluna OrdemRNC automaticamente.
+ *
+ * Processo:
+ * 1. Lê headers da aba RNC
+ * 2. Para cada campo em ConfigCampos
+ * 3. Busca header correspondente na aba RNC
+ * 4. Preenche OrdemRNC com o índice da coluna
+ *
+ * Exibe estatísticas:
+ * - Total de colunas na aba RNC
+ * - Campos mapeados com sucesso
+ * - Campos não encontrados
+ *
+ * @return {void}
+ *
+ * @example
+ * // Chamado via menu: RNC > Manutenção > Mapear Colunas da Aba RNC
+ * menuMapearColunas();
+ *
+ * @since Deploy 75
  */
 function menuMapearColunas() {
   try {
@@ -581,7 +874,30 @@ function menuMapearColunas() {
 
 /**
  * Menu: Pintar Headers por Seção
- * Deploy 75.1: Pinta apenas headers (cabeçalhos) das colunas
+ *
+ * Aplica cores aos headers da aba RNC baseado na seção de cada campo.
+ * Facilita identificação visual das seções na planilha.
+ *
+ * Cores por seção:
+ * - Abertura: Azul claro
+ * - Qualidade: Verde claro
+ * - Liderança: Laranja claro
+ * - Análise: Roxo claro
+ *
+ * IMPORTANTE: Execute "Mapear Colunas" antes de usar esta função!
+ *
+ * Formatação aplicada:
+ * - Background: Cor da seção
+ * - Font: Negrito
+ * - Apenas linha 1 (headers) é afetada
+ *
+ * @return {void}
+ *
+ * @example
+ * // Chamado via menu: RNC > Manutenção > Pintar Colunas por Seção
+ * menuPintarColunas();
+ *
+ * @since Deploy 75.1
  */
 function menuPintarColunas() {
   try {
@@ -635,7 +951,34 @@ function menuPintarColunas() {
 
 /**
  * Menu: Formatar Aba RNC
- * Deploy 75.2: Formatação profissional da planilha
+ *
+ * Aplica formatação profissional completa na aba RNC.
+ *
+ * CABEÇALHO (linha 1):
+ * - Alinhamento: Centro (horizontal e vertical)
+ * - Quebra de texto: Ativada
+ * - Bordas: Todas (preto)
+ * - Altura: 60px
+ * - Linha congelada
+ *
+ * DADOS (linhas 2+):
+ * - Alinhamento: Esquerda (H) + Centro (V)
+ * - Quebra de texto: Ativada
+ * - Bordas: Todas (cinza claro)
+ * - Altura: 30px
+ *
+ * COLUNAS:
+ * - Largura: Auto-ajustada (100-400px)
+ *
+ * Esta operação pode demorar alguns segundos dependendo do tamanho da planilha.
+ *
+ * @return {void}
+ *
+ * @example
+ * // Chamado via menu: RNC > Manutenção > Formatar Aba RNC
+ * menuFormatarAbaRNC();
+ *
+ * @since Deploy 75.2
  */
 function menuFormatarAbaRNC() {
   try {
@@ -689,7 +1032,30 @@ function menuFormatarAbaRNC() {
 }
 
 /**
- * Configura margens e layout da aba Print
+ * Configura margens e layout de impressão da aba Print
+ *
+ * Define configurações de página para impressão profissional:
+ * - Margens: 0.5cm (36 pontos) em todos os lados
+ * - Tamanho: A4
+ * - Orientação: Retrato
+ * - Ajuste: Largura da página
+ * - Centralização: Horizontal
+ *
+ * Nota: 1 ponto = 0.0139 cm, logo 36 pontos ≈ 0.5 cm
+ *
+ * @return {Object} Objeto com resultado da operação
+ * @return {boolean} return.success - True se configuração bem-sucedida
+ * @return {string} [return.error] - Mensagem de erro (se houver)
+ *
+ * @throws {Error} Se a aba "Print" não for encontrada
+ *
+ * @example
+ * var result = configurarLayoutPrint();
+ * if (result.success) {
+ *   console.log('Layout configurado com sucesso');
+ * }
+ *
+ * @since Deploy 37
  */
 function configurarLayoutPrint() {
   try {

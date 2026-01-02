@@ -376,7 +376,17 @@ function sortRncNumbers(rncNumbers) {
 
 /**
  * Ponto de entrada da aplicação web COM AUTENTICAÇÃO FORÇADA
- * Deploy 33 - Correção de Autenticação
+ * Gerencia autenticação, rate limiting e carrega interface HTML
+ *
+ * @param {Object} e - Objeto de evento do Google Apps Script
+ * @return {HtmlOutput} Interface HTML da aplicação ou tela de erro/login
+ *
+ * @example
+ * // Chamado automaticamente quando usuário acessa a URL da aplicação
+ * // Valida email, aplica rate limiting e retorna interface
+ *
+ * @since Deploy 33 - Correção de Autenticação
+ * @since Deploy 119
  */
 function doGet(e) {
   try {
@@ -712,7 +722,15 @@ function doGet(e) {
 
 /**
  * Inicialização rápida do sistema
- * @return {Object} Resultado da inicialização
+ * Valida configurações, cria planilhas e inicializa configurações padrão
+ *
+ * @return {Object} Resultado da inicialização com propriedades {success, message, version}
+ *
+ * @example
+ * var result = initializeSystemFast();
+ * // Returns: {success: true, message: 'Sistema inicializado com sucesso', version: '...'}
+ *
+ * @since Deploy 119
  */
 function initializeSystemFast() {
   var startTime = new Date().getTime();
@@ -752,8 +770,18 @@ function initializeSystemFast() {
 }
 
 /**
- * Inicializa planilhas necessárias
+ * Inicializa planilhas necessárias do sistema
+ * Cria abas RNC, Anexos, Logs e outras planilhas de configuração
+ *
+ * @param {Spreadsheet} ss - Objeto Spreadsheet do Google Sheets
+ * @return {void}
+ *
+ * @example
+ * var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+ * initializeSheets(ss);
+ *
  * @private
+ * @since Deploy 119
  */
 function initializeSheets(ss) {
   // Planilha RNC
@@ -787,8 +815,18 @@ function initializeSheets(ss) {
 }
 
 /**
- * Inicializa configurações padrão
+ * Inicializa configurações padrão do sistema
+ * Cria seções, campos, listas e permissões padrão se não existirem
+ *
+ * @return {void}
+ *
+ * @example
+ * initializeDefaultConfigs();
+ * // Cria seções: Abertura, Qualidade, Liderança
+ * // Cria listas padrão de colaboradores, setores, etc
+ *
  * @private
+ * @since Deploy 119
  */
 function initializeDefaultConfigs() {
   // Seções padrão
@@ -992,8 +1030,18 @@ function getUserContextOptimized() {
 }
 
 /**
- * Obtém role do usuário
+ * Obtém role do usuário baseado nas permissões
+ * Busca role na planilha de permissões, retorna 'Usuario' como padrão
+ *
+ * @param {string} email - Email do usuário
+ * @return {string} Role do usuário ('Admin', 'Usuario', 'Espectador', etc)
+ *
+ * @example
+ * var role = getUserRole('usuario@example.com');
+ * // Returns: 'Admin' ou 'Usuario'
+ *
  * @private
+ * @since Deploy 119
  */
 function getUserRole(email) {
   try {
@@ -1022,15 +1070,79 @@ function getUserRole(email) {
 // ===== FUNÇÕES EXPOSTAS PARA O FRONTEND =====
 
 // RNC Operations
+
+/**
+ * Salva nova RNC no sistema
+ * @param {Object} formData - Dados do formulário de RNC
+ * @param {Array} files - Arquivos anexados (opcional)
+ * @return {Object} Resultado da operação com propriedades {success, rncNumber, message}
+ * @since Deploy 119
+ */
 function saveRnc(formData, files) { return RncOperations.saveRnc(formData, files); }
+
+/**
+ * Atualiza RNC existente
+ * @param {string} rncNumber - Número da RNC no formato "XXXX/YYYY"
+ * @param {Object} formData - Dados atualizados do formulário
+ * @param {Array} files - Arquivos anexados (opcional)
+ * @return {Object} Resultado da operação com propriedades {success, message}
+ * @since Deploy 119
+ */
 function updateRnc(rncNumber, formData, files) { return RncOperations.updateRnc(rncNumber, formData, files); }
+
+/**
+ * Busca RNC por número
+ * @param {string} rncNumber - Número da RNC no formato "XXXX/YYYY"
+ * @return {Object|null} Objeto com dados da RNC ou null se não encontrada
+ * @since Deploy 119
+ */
 function getRncByNumber(rncNumber) { return RncOperations.getRncByNumber(rncNumber); }
+
+/**
+ * Busca todas as RNCs com filtros opcionais
+ * @param {Object} filters - Filtros para busca (opcional)
+ * @return {Array<Object>} Array de objetos RNC
+ * @since Deploy 119
+ */
 function getAllRncs(filters) { return RncOperations.getAllRncs(filters); }
+
+/**
+ * Busca apenas números de todas as RNCs
+ * @return {Array<string>} Array de números de RNC ordenados
+ * @since Deploy 119
+ */
 function getAllRncNumbers() { return RncOperations.getAllRncNumbers(); }
+
+/**
+ * Busca RNCs por termo de pesquisa
+ * @param {string} searchTerm - Termo para buscar em múltiplos campos
+ * @return {Array<Object>} Array de RNCs que correspondem à busca
+ * @since Deploy 119
+ */
 function searchRncs(searchTerm) { return RncOperations.searchRncs(searchTerm); }
+
+/**
+ * Busca RNCs por setor
+ * @param {string} setor - Nome do setor
+ * @return {Array<Object>} Array de RNCs do setor especificado
+ * @since Deploy 119
+ */
 function getRncsBySetor(setor) { return RncOperations.getRncsBySetor(setor); }
 
-// Deploy 66: Filtrar RNCs por setor do usuário
+/**
+ * Busca RNCs filtradas pelo setor do usuário autenticado
+ * Admins visualizam todas as RNCs, outros usuários veem apenas do seu setor
+ *
+ * @return {Array<Object>} Array de RNCs filtradas por permissão do usuário
+ *
+ * @example
+ * var rncs = getRncsByUserSetor();
+ * // Admin: retorna todas
+ * // Usuário: retorna apenas do seu setor
+ *
+ * @since Deploy 66
+ * @since Deploy 119
+ */
 function getRncsByUserSetor() {
   var userEmail = Session.getActiveUser().getEmail();
   var userPerms = PermissionsManager.getUserPermissions(userEmail);
@@ -1044,7 +1156,20 @@ function getRncsByUserSetor() {
   return RncOperations.getRncsByUserSetor(userEmail);
 }
 
-// ✅ Deploy 34: Histórico de alterações
+/**
+ * Obtém histórico de alterações de uma RNC
+ * Retorna array de registros com mudanças, timestamps e usuários
+ *
+ * @param {string} rncNumber - Número da RNC no formato "XXXX/YYYY"
+ * @return {Array<Object>} Array de objetos com histórico de alterações
+ *
+ * @example
+ * var historico = getHistoricoRnc('0001/2024');
+ * // Returns: [{campo: 'Status', valorAnterior: 'Abertura', valorNovo: 'Análise', ...}]
+ *
+ * @since Deploy 34 - Histórico de alterações
+ * @since Deploy 119
+ */
 function getHistoricoRnc(rncNumber) {
   try {
     var result = HistoricoManager.getHistoricoRnc(rncNumber);
@@ -1213,20 +1338,108 @@ function getRncNumbersBySetor(tipoSetor, setor) {
 
 
 // Reports
+
+/**
+ * Obtém dados estatísticos do dashboard
+ * @param {string} setor - Setor para filtrar (opcional)
+ * @return {Object} Estatísticas com totais, gráficos e métricas
+ * @since Deploy 119
+ */
 function getDashboardData(setor) { return Reports.getDashboardData(setor); }
+
+/**
+ * Obtém dados do kanban de RNCs por status
+ * @return {Object} Colunas do kanban com RNCs agrupadas por status
+ * @since Deploy 119
+ */
 function getKanbanData() { return Reports.getKanbanData(); }
+
+/**
+ * Gera relatório personalizado com filtros
+ * @param {Object} filters - Filtros para o relatório (período, setor, status, etc)
+ * @return {Object} Dados do relatório gerado
+ * @since Deploy 119
+ */
 function generateReport(filters) { return Reports.generateReport(filters); }
+
+/**
+ * Obtém opções disponíveis para filtros de relatório
+ * @return {Object} Opções de filtros (setores, status, tipos, etc)
+ * @since Deploy 119
+ */
 function getReportFilterOptions() { return Reports.getReportFilterOptions(); }
 
 // Configuration
+
+/**
+ * Obtém todas as listas de configuração
+ * @return {Object} Objeto com todas as listas (Colaboradores, Setores, etc)
+ * @since Deploy 119
+ */
 function getLists() { return ConfigManager.getLists(); }
+
+/**
+ * Salva ou atualiza uma lista de configuração
+ * @param {string} listName - Nome da lista
+ * @param {Array} items - Itens da lista
+ * @return {Object} Resultado da operação
+ * @since Deploy 119
+ */
 function saveList(listName, items) { return ConfigManager.saveList(listName, items); }
+
+/**
+ * Remove uma lista de configuração
+ * @param {string} listName - Nome da lista a remover
+ * @return {Object} Resultado da operação
+ * @since Deploy 119
+ */
 function deleteList(listName) { return ConfigManager.deleteList(listName); }
+
+/**
+ * Obtém todas as seções do formulário
+ * @return {Array<Object>} Array de seções configuradas
+ * @since Deploy 119
+ */
 function getSections() { return ConfigManager.getSections(); }
+
+/**
+ * Salva ou atualiza uma seção
+ * @param {Object} sectionData - Dados da seção (nome, descrição, ordem)
+ * @return {Object} Resultado da operação
+ * @since Deploy 119
+ */
 function saveSection(sectionData) { return ConfigManager.saveSection(sectionData); }
+
+/**
+ * Remove uma seção do formulário
+ * @param {string} sectionName - Nome da seção a remover
+ * @return {Object} Resultado da operação
+ * @since Deploy 119
+ */
 function deleteSection(sectionName) { return ConfigManager.deleteSection(sectionName); }
+
+/**
+ * Obtém todos os campos configurados
+ * @return {Array<Object>} Array de campos de todas as seções
+ * @since Deploy 119
+ */
 function getAllFieldsFromConfig() { return ConfigManager.getAllFieldsFromConfig(); }
+
+/**
+ * Salva ou atualiza configuração de um campo
+ * @param {Object} fieldData - Dados do campo (seção, nome, tipo, validação, etc)
+ * @return {Object} Resultado da operação
+ * @since Deploy 119
+ */
 function saveFieldConfiguration(fieldData) { return ConfigManager.saveFieldConfiguration(fieldData); }
+
+/**
+ * Remove configuração de um campo
+ * @param {string} secao - Nome da seção
+ * @param {string} campo - Nome do campo
+ * @return {Object} Resultado da operação
+ * @since Deploy 119
+ */
 function deleteFieldConfiguration(secao, campo) { return ConfigManager.deleteFieldConfiguration(secao, campo); }
 
 // ===== FUNÇÕES DE TESTE E DEBUG =====
@@ -1527,10 +1740,48 @@ function getDashboardDataFiltered(tipoSetor, setor) {
 }
 
 // ===== PERMISSIONS (NOVO) =====
+
+/**
+ * Obtém permissões do usuário atual
+ * @return {Object} Objeto com roles, permissões e flags de acesso
+ * @example
+ * var perms = getUserPermissions();
+ * // Returns: {roles: ['Admin'], isAdmin: true, permissions: {...}, ...}
+ * @since Deploy 119
+ */
 function getUserPermissions() { return PermissionsManager.getUserPermissions(Session.getActiveUser().getEmail()); }
+
+/**
+ * Verifica se usuário atual tem permissão para salvar em uma seção
+ * @param {string} secao - Nome da seção
+ * @return {boolean} True se tem permissão
+ * @since Deploy 119
+ */
 function checkPermissionToSave(secao) { return PermissionsManager.checkPermissionToSave(Session.getActiveUser().getEmail(), secao); }
+
+/**
+ * Adiciona role a um usuário
+ * @param {string} email - Email do usuário
+ * @param {string} role - Role a adicionar ('Admin', 'Usuario', etc)
+ * @return {Object} Resultado da operação
+ * @since Deploy 119
+ */
 function addUserRole(email, role) { return PermissionsManager.addUserRole(email, role); }
+
+/**
+ * Remove role de um usuário
+ * @param {string} email - Email do usuário
+ * @param {string} role - Role a remover
+ * @return {Object} Resultado da operação
+ * @since Deploy 119
+ */
 function removeUserRole(email, role) { return PermissionsManager.removeUserRole(email, role); }
+
+/**
+ * Obtém lista de todos os usuários cadastrados
+ * @return {Array<Object>} Array de usuários com suas permissões
+ * @since Deploy 119
+ */
 function getAllUsers() { return PermissionsManager.getAllUsers(); }
 
 // ===== CACHE MANAGEMENT (Deploy 74.5) =====
@@ -2354,22 +2605,33 @@ function debugEmailUsuario() {
 // ===== FUNÇÕES DE ANEXOS (WRAPPERS) =====
 
 /**
- * Excluir anexo - Wrapper corrigido
- * Deploy 36.2
+ * Excluir anexo de uma RNC
+ * Remove arquivo do Google Drive e registro da planilha de anexos
+ *
+ * @param {string} rncNumber - Número da RNC no formato "XXXX/YYYY"
+ * @param {string} fileId - ID do arquivo no Google Drive
+ * @return {Object} Resultado da operação com propriedades {success, message}
+ *
+ * @example
+ * var result = deleteAnexo('0001/2024', '1abc...xyz');
+ * // Returns: {success: true, message: 'Anexo excluído com sucesso'}
+ *
+ * @since Deploy 36.2
+ * @since Deploy 119
  */
 function deleteAnexo(rncNumber, fileId) {
   try {
-    Logger.logWarning('deleteAnexo_ATTEMPT', { 
-      rncNumber: rncNumber, 
-      fileId: fileId 
+    Logger.logWarning('deleteAnexo_ATTEMPT', {
+      rncNumber: rncNumber,
+      fileId: fileId
     });
-    
+
     // Chama a função do FileManager
     var result = FileManager.deleteAnexo(rncNumber, fileId);
-    
+
     Logger.logInfo('deleteAnexo_SUCCESS', { rncNumber: rncNumber, fileId: fileId });
     return result;
-    
+
   } catch (error) {
     Logger.logError('deleteAnexo_ERROR', error);
     return {
@@ -2380,19 +2642,29 @@ function deleteAnexo(rncNumber, fileId) {
 }
 
 /**
- * Download de anexo - Wrapper corrigido
- * Deploy 36.2
+ * Download de anexo
+ * Retorna URL de download do arquivo no Google Drive
+ *
+ * @param {string} fileId - ID do arquivo no Google Drive
+ * @return {Object} Objeto com URL de download ou erro
+ *
+ * @example
+ * var result = downloadAnexo('1abc...xyz');
+ * // Returns: {success: true, url: 'https://drive.google.com/...', fileName: '...'}
+ *
+ * @since Deploy 36.2
+ * @since Deploy 119
  */
 function downloadAnexo(fileId) {
   try {
     Logger.logInfo('downloadAnexo_START', { fileId: fileId });
-    
+
     // Chama a função do FileManager
     var result = FileManager.downloadAnexo(fileId);
-    
+
     Logger.logInfo('downloadAnexo_SUCCESS', { fileId: fileId });
     return result;
-    
+
   } catch (error) {
     Logger.logError('downloadAnexo_ERROR', error);
     return {
@@ -2403,19 +2675,29 @@ function downloadAnexo(fileId) {
 }
 
 /**
- * Obter anexos - Wrapper corrigido
- * Deploy 36.2
+ * Obter lista de anexos de uma RNC
+ * Retorna todos os arquivos anexados a uma RNC específica
+ *
+ * @param {string} rncNumber - Número da RNC no formato "XXXX/YYYY"
+ * @return {Array<Object>} Array de objetos com dados dos anexos
+ *
+ * @example
+ * var anexos = getAttachments('0001/2024');
+ * // Returns: [{fileId: '...', fileName: '...', fileSize: 1234, ...}]
+ *
+ * @since Deploy 36.2
+ * @since Deploy 119
  */
 function getAttachments(rncNumber) {
   try {
     Logger.logInfo('getAttachments_START', { rncNumber: rncNumber });
-    
+
     // Chama a função do FileManager
     var anexos = FileManager.getAnexosRnc(rncNumber);
-    
+
     Logger.logInfo('getAttachments_SUCCESS', { count: anexos.length });
     return anexos;
-    
+
   } catch (error) {
     Logger.logError('getAttachments_ERROR', error);
     return [];
@@ -2424,7 +2706,15 @@ function getAttachments(rncNumber) {
 
 /**
  * Função manual para sincronização completa
- * Execute no Apps Script quando precisar sincronizar tudo
+ * Sincroniza aba RNC com configuração de campos e atualiza status de anexos
+ *
+ * @return {Object} Resultado da sincronização com detalhes de mudanças
+ *
+ * @example
+ * var result = manualFullSync();
+ * // Sincroniza headers RNC, adiciona/remove colunas e atualiza anexos
+ *
+ * @since Deploy 119
  */
 function manualFullSync() {
   try {
@@ -2460,8 +2750,16 @@ function manualFullSync() {
 }
 
 /**
- * Função para reorganizar completamente os headers
- * ATENÇÃO: Só use se não houver dados na planilha RNC!
+ * Função para reorganizar completamente os headers da aba RNC
+ * ATENÇÃO: Só use se não houver dados na planilha RNC! Pode causar perda de dados.
+ *
+ * @return {Object} Resultado da reorganização
+ *
+ * @example
+ * var result = forceReorganizeHeaders();
+ * // ATENÇÃO: Reorganiza headers completamente, USE APENAS EM PLANILHA VAZIA
+ *
+ * @since Deploy 119
  */
 function forceReorganizeHeaders() {
   try {
@@ -2485,6 +2783,15 @@ function forceReorganizeHeaders() {
 
 /**
  * Atualiza status de anexos para todas as RNCs
+ * Percorre todas as RNCs e atualiza campo de status de anexos
+ *
+ * @return {Object} Estatísticas da atualização com contadores
+ *
+ * @example
+ * var result = updateAllAttachmentStatus();
+ * // Returns: {updated: 50, errors: 0}
+ *
+ * @since Deploy 119
  */
 function updateAllAttachmentStatus() {
   try {
@@ -2526,6 +2833,15 @@ function updateAllAttachmentStatus() {
 
 /**
  * Função para criar automaticamente o campo "Anexo de Documentos"
+ * Cria campo de status de anexos na seção Abertura
+ *
+ * @return {Object} Resultado da criação do campo
+ *
+ * @example
+ * var result = createAttachmentField();
+ * // Cria campo tipo 'label' para mostrar status dos anexos
+ *
+ * @since Deploy 119
  */
 function createAttachmentField() {
   try {
@@ -2594,6 +2910,21 @@ function reloadUserContext() {
 
 
 // ===== IMPRESSÃO (Deploy 34) =====
+
+/**
+ * Preenche template de impressão e retorna URL
+ * Cria documento formatado da RNC para impressão
+ *
+ * @param {string} rncNumber - Número da RNC no formato "XXXX/YYYY"
+ * @return {Object} Objeto com URL do documento gerado
+ *
+ * @example
+ * var result = fillPrintTemplateAndGetUrl('0001/2024');
+ * // Returns: {success: true, url: 'https://docs.google.com/...'}
+ *
+ * @since Deploy 34
+ * @since Deploy 119
+ */
 function fillPrintTemplateAndGetUrl(rncNumber) {
   return PrintManager.fillPrintTemplateAndGetUrl(rncNumber);
 }
@@ -3087,26 +3418,103 @@ var BackupManager = (function() {
 })();
 
 // Funções wrapper para acesso direto
+
+/**
+ * Cria backup completo do sistema
+ * Exporta todas as planilhas para arquivo JSON no Google Drive
+ *
+ * @return {Object} Resultado com informações do backup criado
+ *
+ * @example
+ * var result = createSystemBackup();
+ * // Returns: {success: true, fileId: '...', fileName: 'backup-2024-01-02.json', ...}
+ *
+ * @since Deploy 76
+ * @since Deploy 119
+ */
 function createSystemBackup() {
   return BackupManager.createBackup();
 }
 
+/**
+ * Lista todos os backups disponíveis
+ *
+ * @return {Object} Lista de backups com metadados
+ *
+ * @example
+ * var result = listSystemBackups();
+ * // Returns: {success: true, backups: [{fileId: '...', fileName: '...', date: '...'}]}
+ *
+ * @since Deploy 76
+ * @since Deploy 119
+ */
 function listSystemBackups() {
   return BackupManager.listBackups();
 }
 
+/**
+ * Deleta um backup específico
+ *
+ * @param {string} fileId - ID do arquivo de backup no Google Drive
+ * @return {Object} Resultado da operação
+ *
+ * @example
+ * var result = deleteSystemBackup('1abc...xyz');
+ * // Returns: {success: true, message: 'Backup deletado com sucesso'}
+ *
+ * @since Deploy 76
+ * @since Deploy 119
+ */
 function deleteSystemBackup(fileId) {
   return BackupManager.deleteBackup(fileId);
 }
 
+/**
+ * Faz download de um backup
+ *
+ * @param {string} fileId - ID do arquivo de backup no Google Drive
+ * @return {Object} URLs para download do backup
+ *
+ * @example
+ * var result = downloadSystemBackup('1abc...xyz');
+ * // Returns: {success: true, fileUrl: '...', downloadUrl: '...'}
+ *
+ * @since Deploy 76
+ * @since Deploy 119
+ */
 function downloadSystemBackup(fileId) {
   return BackupManager.downloadBackup(fileId);
 }
 
+/**
+ * Configura pasta do Google Drive para armazenar backups
+ *
+ * @param {string} folderId - ID da pasta no Google Drive
+ * @return {Object} Resultado da configuração
+ *
+ * @example
+ * var result = setSystemBackupFolder('1abc...xyz');
+ * // Returns: {success: true, folderId: '...', message: '...'}
+ *
+ * @since Deploy 76
+ * @since Deploy 119
+ */
 function setSystemBackupFolder(folderId) {
   return BackupManager.setBackupFolderId(folderId);
 }
 
+/**
+ * Obtém ID da pasta configurada para backups
+ *
+ * @return {string|null} ID da pasta ou null se não configurada
+ *
+ * @example
+ * var folderId = getSystemBackupFolder();
+ * // Returns: '1abc...xyz' ou null
+ *
+ * @since Deploy 76
+ * @since Deploy 119
+ */
 function getSystemBackupFolder() {
   return BackupManager.getBackupFolderId();
 }

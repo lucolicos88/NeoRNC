@@ -1,5 +1,32 @@
 /**
- * Verificar estrutura da planilha Anexos
+ * ============================================
+ * ARQUIVO: 09. Tests.js
+ * MÓDULO: Sistema de Testes do RNC
+ * ============================================
+ *
+ * Este arquivo contém todas as funções de teste e diagnóstico
+ * do sistema RNC. Permite validar funcionalidades, verificar
+ * integridade de dados e realizar troubleshooting.
+ *
+ * @module Tests
+ * @author Neoformula
+ * @since Deploy 119
+ * @version 1.0.0
+ */
+
+/**
+ * TESTE: Verificar estrutura da planilha Anexos
+ *
+ * Valida se a planilha Anexos existe e está configurada corretamente.
+ * Exibe informações sobre cabeçalhos, quantidade de registros e últimos
+ * 5 registros cadastrados para validação.
+ *
+ * @example
+ * verificarPlanilhaAnexos();
+ * // Resultado esperado: Log com estrutura completa da planilha Anexos
+ *
+ * @returns {void}
+ * @since Deploy 119
  */
 function verificarPlanilhaAnexos() {
   try {
@@ -59,6 +86,20 @@ function verificarPlanilhaAnexos() {
 
 
 
+/**
+ * TESTE: Funcionalidade de anexos
+ *
+ * Testa as operações de anexos incluindo busca e download.
+ * Valida a integração com FileManager e verifica se os anexos
+ * podem ser recuperados corretamente.
+ *
+ * @example
+ * testarAnexos();
+ * // Resultado esperado: Logs de teste de busca e download de anexos
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function testarAnexos() {
   try {
     // Testar com uma RNC real do seu sistema
@@ -98,6 +139,20 @@ function testarAnexos() {
 }
 
 
+/**
+ * TESTE: Verificar nomes das listas e sincronização
+ *
+ * Valida se as listas na aba Listas correspondem às referências
+ * na ConfigCampos. Identifica incompatibilidades e listas ausentes
+ * que podem causar erros nos selects do formulário.
+ *
+ * @example
+ * verificarNomesListas();
+ * // Resultado esperado: Lista de todas as listas e suas referências
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function verificarNomesListas() {
   console.log('=== VERIFICAÇÃO DE NOMES DAS LISTAS ===\n');
   
@@ -159,6 +214,20 @@ function verificarNomesListas() {
 }
 
 
+/**
+ * TESTE: Carregamento de listas da planilha
+ *
+ * Testa o carregamento de todas as listas da aba Listas.
+ * Retorna um objeto com todos os valores de cada lista para
+ * validação de dados e debug.
+ *
+ * @example
+ * testarCarregamentoListas();
+ * // Resultado esperado: Objeto com todas as listas e seus valores
+ *
+ * @returns {Object} Objeto com listas e seus valores
+ * @since Deploy 119
+ */
 function testarCarregamentoListas() {
   console.log('=== TESTE: CARREGAMENTO DE LISTAS ===');
   
@@ -199,8 +268,19 @@ function testarCarregamentoListas() {
   return lists;
 }
 /**
- * Testa o sistema de permissões completo
- * Deploy 32
+ * TESTE: Sistema de permissões completo
+ *
+ * Valida todas as funcionalidades do PermissionsManager incluindo
+ * getUserRoles, getPermissionForSection, getUserPermissions,
+ * checkPermissionToSave e getAllUsers. Verifica se o controle de
+ * acesso está funcionando corretamente.
+ *
+ * @example
+ * testarSistemaPermissoes();
+ * // Resultado esperado: Todos os testes de permissões devem passar
+ *
+ * @returns {boolean} True se todos os testes passaram
+ * @since Deploy 119
  */
 function testarSistemaPermissoes() {
   console.log('\n=== TESTE SISTEMA DE PERMISSÕES ===\n');
@@ -262,8 +342,18 @@ function testarSistemaPermissoes() {
 
 
 /**
- * Testa os novos KPIs implementados
- * Deploy 31 - Validação completa
+ * TESTE: Novos KPIs implementados
+ *
+ * Valida os 8 KPIs principais do sistema: Impacto Cliente, Detecção Interna,
+ * Não Procede, Custo Médio por Tipo, ISP (Índice de Severidade Ponderado),
+ * Cumprimento de Prazo, entre outros. Verifica cálculos e exibe resumo geral.
+ *
+ * @example
+ * testarNovosKPIs();
+ * // Resultado esperado: Dashboard com todos os KPIs calculados
+ *
+ * @returns {boolean} True se todos os KPIs foram calculados corretamente
+ * @since Deploy 119
  */
 function testarNovosKPIs() {
   console.log('\n=== TESTE DOS 8 NOVOS KPIs ===\n');
@@ -341,7 +431,18 @@ function testarNovosKPIs() {
 }
 
 /**
- * Testa relatórios com filtros
+ * TESTE: Relatórios com filtros e KPIs
+ *
+ * Testa a geração de relatórios aplicando filtros de data, status,
+ * setor e tipo. Valida se os KPIs são calculados corretamente sobre
+ * o conjunto filtrado de RNCs.
+ *
+ * @example
+ * testarRelatoriosComKPIs();
+ * // Resultado esperado: Relatório filtrado com KPIs calculados
+ *
+ * @returns {boolean} True se o relatório foi gerado com sucesso
+ * @since Deploy 119
  */
 function testarRelatoriosComKPIs() {
   console.log('\n=== TESTE RELATÓRIOS COM KPIs ===\n');
@@ -382,6 +483,20 @@ function testarRelatoriosComKPIs() {
 
 
 
+/**
+ * TESTE: Sistema completo
+ *
+ * Executa teste completo do sistema RNC incluindo configuração,
+ * inicialização, testes básicos, listagem de RNCs e dashboard.
+ * Útil para validar se o sistema está pronto para deploy.
+ *
+ * @example
+ * fullSystemTest();
+ * // Resultado esperado: Log completo do status de todos os módulos
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function fullSystemTest() {
   console.log('🚀 TESTE COMPLETO DO SISTEMA RNC\n');
   
@@ -423,6 +538,20 @@ function fullSystemTest() {
   console.log('\n✅ SISTEMA PRONTO PARA DEPLOY!');
 }
 
+/**
+ * TESTE: Sistema de arquivos do Google Drive
+ *
+ * Valida se a pasta configurada no Drive está acessível e se
+ * o sistema tem permissão para criar e deletar pastas. Essencial
+ * para o funcionamento do sistema de anexos.
+ *
+ * @example
+ * testFileSystem();
+ * // Resultado esperado: Confirmação de acesso ao Drive
+ *
+ * @returns {boolean} True se o sistema de arquivos está OK
+ * @since Deploy 119
+ */
 function testFileSystem() {
   console.log('=== TESTE DO SISTEMA DE ARQUIVOS ===');
   
@@ -456,6 +585,20 @@ function testFileSystem() {
   }
 }
 
+/**
+ * TESTE: Verificar correções aplicadas
+ *
+ * Valida se as correções de bugs foram aplicadas corretamente,
+ * incluindo campo Data, status Não Procede, relatórios e sistema
+ * de arquivos. Útil após aplicar patches.
+ *
+ * @example
+ * verifyFixes();
+ * // Resultado esperado: Todos os testes de correção devem passar
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function verifyFixes() {
   console.log('=== VERIFICANDO CORREÇÕES ===\n');
   
@@ -496,6 +639,19 @@ function verifyFixes() {
   console.log('Se todos os testes passaram (✅), as correções foram aplicadas com sucesso!');
 }
 
+/**
+ * TESTE: Monitorar logs recentes
+ *
+ * Exibe os últimos 20 logs do sistema, filtrando apenas erros
+ * e avisos. Útil para identificar problemas rapidamente.
+ *
+ * @example
+ * monitorLogs();
+ * // Resultado esperado: Lista de logs de erro e warning
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function monitorLogs() {
   var logs = Logger.getRecentLogs(20);
   logs.forEach(function(log) {
@@ -505,6 +661,20 @@ function monitorLogs() {
   });
 }
 
+/**
+ * TESTE: Sistema básico
+ *
+ * Testa as funcionalidades básicas do sistema incluindo existência
+ * de CONFIG, Database, RncOperations, getAllRncNumbers e contexto
+ * de usuário. Primeiro teste a executar após deployment.
+ *
+ * @example
+ * testBasicSystem();
+ * // Resultado esperado: Todos os módulos básicos devem existir
+ *
+ * @returns {boolean} True se o sistema básico está funcionando
+ * @since Deploy 119
+ */
 function testBasicSystem() {
   console.log('=== TESTE BÁSICO DO SISTEMA ===');
   
@@ -535,6 +705,20 @@ function testBasicSystem() {
   }
 }
 
+/**
+ * TESTE: Diagnóstico completo do sistema
+ *
+ * Executa checagem completa de todos os componentes críticos:
+ * planilha, Drive, contexto, listagem de RNCs e dashboard.
+ * Retorna objeto com status de cada componente.
+ *
+ * @example
+ * diagnosticCheck();
+ * // Resultado esperado: Objeto com status de todos os componentes
+ *
+ * @returns {Object} Objeto com status de cada verificação
+ * @since Deploy 119
+ */
 function diagnosticCheck() {
   console.log('=== DIAGNÓSTICO COMPLETO ===\n');
   
@@ -595,6 +779,19 @@ function diagnosticCheck() {
   return checks;
 }
 
+/**
+ * TESTE: Verificar cabeçalhos da planilha RNC
+ *
+ * Lista todos os cabeçalhos da aba RNC e identifica especificamente
+ * as colunas relacionadas a datas. Útil para debug de mapeamento de campos.
+ *
+ * @example
+ * checkSheetHeaders();
+ * // Resultado esperado: Lista completa de headers e colunas de data
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function checkSheetHeaders() {
   var sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName('RNC');
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -613,6 +810,19 @@ function checkSheetHeaders() {
   });
 }
 
+/**
+ * TESTE: Validar campo Data
+ *
+ * Testa o mapeamento do campo "Data" durante o processo de prepareRncData.
+ * Verifica se o campo está sendo mapeado corretamente para a planilha.
+ *
+ * @example
+ * testDataField();
+ * // Resultado esperado: Objeto com dados preparados e campo Data mapeado
+ *
+ * @returns {Object} Dados preparados para salvar
+ * @since Deploy 119
+ */
 function testDataField() {
   console.log('=== TESTE DO CAMPO DATA ===');
   
@@ -639,6 +849,19 @@ function testDataField() {
   return prepared;
 }
 
+/**
+ * TESTE: Verificar configuração do campo Filial de Origem
+ *
+ * Valida se o campo "Filial de Origem" está presente no ConfigCampos
+ * e configurado corretamente com seção, tipo, obrigatoriedade e lista.
+ *
+ * @example
+ * verificarCampoFilial();
+ * // Resultado esperado: Confirmação da existência e configuração do campo
+ *
+ * @returns {boolean} True se o campo foi encontrado
+ * @since Deploy 119
+ */
 function verificarCampoFilial() {
   console.log('=== VERIFICANDO CAMPO FILIAL ===');
   
@@ -673,6 +896,19 @@ function verificarCampoFilial() {
   return encontrado;
 }
 
+/**
+ * TESTE: Teste completo do campo Filial de Origem
+ *
+ * Executa bateria completa de testes para o campo Filial incluindo
+ * verificação de configuração, lista, busca de RNC e limpeza de cache.
+ *
+ * @example
+ * testeCompletoFilial();
+ * // Resultado esperado: Validação completa do campo Filial
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function testeCompletoFilial() {
   console.log('\n=== TESTE COMPLETO - FILIAL DE ORIGEM ===\n');
   
@@ -701,6 +937,20 @@ function testeCompletoFilial() {
 }
 
 
+/**
+ * TESTE: Diagnóstico profundo do campo Filial de Origem
+ *
+ * Realiza análise profunda do campo Filial verificando headers da planilha,
+ * busca de RNC, presença no objeto, variações de nome e ConfigCampos.
+ * Útil para troubleshooting de campos que não aparecem no formulário.
+ *
+ * @example
+ * testeCompletoFilialOrigem();
+ * // Resultado esperado: Análise detalhada de todas as variações do campo
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function testeCompletoFilialOrigem() {
   console.log('\n=== TESTE COMPLETO: FILIAL DE ORIGEM ===\n');
   
@@ -778,7 +1028,18 @@ function testeCompletoFilialOrigem() {
 }
 
 /**
- * Testa as regras do StatusPipeline
+ * TESTE: Regras do pipeline de status
+ *
+ * Valida as regras de transição de status do sistema incluindo:
+ * Abertura -> Qualidade, Qualidade -> Liderança, Não Procede -> Finalizada,
+ * e Ação Corretiva Concluída -> Finalizada.
+ *
+ * @example
+ * testarRegraStatusPipeline();
+ * // Resultado esperado: Todas as transições devem funcionar corretamente
+ *
+ * @returns {void}
+ * @since Deploy 119
  */
 function testarRegraStatusPipeline() {
   console.log('\n=== TESTE: REGRAS DO STATUS PIPELINE ===\n');
@@ -832,6 +1093,19 @@ function testarRegraStatusPipeline() {
   console.log('\n=== FIM DOS TESTES ===\n');
 }
 
+/**
+ * TESTE: Filtro por setor
+ *
+ * Testa a funcionalidade de filtro por setor incluindo listagem de
+ * setores únicos e filtragem de RNCs por setor específico.
+ *
+ * @example
+ * testarFiltroSetor();
+ * // Resultado esperado: Lista de setores e RNCs filtradas
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function testarFiltroSetor() {
     console.log('=== TESTE: FILTRO POR SETOR ===');
     
@@ -854,7 +1128,19 @@ function testarFiltroSetor() {
 }
 
 
-// No Apps Script Editor, execute:
+/**
+ * TESTE: Setores duplos (Abertura e Qualidade)
+ *
+ * Testa a função getSetoresDuplos que retorna setores distintos
+ * de Abertura e Qualidade para filtros específicos.
+ *
+ * @example
+ * testarSetoresDuplos();
+ * // Resultado esperado: Arrays separados de setores de Abertura e Qualidade
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function testarSetoresDuplos() {
   var setores = getSetoresDuplos();
   console.log('Setores de Abertura:', setores.setoresAbertura);
@@ -862,6 +1148,19 @@ function testarSetoresDuplos() {
 }
 
 
+/**
+ * TESTE: Filtros completos do sistema
+ *
+ * Valida todos os filtros incluindo setores duplos, Kanban filtrado
+ * e Dashboard filtrado. Verifica se os dados são filtrados corretamente.
+ *
+ * @example
+ * testarFiltrosCompletos();
+ * // Resultado esperado: Kanban e Dashboard com filtros aplicados
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function testarFiltrosCompletos() {
     console.log('=== TESTE COMPLETO DOS FILTROS ===\n');
     
@@ -884,6 +1183,20 @@ function testarFiltrosCompletos() {
 }
 
 
+/**
+ * TESTE: Dashboard completo
+ *
+ * Testa o carregamento completo do dashboard com todos os KPIs
+ * e estatísticas incluindo totais, custos, tempos, distribuições
+ * por tipo, falha e setor.
+ *
+ * @example
+ * testarDashboardCompleto();
+ * // Resultado esperado: Dashboard com todas as métricas calculadas
+ *
+ * @returns {void}
+ * @since Deploy 119
+ */
 function testarDashboardCompleto() {
     console.log('=== TESTE DASHBOARD COMPLETO ===\n');
     
@@ -900,6 +1213,20 @@ function testarDashboardCompleto() {
     console.log('✅ Por Setor Qualidade:', stats.porSetorQualidade);
 }
 
+/**
+ * TESTE: Diagnosticar problemas de campos
+ *
+ * Compara campos em ConfigCampos com headers da planilha RNC.
+ * Identifica discrepâncias e campos que existem em um local mas
+ * não em outro. Essencial para troubleshooting de campos ausentes.
+ *
+ * @example
+ * diagnosticarProblema();
+ * // Resultado esperado: Relatório de compatibilidade entre ConfigCampos e RNC
+ *
+ * @returns {Object} Objeto com totais e lista de headers
+ * @since Deploy 119
+ */
 function diagnosticarProblema() {
   console.log('=== DIAGNÓSTICO DE CAMPOS ===');
   
@@ -954,6 +1281,20 @@ function diagnosticarProblema() {
   };
 }
 
+/**
+ * TESTE: Corrigir sincronização entre ConfigCampos e RNC
+ *
+ * Executa sincronização completa entre ConfigCampos e a aba RNC
+ * usando fullSyncRncWithConfig. Útil para resolver problemas de
+ * campos desconfigurados.
+ *
+ * @example
+ * corrigirSincronizacao();
+ * // Resultado esperado: Sincronização completa executada com sucesso
+ *
+ * @returns {Object} Resultado da sincronização
+ * @since Deploy 119
+ */
 function corrigirSincronizacao() {
   console.log('=== INICIANDO CORREÇÃO ===');
   
@@ -976,6 +1317,19 @@ function corrigirSincronizacao() {
   }
 }
 
+/**
+ * TESTE: Verificar FIELD_MAPPING
+ *
+ * Valida se o objeto FIELD_MAPPING existe e está configurado corretamente.
+ * Verifica mapeamento de campos problemáticos específicos.
+ *
+ * @example
+ * verificarMapeamento();
+ * // Resultado esperado: Estrutura do FIELD_MAPPING e campos chave
+ *
+ * @returns {Object|null} FIELD_MAPPING ou null se não existir
+ * @since Deploy 119
+ */
 function verificarMapeamento() {
   console.log('=== VERIFICANDO MAPEAMENTO ===');
   
@@ -999,15 +1353,28 @@ function verificarMapeamento() {
 /**
  * ============================================
  * TESTES - Sistema de Impressão RNC
- * Deploy 34 - Neoformula
  * ============================================
- * 
- * Cole estas funções no Apps Script para testar
- * o sistema de impressão.
+ *
+ * Conjunto de testes para validar o sistema de impressão de RNCs.
+ * Inclui verificação de módulos, aba Print, mapeamento, ranges e
+ * testes de impressão completa.
+ *
+ * @section Testes de Impressão
+ * @since Deploy 119
  */
 
 /**
- * TESTE 1: Verificar se PrintManager está funcionando
+ * TESTE: Verificar se PrintManager está funcionando
+ *
+ * Valida se o módulo PrintManager foi carregado corretamente e
+ * se todos os seus métodos estão disponíveis.
+ *
+ * @example
+ * test1_VerificarPrintManager();
+ * // Resultado esperado: Confirmação de que PrintManager existe
+ *
+ * @returns {boolean} True se PrintManager está disponível
+ * @since Deploy 119
  */
 function test1_VerificarPrintManager() {
   console.log('=== TESTE 1: Verificar PrintManager ===');
@@ -1035,7 +1402,17 @@ function test1_VerificarPrintManager() {
 }
 
 /**
- * TESTE 2: Verificar estrutura da aba Print
+ * TESTE: Verificar estrutura da aba Print
+ *
+ * Valida se a aba Print existe na planilha e exibe informações
+ * sobre sua estrutura (linhas, colunas, sheet ID).
+ *
+ * @example
+ * test2_VerificarAbaPrint();
+ * // Resultado esperado: Informações da aba Print
+ *
+ * @returns {boolean} True se a aba Print existe
+ * @since Deploy 119
  */
 function test2_VerificarAbaPrint() {
   console.log('\n=== TESTE 2: Verificar Aba Print ===');
@@ -1065,7 +1442,17 @@ function test2_VerificarAbaPrint() {
 }
 
 /**
- * TESTE 3: Verificar mapeamento no ConfigCampos
+ * TESTE: Verificar mapeamento no ConfigCampos
+ *
+ * Valida se os campos ativos em ConfigCampos têm ranges de impressão
+ * configurados na coluna K. Lista campos mapeados e não mapeados.
+ *
+ * @example
+ * test3_VerificarMapeamento();
+ * // Resultado esperado: Lista de campos com e sem range configurado
+ *
+ * @returns {boolean} True se há campos mapeados
+ * @since Deploy 119
  */
 function test3_VerificarMapeamento() {
   console.log('\n=== TESTE 3: Verificar Mapeamento ConfigCampos ===');
@@ -1122,7 +1509,17 @@ function test3_VerificarMapeamento() {
 }
 
 /**
- * TESTE 4: Buscar uma RNC de teste
+ * TESTE: Buscar uma RNC de teste
+ *
+ * Busca a primeira RNC disponível na planilha para usar nos testes
+ * de impressão. Retorna o número da RNC encontrada.
+ *
+ * @example
+ * test4_BuscarRncTeste();
+ * // Resultado esperado: Número da primeira RNC cadastrada
+ *
+ * @returns {string|null} Número da RNC ou null se não encontrar
+ * @since Deploy 119
  */
 function test4_BuscarRncTeste() {
   console.log('\n=== TESTE 4: Buscar RNC para Teste ===');
@@ -1167,7 +1564,18 @@ function test4_BuscarRncTeste() {
 }
 
 /**
- * TESTE 5: Executar impressão completa
+ * TESTE: Executar impressão completa
+ *
+ * Executa o processo completo de impressão de uma RNC usando
+ * PrintManager.fillPrintTemplateAndGetUrl. Valida sucesso e
+ * exibe estatísticas de campos processados.
+ *
+ * @example
+ * test5_TesteImpressaoCompleta();
+ * // Resultado esperado: RNC impressa com sucesso na aba Print
+ *
+ * @returns {boolean} True se a impressão foi bem-sucedida
+ * @since Deploy 119
  */
 function test5_TesteImpressaoCompleta() {
   console.log('\n=== TESTE 5: Impressão Completa ===');
@@ -1208,7 +1616,17 @@ function test5_TesteImpressaoCompleta() {
 }
 
 /**
- * TESTE 6: Verificar ranges específicos
+ * TESTE: Verificar ranges específicos
+ *
+ * Valida se todos os ranges configurados no ConfigCampos são válidos
+ * e podem ser acessados na aba Print. Identifica ranges inválidos.
+ *
+ * @example
+ * test6_ValidarRangesConfigCampos();
+ * // Resultado esperado: Lista de ranges válidos e inválidos
+ *
+ * @returns {boolean} True se todos os ranges são válidos
+ * @since Deploy 119
  */
 function test6_ValidarRangesConfigCampos() {
   console.log('\n=== TESTE 6: Validar Ranges Específicos ===');
@@ -1267,7 +1685,18 @@ function test6_ValidarRangesConfigCampos() {
 }
 
 /**
- * TESTE COMPLETO: Executa todos os testes em sequência
+ * TESTE: Executa todos os testes de impressão em sequência
+ *
+ * Bateria completa de testes do sistema de impressão incluindo
+ * verificação de módulo, aba, mapeamento, ranges e impressão.
+ * Gera relatório final com resultados de cada teste.
+ *
+ * @example
+ * testAll_SistemaImpressao();
+ * // Resultado esperado: Relatório completo de todos os testes
+ *
+ * @returns {boolean} True se todos os testes passaram
+ * @since Deploy 119
  */
 function testAll_SistemaImpressao() {
   console.log('╔════════════════════════════════════════╗');
@@ -1326,7 +1755,18 @@ function testAll_SistemaImpressao() {
 }
 
 /**
- * TESTE RÁPIDO: Apenas imprime uma RNC específica
+ * TESTE: Impressão rápida de RNC específica
+ *
+ * Teste rápido que imprime uma RNC específica sem executar
+ * toda a bateria de testes. Útil para validação pontual.
+ *
+ * @example
+ * testQuick_ImprimirRNC('0001/2025');
+ * // Resultado esperado: RNC 0001/2025 impressa na aba Print
+ *
+ * @param {string} rncNumber - Número da RNC a ser impressa (padrão: '0001/2025')
+ * @returns {Object} Resultado da impressão
+ * @since Deploy 119
  */
 function testQuick_ImprimirRNC(rncNumber) {
   if (!rncNumber) {
@@ -1344,6 +1784,17 @@ function testQuick_ImprimirRNC(rncNumber) {
 
 /**
  * DEBUG: Mostrar estrutura completa de uma RNC
+ *
+ * Exibe todos os campos e valores de uma RNC específica.
+ * Útil para debug e validação de dados antes da impressão.
+ *
+ * @example
+ * debug_MostrarEstrutuRA('0001/2025');
+ * // Resultado esperado: Lista completa de campos e valores da RNC
+ *
+ * @param {string} rncNumber - Número da RNC a ser analisada
+ * @returns {void}
+ * @since Deploy 119
  */
 function debug_MostrarEstrutuRA(rncNumber) {
   console.log('🔍 DEBUG: Estrutura da RNC', rncNumber);
@@ -1372,8 +1823,27 @@ function debug_MostrarEstrutuRA(rncNumber) {
 }
 
 /**
- * ✅ DEPLOY 115 - FASE 4: Teste da função isValidEmail() unificada
- * Execute este teste para validar a função após Deploy 115
+ * TESTE: Validação completa da função isValidEmail()
+ *
+ * Testa todos os cenários de validação de email incluindo emails válidos,
+ * inválidos, vazios, muito longos e com caracteres especiais. Valida tanto
+ * retorno de objeto quanto boolean.
+ *
+ * Casos testados:
+ * - Email válido (retorno objeto)
+ * - Email inválido (retorno objeto)
+ * - Email válido (retorno boolean)
+ * - Email inválido (retorno boolean)
+ * - Email vazio
+ * - Email muito longo
+ * - Caracteres especiais inválidos
+ *
+ * @example
+ * testIsValidEmail();
+ * // Resultado esperado: Todos os testes devem passar com outputs corretos
+ *
+ * @returns {void}
+ * @since Deploy 119
  */
 function testIsValidEmail() {
   console.log('========================================');
