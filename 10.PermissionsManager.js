@@ -3,13 +3,23 @@
  * 10.PERMISSIONSMANAGER.GS - Gerenciamento de Permissões
  * Sistema RNC Neoformula - Deploy 32
  * ============================================
+ *
+ * @namespace PermissionsManager
+ * @description Módulo responsável pelo gerenciamento completo de permissões de usuários.
+ * Controla roles, setores e permissões de acesso às seções do sistema RNC.
+ * @since Deploy 32
  */
 
 var PermissionsManager = (function() {
-  
+
   /**
-   * Define o mapa de permissões por role
+   * Define o mapa de permissões por role, controlando o nível de acesso
+   * de cada tipo de usuário às diferentes seções do sistema.
+   *
+   * @type {Object.<string, Object.<string, string>>}
    * @private
+   * @constant
+   * @since Deploy 32
    */
   var PERMISSIONS_MAP = {
     'Admin': {
@@ -40,9 +50,19 @@ var PermissionsManager = (function() {
   };
   
   /**
-   * Obtém todas as roles de um usuário
-   * @param {string} email - Email do usuário
-   * @return {Array} Lista de roles
+   * Obtém todas as roles ativas de um usuário consultando a planilha de permissões.
+   * Retorna 'Espectador' como fallback caso não haja permissões cadastradas.
+   *
+   * @param {string} email - Email do usuário a ser consultado
+   * @return {Array.<string>} Lista de roles atribuídas ao usuário
+   *
+   * @example
+   * var roles = getUserRoles('usuario@exemplo.com');
+   * // Returns: ['Abertura', 'Qualidade']
+   *
+   * @memberof PermissionsManager
+   * @private
+   * @since Deploy 32
    */
   function getUserRoles(email) {
     try {
@@ -85,9 +105,19 @@ var PermissionsManager = (function() {
   }
 
   /**
-   * Deploy 66: Obtém o setor de um usuário
-   * @param {string} email - Email do usuário
-   * @return {string} Setor do usuário ou null
+   * Obtém o setor associado ao usuário consultando a planilha de permissões.
+   * Retorna o primeiro setor encontrado nas permissões ativas do usuário.
+   *
+   * @param {string} email - Email do usuário a ser consultado
+   * @return {string|null} Nome do setor do usuário ou null se não encontrado
+   *
+   * @example
+   * var setor = getUserSetor('usuario@exemplo.com');
+   * // Returns: 'Produção' ou null
+   *
+   * @memberof PermissionsManager
+   * @private
+   * @since Deploy 66
    */
   function getUserSetor(email) {
     try {
@@ -120,19 +150,45 @@ var PermissionsManager = (function() {
   }
   
   /**
-   * Verifica se usuário tem role Admin
-   * @param {Array} roles - Lista de roles do usuário
-   * @return {boolean} True se é admin
+   * Verifica se o usuário possui a role de administrador do sistema.
+   * Utilizada internamente para determinar permissões totais de edição.
+   *
+   * @param {Array.<string>} roles - Lista de roles do usuário a verificar
+   * @return {boolean} true se possui role Admin, false caso contrário
+   *
+   * @example
+   * var ehAdmin = isAdmin(['Abertura', 'Admin']);
+   * // Returns: true
+   *
+   * @memberof PermissionsManager
+   * @since Deploy 32
    */
   function isAdmin(roles) {
     return roles.indexOf('Admin') !== -1;
   }
   
   /**
-   * Obtém permissões consolidadas do usuário
-   * Deploy 66: Agora inclui setor do usuário
-   * @param {string} email - Email do usuário
-   * @return {Object} Objeto com roles, permissões e setor
+   * Obtém permissões consolidadas do usuário incluindo roles, permissões por seção e setor.
+   * Consolida múltiplas roles com prioridade: editar > visualizar > negar.
+   *
+   * @param {string} email - Email do usuário a ser consultado
+   * @return {Object} Objeto com propriedades:
+   *   - roles {Array.<string>} - Lista de roles do usuário
+   *   - permissions {Object.<string, string>} - Mapa de permissões por seção
+   *   - isAdmin {boolean} - Indica se é administrador
+   *   - setor {string|null} - Setor do usuário
+   *
+   * @example
+   * var perms = getUserPermissions('usuario@exemplo.com');
+   * // Returns: {
+   * //   roles: ['Abertura'],
+   * //   permissions: { 'Abertura': 'editar', 'Qualidade': 'visualizar', 'Liderança': 'visualizar' },
+   * //   isAdmin: false,
+   * //   setor: 'Produção'
+   * // }
+   *
+   * @memberof PermissionsManager
+   * @since Deploy 32
    */
   function getUserPermissions(email) {
     try {
@@ -213,10 +269,19 @@ var PermissionsManager = (function() {
   }
   
   /**
-   * Verifica se usuário pode editar uma seção específica
-   * @param {string} email - Email do usuário
-   * @param {string} secao - Nome da seção
-   * @return {boolean} True se pode editar
+   * Verifica se o usuário possui permissão para editar uma seção específica do sistema.
+   * Administradores sempre têm permissão de edição em todas as seções.
+   *
+   * @param {string} email - Email do usuário a verificar
+   * @param {string} secao - Nome da seção a verificar ('Abertura', 'Qualidade', 'Liderança')
+   * @return {boolean} true se pode editar, false caso contrário
+   *
+   * @example
+   * var canEdit = canEditSection('usuario@exemplo.com', 'Abertura');
+   * // Returns: true ou false
+   *
+   * @memberof PermissionsManager
+   * @since Deploy 32
    */
   function canEditSection(email, secao) {
     try {
@@ -239,10 +304,21 @@ var PermissionsManager = (function() {
   }
   
   /**
-   * Valida se usuário pode salvar dados de uma seção
-   * @param {string} email - Email do usuário
-   * @param {string} secao - Nome da seção
-   * @return {Object} Resultado da validação
+   * Valida se o usuário possui permissão para salvar dados em uma seção específica.
+   * Retorna objeto com resultado da validação e mensagem explicativa.
+   *
+   * @param {string} email - Email do usuário a validar
+   * @param {string} secao - Nome da seção a validar
+   * @return {Object} Objeto com propriedades:
+   *   - allowed {boolean} - Indica se a ação é permitida
+   *   - message {string} - Mensagem explicativa do resultado
+   *
+   * @example
+   * var result = checkPermissionToSave('usuario@exemplo.com', 'Qualidade');
+   * // Returns: { allowed: true, message: 'Permissão concedida' }
+   *
+   * @memberof PermissionsManager
+   * @since Deploy 32
    */
   function checkPermissionToSave(email, secao) {
     try {
@@ -281,12 +357,22 @@ var PermissionsManager = (function() {
   }
   
   /**
-   * Adiciona uma role a um usuário
-   * Deploy 67: Agora aceita setor opcional
-   * @param {string} email - Email do usuário
-   * @param {string} role - Role a adicionar
-   * @param {string} setor - Setor do usuário (opcional)
-   * @return {Object} Resultado da operação
+   * Adiciona uma nova role a um usuário na planilha de permissões.
+   * Valida se a role é válida e se o usuário já não possui essa role.
+   *
+   * @param {string} email - Email do usuário a receber a role
+   * @param {string} role - Role a adicionar (Admin, Abertura, Qualidade, Liderança, Espectador)
+   * @param {string} [setor] - Setor do usuário (opcional)
+   * @return {Object} Objeto com propriedades:
+   *   - success {boolean} - Indica se a operação foi bem-sucedida
+   *   - message {string} - Mensagem descritiva do resultado
+   *
+   * @example
+   * var result = addUserRole('usuario@exemplo.com', 'Qualidade', 'Produção');
+   * // Returns: { success: true, message: 'Role adicionada com sucesso' }
+   *
+   * @memberof PermissionsManager
+   * @since Deploy 67
    */
   function addUserRole(email, role, setor) {
     try {
@@ -347,10 +433,21 @@ var PermissionsManager = (function() {
   }
   
   /**
-   * Remove uma role de um usuário
-   * @param {string} email - Email do usuário
+   * Remove uma role de um usuário marcando-a como inativa na planilha de permissões.
+   * Impede a remoção do último administrador do sistema por segurança.
+   *
+   * @param {string} email - Email do usuário a ter role removida
    * @param {string} role - Role a remover
-   * @return {Object} Resultado da operação
+   * @return {Object} Objeto com propriedades:
+   *   - success {boolean} - Indica se a operação foi bem-sucedida
+   *   - message {string} - Mensagem descritiva do resultado
+   *
+   * @example
+   * var result = removeUserRole('usuario@exemplo.com', 'Espectador');
+   * // Returns: { success: true, message: 'Role removida com sucesso' }
+   *
+   * @memberof PermissionsManager
+   * @since Deploy 32
    */
   function removeUserRole(email, role) {
     try {
@@ -400,10 +497,21 @@ var PermissionsManager = (function() {
   }
   
   /**
-   * Deploy 67: Atualiza o setor de todas as permissões de um usuário
-   * @param {string} email - Email do usuário
-   * @param {string} novoSetor - Novo setor para o usuário
-   * @return {Object} Resultado da operação
+   * Atualiza o setor de todas as permissões ativas de um usuário.
+   * Aplica a mudança em todos os registros de permissão do usuário simultaneamente.
+   *
+   * @param {string} email - Email do usuário a ter setor atualizado
+   * @param {string} novoSetor - Novo setor a ser atribuído
+   * @return {Object} Objeto com propriedades:
+   *   - success {boolean} - Indica se a operação foi bem-sucedida
+   *   - message {string} - Mensagem descritiva do resultado
+   *
+   * @example
+   * var result = updateUserSetor('usuario@exemplo.com', 'Logística');
+   * // Returns: { success: true, message: 'Setor atualizado em 2 permissão(ões)' }
+   *
+   * @memberof PermissionsManager
+   * @since Deploy 67
    */
   function updateUserSetor(email, novoSetor) {
     try {
@@ -469,8 +577,23 @@ var PermissionsManager = (function() {
   }
 
   /**
-   * Lista todos os usuários com suas roles
-   * @return {Array} Lista de usuários
+   * Lista todos os usuários ativos do sistema com suas respectivas roles e setores.
+   * Agrupa múltiplas roles de um mesmo usuário em um único objeto.
+   *
+   * @return {Array.<Object>} Lista de objetos de usuário, cada um com propriedades:
+   *   - email {string} - Email do usuário
+   *   - roles {Array.<string>} - Lista de roles do usuário
+   *   - setor {string} - Setor do usuário
+   *
+   * @example
+   * var usuarios = getAllUsers();
+   * // Returns: [
+   * //   { email: 'user1@exemplo.com', roles: ['Admin'], setor: 'TI' },
+   * //   { email: 'user2@exemplo.com', roles: ['Abertura', 'Qualidade'], setor: 'Produção' }
+   * // ]
+   *
+   * @memberof PermissionsManager
+   * @since Deploy 71
    */
   function getAllUsers() {
     try {
@@ -521,7 +644,13 @@ var PermissionsManager = (function() {
     }
   }
 
-  // API Pública
+  /**
+   * API Pública do PermissionsManager
+   * Expõe métodos para gerenciamento de permissões, roles e setores de usuários.
+   *
+   * @public
+   * @since Deploy 32
+   */
   return {
     getUserRoles: getUserRoles,
     getUserSetor: getUserSetor, // Deploy 66

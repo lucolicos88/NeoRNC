@@ -8,6 +8,9 @@
  * - ✅ Adicionado controle de debug mode por ambiente (Problema #8)
  * - ✅ Migrado var para const/let (Problema #16)
  * - ✅ Melhorado tratamento de erros com stack trace (Problema #15)
+ *
+ * @namespace Logger
+ * @since Deploy 31
  */
 
 const Logger = (function() {
@@ -26,8 +29,14 @@ const Logger = (function() {
   let currentLogLevel = determineLogLevel();
 
   /**
-   * ✅ NOVO: Determina nível de log baseado no ambiente
+   * Determina nível de log baseado no ambiente de execução.
+   * Em desenvolvimento permite DEBUG, em produção apenas INFO ou superior.
+   * Inclui fallback seguro em caso de erro ao acessar CONFIG.
+   *
+   * @return {number} Nível de log (0=DEBUG, 1=INFO, 2=WARNING, 3=ERROR, 4=CRITICAL)
+   *
    * @private
+   * @since Deploy 31
    */
   function determineLogLevel() {
     try {
@@ -46,8 +55,19 @@ const Logger = (function() {
   }
 
   /**
-   * TASK-008: Sanitiza dados sensíveis antes de logar
+   * Sanitiza dados sensíveis antes de logar para proteção de privacidade.
+   * Remove ou mascara campos como email, password, token, apiKey, secret e credential.
+   * Para emails, mantém apenas o domínio; outros campos sensíveis são substituídos por REDACTED.
+   *
+   * @param {Object} data - Objeto com dados a serem sanitizados
+   * @return {Object} Objeto sanitizado com campos sensíveis mascarados
+   *
+   * @example
+   * const sanitized = sanitizeLogData({ email: 'user@example.com', password: '123456' });
+   * // Retorna: { email: '***@example.com', password: '***REDACTED***' }
+   *
    * @private
+   * @since Deploy 31
    */
   function sanitizeLogData(data) {
     if (!data || typeof data !== 'object') {
@@ -82,8 +102,18 @@ const Logger = (function() {
   }
 
   /**
-   * Registra um evento no sistema
+   * Registra um evento no sistema com timestamp, usuário, ação e contexto.
+   * Grava no console e opcionalmente na planilha de logs (apenas INFO ou superior).
+   * Inclui stack trace completo para erros e sanitização automática de dados sensíveis.
+   *
+   * @param {string} level - Nível do log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+   * @param {string} action - Ação sendo executada
+   * @param {Object} info - Informações contextuais adicionais
+   * @param {Error} error - Objeto de erro (se houver)
+   * @return {void}
+   *
    * @private
+   * @since Deploy 31
    */
   function logEvent(level, action, info, error) {
     try {
@@ -153,8 +183,19 @@ const Logger = (function() {
   }
 
   /**
-   * Log de debug (desenvolvimento)
-   * ✅ MELHORADO: Respeita configuração de ambiente
+   * Registra log de nível DEBUG para desenvolvimento e diagnóstico.
+   * Apenas registra se DEBUG_MODE estiver ativo ou ambiente for development.
+   * Não grava na planilha, apenas no console para evitar poluição de logs.
+   *
+   * @param {string} action - Ação sendo executada
+   * @param {Object} [info] - Informações contextuais adicionais
+   * @return {void}
+   *
+   * @example
+   * Logger.logDebug('VALIDATING_INPUT', { formId: 'form-123', fieldCount: 5 });
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function logDebug(action, info) {
     // ✅ NOVO: Só loga debug se estiver em modo desenvolvimento
@@ -166,7 +207,19 @@ const Logger = (function() {
   }
 
   /**
-   * Log de informação (operações normais)
+   * Registra log de nível INFO para operações normais do sistema.
+   * Grava no console e na planilha de logs para auditoria.
+   * Use para ações importantes como criação de RNC, envio de emails, etc.
+   *
+   * @param {string} action - Ação sendo executada
+   * @param {Object} [info] - Informações contextuais adicionais
+   * @return {void}
+   *
+   * @example
+   * Logger.logInfo('CREATE_RNC', { rncNumber: 'RNC-2024-001', setor: 'Produção' });
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function logInfo(action, info) {
     if (currentLogLevel <= LOG_LEVELS.INFO) {
@@ -175,7 +228,19 @@ const Logger = (function() {
   }
 
   /**
-   * Log de aviso (situações não ideais mas recuperáveis)
+   * Registra log de nível WARNING para situações não ideais mas recuperáveis.
+   * Use para alertar sobre operações lentas, dados inconsistentes ou configurações subótimas.
+   * Grava no console e na planilha para análise posterior.
+   *
+   * @param {string} action - Ação sendo executada
+   * @param {Object} [info] - Informações contextuais adicionais
+   * @return {void}
+   *
+   * @example
+   * Logger.logWarning('SLOW_QUERY', { duration: 6500, query: 'SELECT * FROM rnc' });
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function logWarning(action, info) {
     if (currentLogLevel <= LOG_LEVELS.WARNING) {
@@ -184,7 +249,20 @@ const Logger = (function() {
   }
 
   /**
-   * ✅ MELHORADO: Log de erro com stack trace completo (Problema #15)
+   * Registra log de nível ERROR para erros recuperáveis do sistema.
+   * Gera stack trace automaticamente se não existir e grava no console e planilha.
+   * Use para falhas em operações que não comprometem o sistema inteiro.
+   *
+   * @param {string} action - Ação que gerou o erro
+   * @param {Error} error - Objeto de erro com mensagem e stack trace
+   * @param {Object} [info] - Informações contextuais adicionais
+   * @return {void}
+   *
+   * @example
+   * Logger.logError('SEND_EMAIL', new Error('SMTP timeout'), { recipient: 'user@example.com' });
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function logError(action, error, info) {
     if (currentLogLevel <= LOG_LEVELS.ERROR) {
@@ -202,7 +280,20 @@ const Logger = (function() {
   }
 
   /**
-   * Log crítico (erros que podem comprometer o sistema)
+   * Registra log de nível CRITICAL para erros que podem comprometer o sistema.
+   * Gera stack trace, grava no console e planilha, e envia email de alerta ao admin.
+   * Use apenas para falhas graves como perda de dados ou indisponibilidade de serviço.
+   *
+   * @param {string} action - Ação que gerou o erro crítico
+   * @param {Error} error - Objeto de erro com mensagem e stack trace
+   * @param {Object} [info] - Informações contextuais adicionais
+   * @return {void}
+   *
+   * @example
+   * Logger.logCritical('DATABASE_FAILURE', new Error('Sheet not found'), { sheetName: 'RNC' });
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function logCritical(action, error, info) {
     // ✅ MELHORADO: Sempre garantir stack trace em erros críticos
@@ -225,8 +316,17 @@ const Logger = (function() {
   }
 
   /**
-   * Notifica administrador sobre erro crítico
+   * Notifica administrador sobre erro crítico via email.
+   * Inclui detalhes completos do erro, stack trace, timestamp e versão do sistema.
+   * Falha silenciosamente se AdminEmail não estiver configurado ou envio falhar.
+   *
+   * @param {string} action - Ação que gerou o erro crítico
+   * @param {Error} error - Objeto de erro com mensagem e stack trace
+   * @param {Object} info - Informações contextuais adicionais
+   * @return {void}
+   *
    * @private
+   * @since Deploy 31
    */
   function notifyAdminOfCriticalError(action, error, info) {
     try {
@@ -252,7 +352,22 @@ Ambiente: ${CONFIG.ENVIRONMENT}`;
   }
 
   /**
-   * Registra performance de operação
+   * Registra performance de operação medindo tempo de execução.
+   * Gera WARNING se duração > 5 segundos, ou DEBUG se em modo desenvolvimento.
+   * Adiciona automaticamente duration_ms e duration_seconds ao contexto.
+   *
+   * @param {string} operation - Nome da operação sendo medida
+   * @param {number} startTime - Timestamp de início (new Date().getTime())
+   * @param {Object} [info] - Informações contextuais adicionais
+   * @return {number} Duração em milissegundos
+   *
+   * @example
+   * const start = new Date().getTime();
+   * // ... operação demorada ...
+   * Logger.logPerformance('PROCESS_BATCH', start, { recordCount: 1000 });
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function logPerformance(operation, startTime, info) {
     const duration = new Date().getTime() - startTime;
@@ -331,8 +446,15 @@ Ambiente: ${CONFIG.ENVIRONMENT}`;
   }
 
   /**
-   * Helper para sanitizar email (manter apenas domínio)
+   * Sanitiza email mantendo apenas o domínio para proteção de privacidade.
+   * Substitui a parte local por asteriscos, preservando apenas @dominio.com.
+   * Retorna apenas asteriscos se formato de email for inválido.
+   *
+   * @param {string} email - Email a ser sanitizado
+   * @return {string} Email sanitizado (ex: '***@example.com')
+   *
    * @private
+   * @since Deploy 31
    */
   function sanitizeEmail(email) {
     try {
@@ -344,7 +466,19 @@ Ambiente: ${CONFIG.ENVIRONMENT}`;
   }
 
   /**
-   * Obtém logs recentes
+   * Obtém logs recentes da planilha de auditoria em ordem decrescente.
+   * Retorna array de objetos com timestamp, level, user, action, info, error, stack e version.
+   * Limite padrão de 100 logs se não especificado.
+   *
+   * @param {number} [limit=100] - Número máximo de logs a retornar
+   * @return {Array<Object>} Array de objetos de log (mais recentes primeiro)
+   *
+   * @example
+   * const logs = Logger.getRecentLogs(50);
+   * logs.forEach(log => console.log(log.action, log.timestamp));
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function getRecentLogs(limit) {
     limit = limit || 100;
@@ -384,7 +518,19 @@ Ambiente: ${CONFIG.ENVIRONMENT}`;
   }
 
   /**
-   * Limpa logs antigos
+   * Limpa logs mais antigos que o período especificado para economizar espaço.
+   * Remove linhas da planilha de logs mantendo apenas últimos N dias.
+   * Padrão de 30 dias se não especificado.
+   *
+   * @param {number} [daysToKeep=30] - Número de dias de logs a manter
+   * @return {Object} Objeto com success, message e opcionalmente error
+   *
+   * @example
+   * const result = Logger.cleanOldLogs(60);
+   * console.log(result.message); // "15 logs antigos removidos"
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function cleanOldLogs(daysToKeep) {
     daysToKeep = daysToKeep || 30;
@@ -434,7 +580,22 @@ Ambiente: ${CONFIG.ENVIRONMENT}`;
   }
 
   /**
-   * Exporta logs para CSV
+   * Exporta logs para formato CSV filtrado por intervalo de datas.
+   * Gera arquivo CSV com todos os campos, escapando valores com vírgulas e aspas.
+   * Retorna objeto com success, csv string e filename sugerido.
+   *
+   * @param {Date|string} [startDate] - Data inicial do filtro (default: início dos tempos)
+   * @param {Date|string} [endDate] - Data final do filtro (default: hoje)
+   * @return {Object} Objeto com success, csv (string) e filename
+   *
+   * @example
+   * const result = Logger.exportLogs('2024-01-01', '2024-12-31');
+   * if (result.success) {
+   *   console.log('CSV gerado:', result.filename);
+   * }
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function exportLogs(startDate, endDate) {
     try {
@@ -492,7 +653,19 @@ Ambiente: ${CONFIG.ENVIRONMENT}`;
   }
 
   /**
-   * Define o nível de log
+   * Define o nível de log mínimo para o sistema dinamicamente.
+   * Valores válidos: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+   * Altera comportamento de filtragem de logs sem reiniciar sistema.
+   *
+   * @param {string} level - Nível de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+   * @return {void}
+   *
+   * @example
+   * Logger.setLogLevel('DEBUG'); // Habilita todos os logs
+   * Logger.setLogLevel('ERROR'); // Apenas erros e críticos
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function setLogLevel(level) {
     if (LOG_LEVELS.hasOwnProperty(level)) {
@@ -502,7 +675,19 @@ Ambiente: ${CONFIG.ENVIRONMENT}`;
   }
 
   /**
-   * ✅ NOVO: Obtém estatísticas de logs (Problema #19)
+   * Obtém estatísticas agregadas dos últimos 1000 logs para análise.
+   * Retorna contagens por nível, por usuário, lista de erros e críticos.
+   * Útil para dashboards e relatórios de health do sistema.
+   *
+   * @return {Object|null} Objeto com total, byLevel, byUser, errors, criticals
+   *
+   * @example
+   * const stats = Logger.getLogStats();
+   * console.log('Total de logs:', stats.total);
+   * console.log('Erros:', stats.byLevel.ERROR);
+   *
+   * @memberof Logger
+   * @since Deploy 31
    */
   function getLogStats() {
     try {
@@ -570,7 +755,16 @@ Ambiente: ${CONFIG.ENVIRONMENT}`;
 // ===== FUNÇÕES AUXILIARES =====
 
 /**
- * Verifica logs recentes no console
+ * Verifica e exibe os últimos 50 logs no console em formato legível.
+ * Função auxiliar para debug e monitoramento rápido do sistema.
+ * Mostra timestamp, level, action e info de cada log.
+ *
+ * @return {void}
+ *
+ * @example
+ * checkLogs(); // Exibe últimos 50 logs no console
+ *
+ * @since Deploy 31
  */
 function checkLogs() {
   const logs = Logger.getRecentLogs(50);
@@ -585,7 +779,16 @@ function checkLogs() {
 }
 
 /**
- * Configura trigger para limpeza automática de logs
+ * Configura trigger semanal para limpeza automática de logs antigos.
+ * Cria trigger baseado em tempo que executa cleanOldLogs toda semana.
+ * Execute manualmente uma vez para ativar manutenção automática.
+ *
+ * @return {void}
+ *
+ * @example
+ * setupCleanupTrigger(); // Ativa limpeza semanal automática
+ *
+ * @since Deploy 31
  */
 function setupCleanupTrigger() {
   ScriptApp.newTrigger('cleanOldLogs')

@@ -11,7 +11,37 @@
  * - Mensagens de erro
  */
 
-// ===== CONFIGURAÇÕES GLOBAIS =====
+/**
+ * Configurações centralizadas do sistema RNC Neoformula.
+ * Contém IDs de planilhas, configurações de cache, permissões, limites de execução
+ * e mensagens padronizadas para garantir consistência em toda a aplicação.
+ *
+ * @constant {Object}
+ * @property {string} SPREADSHEET_ID - ID da planilha principal do Google Sheets
+ * @property {string} DRIVE_FOLDER_ID - ID da pasta do Google Drive para armazenamento de anexos
+ * @property {string} VERSION - Versão atual do sistema e número do deploy
+ * @property {string} BUILD_DATE - Data de build do sistema (formato YYYY-MM-DD)
+ * @property {boolean} DEBUG_MODE - Controla exibição de logs de debug no sistema
+ * @property {string} ENVIRONMENT - Ambiente de execução (development | production)
+ * @property {Object} SHEETS - Nomes das abas da planilha principal
+ * @property {Object} FIELD_TYPES - Tipos de campos disponíveis no sistema de formulários
+ * @property {Object} STATUS_PIPELINE - Pipeline de status para fluxo de RNCs
+ * @property {Object} SYSTEM - Configurações de sistema (tamanhos, tipos permitidos, limites)
+ * @property {Object} CACHE - TTLs padronizados para cache em segundos (SHORT, MEDIUM, LONG, VERY_LONG)
+ * @property {Object} LIMITS - Limites de execução, batch size, timeouts e locks
+ * @property {Object} PRINT - Constantes para configuração de impressão
+ * @property {Object} ERROR_MESSAGES - Mensagens de erro padronizadas do sistema
+ *
+ * @example
+ * // Acessar ID da planilha
+ * const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+ *
+ * @example
+ * // Usar TTL de cache apropriado
+ * cache.put('key', data, CONFIG.CACHE.MEDIUM);
+ *
+ * @since Deploy 1
+ */
 const CONFIG = {
   // ID da Planilha Principal
   SPREADSHEET_ID: '14X1ix2CZ2Exg9qORXF8THluwVoG-NFlfdAlUl2J-Syc',
@@ -112,6 +142,25 @@ const CONFIG = {
   }
 };
 
+/**
+ * Mapeamento entre nomes de campos do formulário e colunas da planilha.
+ * Utilizado para normalizar diferentes variações de nomes de campos e garantir
+ * consistência na leitura/escrita de dados entre frontend e backend.
+ *
+ * @constant {Object}
+ * @property {string} [key] - Nome alternativo ou variação do campo
+ * @property {string} [value] - Nome canônico do campo na planilha
+ *
+ * @example
+ * // Normalizar nome de campo
+ * const fieldName = FIELD_MAPPING['Status'] || 'Status'; // 'Status Geral'
+ *
+ * @example
+ * // Usar com getFormFieldFromColumn()
+ * const formField = getFormFieldFromColumn('Data'); // 'Data de Abertura'
+ *
+ * @since Deploy 1
+ */
 // ✅ CORRIGIDO: FIELD_MAPPING limpo e consistente (Problema #3)
 const FIELD_MAPPING = {
   // Campos do Sistema
@@ -170,10 +219,21 @@ const FIELD_MAPPING = {
 // ===== FUNÇÕES AUXILIARES DE CONFIGURAÇÃO =====
 
 /**
- * ✅ MELHORADO: Obtém mapeamento de campo com validação (Problema #12)
- * @param {string} columnName - Nome da coluna
- * @return {string} Nome do campo do formulário
+ * Obtém o nome canônico de um campo a partir de variações de nomes de coluna.
+ * Realiza busca direta, busca por valor mapeado e fallback case-insensitive
+ * para garantir compatibilidade com diferentes formatos de entrada.
+ *
+ * @param {string} columnName - Nome da coluna a ser normalizado
+ * @return {string} Nome canônico do campo do formulário ou nome limpo da coluna
+ *
+ * @example
+ * getFormFieldFromColumn('Status'); // 'Status Geral'
+ * getFormFieldFromColumn('Data'); // 'Data de Abertura'
+ * getFormFieldFromColumn('Campo Inexistente'); // 'Campo Inexistente' (limpo)
+ *
+ * @since Deploy 1
  */
+// ✅ MELHORADO: Obtém mapeamento de campo com validação (Problema #12)
 function getFormFieldFromColumn(columnName) {
   if (!columnName || typeof columnName !== 'string') {
     Logger.logWarning('getFormFieldFromColumn_INVALID_INPUT', { columnName: columnName });
@@ -229,10 +289,24 @@ function getFormFieldFromColumn(columnName) {
 // ============================================
 
 /**
- * Converte qualquer formato de data para DD/MM/YYYY
- * @param {Date|String|Number} dateValue - Valor da data
- * @return {String} Data formatada DD/MM/YYYY ou string vazia
+ * Converte qualquer formato de data para o padrão brasileiro DD/MM/YYYY.
+ * Aceita objetos Date, strings ISO (YYYY-MM-DD), timestamps numéricos e strings DD/MM/YYYY.
+ * Inclui validação contra formula injection e ranges de data razoáveis.
+ *
+ * @param {Date|string|number} dateValue - Valor da data a ser formatado
+ * @return {string} Data formatada DD/MM/YYYY ou string vazia se inválida
+ *
+ * @example
+ * formatDateBR(new Date(2025, 0, 15)); // '15/01/2025'
+ * formatDateBR('2025-01-15'); // '15/01/2025'
+ * formatDateBR('15/01/2025'); // '15/01/2025'
+ * formatDateBR(1705276800000); // '15/01/2025'
+ *
+ * @since Deploy 1
  */
+// ============================================
+// ✅ MELHORADO: Funções de Data Padronizadas (Problema #6)
+// ============================================
 function formatDateBR(dateValue) {
   if (!dateValue) return '';
 
@@ -303,9 +377,17 @@ function formatDateBR(dateValue) {
 }
 
 /**
- * Converte DD/MM/YYYY para YYYY-MM-DD (para inputs HTML)
- * @param {String} dateBR - Data no formato DD/MM/YYYY
- * @return {String} Data no formato YYYY-MM-DD
+ * Converte data do formato brasileiro DD/MM/YYYY para formato ISO YYYY-MM-DD.
+ * Utilizado principalmente para preencher inputs HTML do tipo date que requerem formato ISO.
+ *
+ * @param {string} dateBR - Data no formato DD/MM/YYYY
+ * @return {string} Data no formato YYYY-MM-DD ou string vazia se inválida
+ *
+ * @example
+ * formatDateISO('15/01/2025'); // '2025-01-15'
+ * formatDateISO('2025-01-15'); // '2025-01-15' (já em formato ISO)
+ *
+ * @since Deploy 1
  */
 function formatDateISO(dateBR) {
   if (!dateBR) return '';
@@ -333,8 +415,15 @@ function formatDateISO(dateBR) {
 }
 
 /**
- * Obtém data/hora atual formatada para PT-BR
- * @return {String} Data e hora no formato DD/MM/YYYY HH:MM:SS
+ * Obtém data e hora atual formatada para padrão brasileiro.
+ * Utiliza o timezone da sessão do Google Apps Script para garantir horário local correto.
+ *
+ * @return {string} Data e hora no formato DD/MM/YYYY HH:MM:SS
+ *
+ * @example
+ * getCurrentDateTimeBR(); // '02/01/2026 14:30:45'
+ *
+ * @since Deploy 1
  */
 function getCurrentDateTimeBR() {
   const now = new Date();
@@ -342,10 +431,21 @@ function getCurrentDateTimeBR() {
 }
 
 /**
- * ✅ NOVO: Valida se uma data é válida (Problema #6)
- * @param {*} dateValue - Valor a validar
- * @return {boolean} True se é data válida
+ * Valida se um valor pode ser convertido para uma data válida.
+ * Utiliza formatDateBR() internamente para testar a conversão.
+ *
+ * @param {*} dateValue - Valor a ser validado como data
+ * @return {boolean} true se é uma data válida, false caso contrário
+ *
+ * @example
+ * isValidDate('15/01/2025'); // true
+ * isValidDate('32/01/2025'); // false
+ * isValidDate(new Date()); // true
+ * isValidDate('texto inválido'); // false
+ *
+ * @since Deploy 1
  */
+// ✅ NOVO: Valida se uma data é válida (Problema #6)
 function isValidDate(dateValue) {
   if (!dateValue) return false;
 
@@ -361,9 +461,19 @@ function isValidDate(dateValue) {
 // Use a versão unificada mais abaixo (linha ~870) que suporta ambos os modos de retorno
 
 /**
- * Sanitiza string removendo caracteres perigosos
- * @param {string} str - String a sanitizar
- * @return {string} String sanitizada
+ * Sanitiza string removendo caracteres perigosos e potencialmente maliciosos.
+ * Remove tags HTML (<>), limita tamanho e normaliza espaços para prevenir
+ * injeção de código e corrupção de dados.
+ *
+ * @param {string} str - String a ser sanitizada
+ * @return {string} String sanitizada e segura ou string vazia se inválida
+ *
+ * @example
+ * sanitizeString('<script>alert("xss")</script>'); // ''
+ * sanitizeString('Texto normal'); // 'Texto normal'
+ * sanitizeString('   espaços extras   '); // 'espaços extras'
+ *
+ * @since Deploy 121
  */
 function sanitizeString(str) {
   if (!str || typeof str !== 'string') return '';
@@ -375,9 +485,20 @@ function sanitizeString(str) {
 }
 
 /**
- * Valida número
- * @param {*} value - Valor a validar
- * @return {boolean} True se é número válido
+ * Valida se um valor é um número válido e finito.
+ * Rejeita null, undefined, strings vazias, NaN e Infinity.
+ *
+ * @param {*} value - Valor a ser validado como número
+ * @return {boolean} true se é um número válido e finito, false caso contrário
+ *
+ * @example
+ * isValidNumber(42); // true
+ * isValidNumber('42'); // true
+ * isValidNumber('abc'); // false
+ * isValidNumber(null); // false
+ * isValidNumber(Infinity); // false
+ *
+ * @since Deploy 121
  */
 function isValidNumber(value) {
   if (value === null || value === undefined || value === '') return false;
@@ -389,8 +510,24 @@ function isValidNumber(value) {
 // ============================================
 
 /**
- * Valida as configurações do sistema
- * @return {Object} Resultado da validação
+ * Valida as configurações essenciais do sistema (IDs de planilha e pasta Drive).
+ * Tenta acessar os recursos para confirmar permissões e disponibilidade.
+ * Retorna objeto detalhado com status de validação e mensagens de erro/aviso.
+ *
+ * @return {Object} Resultado da validação com propriedades:
+ *   - valid {boolean} - true se todas as validações críticas passaram
+ *   - errors {Array<string>} - Lista de erros críticos encontrados
+ *   - warnings {Array<string>} - Lista de avisos não-críticos
+ *   - spreadsheetName {string} - Nome da planilha se acessível
+ *   - folderName {string} - Nome da pasta Drive se acessível
+ *
+ * @example
+ * const validation = validateSystemConfig();
+ * if (!validation.valid) {
+ *   console.error('Erros:', validation.errors);
+ * }
+ *
+ * @since Deploy 121
  */
 function validateSystemConfig() {
   const validation = {
@@ -439,10 +576,19 @@ function validateSystemConfig() {
 }
 
 /**
- * Obtém configuração do sistema da planilha
- * @param {string} key - Chave da configuração
- * @param {*} defaultValue - Valor padrão se não encontrar
- * @return {*} Valor da configuração
+ * Obtém configuração dinâmica do sistema armazenada na planilha ConfigSistema.
+ * Utiliza cache para otimizar performance em leituras repetidas.
+ * Inicializa configurações padrão se a planilha estiver vazia.
+ *
+ * @param {string} key - Chave da configuração a ser obtida
+ * @param {*} defaultValue - Valor padrão retornado se a chave não existir
+ * @return {*} Valor da configuração ou defaultValue se não encontrado
+ *
+ * @example
+ * const pastaId = getSystemConfig('PastaGID', CONFIG.DRIVE_FOLDER_ID);
+ * const debugMode = getSystemConfig('DebugMode', 'Não');
+ *
+ * @since Deploy 1
  */
 function getSystemConfig(key, defaultValue) {
   try {
@@ -499,11 +645,22 @@ function getSystemConfig(key, defaultValue) {
 }
 
 /**
- * Define configuração do sistema
- * @param {string} key - Chave da configuração
- * @param {*} value - Valor a definir
- * @param {string} description - Descrição opcional
- * @return {Object} Resultado da operação
+ * Define ou atualiza configuração dinâmica do sistema na planilha ConfigSistema.
+ * Utiliza apóstrofo (') para forçar armazenamento como texto e prevenir conversão automática.
+ * Limpa cache automaticamente após atualização.
+ *
+ * @param {string} key - Chave da configuração a ser definida
+ * @param {*} value - Valor a ser armazenado (será convertido para string)
+ * @param {string} [description] - Descrição opcional da configuração
+ * @return {Object} Resultado com propriedades:
+ *   - success {boolean} - true se operação bem-sucedida
+ *   - error {string} - Mensagem de erro se success=false
+ *
+ * @example
+ * setSystemConfig('DebugMode', 'Sim', 'Ativar logs de debug');
+ * setSystemConfig('MaxFileSize', 10485760, 'Tamanho máximo de arquivo em bytes');
+ *
+ * @since Deploy 1
  */
 function setSystemConfig(key, value, description) {
   try {
@@ -548,8 +705,16 @@ function setSystemConfig(key, value, description) {
 }
 
 /**
- * Retorna a URL do script do Apps Script
- * @return {string} URL do script
+ * Retorna a URL do web app implantado do Google Apps Script.
+ * Utilizado para gerar links e callbacks para o frontend.
+ *
+ * @return {string} URL do script implantado ou string vazia se erro
+ *
+ * @example
+ * const url = getScriptUrl();
+ * console.log('App URL:', url);
+ *
+ * @since Deploy 1
  */
 function getScriptUrl() {
   try {
@@ -566,11 +731,20 @@ function getScriptUrl() {
  */
 
 /**
- * Sanitiza input do usuário para prevenir injeções e corrupção de dados
- * Remove scripts, HTML tags, fórmulas Excel e limita tamanho
- * @param {*} value - Valor a ser sanitizado
- * @param {number} maxLength - Tamanho máximo permitido (padrão: 5000)
- * @return {string} Valor sanitizado
+ * Sanitiza input do usuário para prevenir injeções e corrupção de dados.
+ * Remove scripts maliciosos, tags HTML, fórmulas Excel/Sheets perigosas e caracteres de controle.
+ * Limita tamanho da string para prevenir overflow e DoS.
+ *
+ * @param {*} value - Valor a ser sanitizado (será convertido para string)
+ * @param {number} [maxLength=5000] - Tamanho máximo permitido em caracteres
+ * @return {string} Valor sanitizado e seguro para armazenamento
+ *
+ * @example
+ * sanitizeUserInput('<script>alert("xss")</script>'); // ''
+ * sanitizeUserInput('=SUM(A1:A10)'); // "'=SUM(A1:A10)" (fórmula neutralizada)
+ * sanitizeUserInput('Texto normal', 100); // 'Texto normal'
+ *
+ * @since Deploy 32
  */
 function sanitizeUserInput(value, maxLength) {
   maxLength = maxLength || 5000;
@@ -612,10 +786,23 @@ function sanitizeUserInput(value, maxLength) {
 }
 
 /**
- * Sanitiza objeto completo de dados do formulário
- * @param {Object} formData - Dados do formulário
- * @param {Object} fieldLimits - Limites específicos por campo (opcional)
- * @return {Object} Dados sanitizados
+ * Sanitiza objeto completo de dados do formulário aplicando limites inteligentes.
+ * Aplica limites de tamanho específicos baseados no tipo de campo (email, telefone, descrição, etc).
+ * Sanitiza cada campo individualmente usando sanitizeUserInput().
+ *
+ * @param {Object} formData - Objeto com dados do formulário (chave: valor)
+ * @param {Object} [fieldLimits] - Limites personalizados por campo (chave: maxLength)
+ * @return {Object} Objeto com todos os dados sanitizados
+ *
+ * @example
+ * const dados = {
+ *   'Email': 'user@example.com',
+ *   'Descrição': '<script>xss</script>Texto longo...'
+ * };
+ * const limpo = sanitizeFormData(dados);
+ * // { 'Email': 'user@example.com', 'Descrição': 'Texto longo...' }
+ *
+ * @since Deploy 32
  */
 function sanitizeFormData(formData, fieldLimits) {
   fieldLimits = fieldLimits || {};
@@ -668,9 +855,21 @@ function sanitizeFormData(formData, fieldLimits) {
 }
 
 /**
- * Valida se um valor é seguro para armazenamento
- * @param {*} value - Valor a validar
- * @return {Object} { safe: boolean, reason: string }
+ * Valida se um valor é seguro para armazenamento no banco de dados.
+ * Detecta scripts maliciosos, fórmulas suspeitas e padrões de SQL injection.
+ * Retorna resultado detalhado com motivo da rejeição se aplicável.
+ *
+ * @param {*} value - Valor a ser validado (será convertido para string)
+ * @return {Object} Resultado com propriedades:
+ *   - safe {boolean} - true se valor é seguro
+ *   - reason {string} - Motivo da rejeição se safe=false, vazio se safe=true
+ *
+ * @example
+ * validateSafeInput('Texto normal'); // { safe: true, reason: '' }
+ * validateSafeInput('<script>alert()</script>'); // { safe: false, reason: 'Contém tags de script...' }
+ * validateSafeInput("' OR 1=1 --"); // { safe: false, reason: 'Contém padrões de SQL injection' }
+ *
+ * @since Deploy 32
  */
 function validateSafeInput(value) {
   var result = { safe: true, reason: '' };
@@ -722,14 +921,26 @@ function validateSafeInput(value) {
  */
 
 /**
- * Converte erro técnico em mensagem amigável para o usuário
- * @param {Error|string} error - Erro a converter
- * @param {string} context - Contexto da operação (opcional)
- * @return {string} Mensagem amigável
+ * Converte erro técnico em mensagem amigável e compreensível para o usuário final.
+ * Detecta padrões comuns de erro (lock, permissão, validação, rede, arquivo, etc)
+ * e retorna mensagem apropriada com orientações de ação.
+ *
+ * @param {Error|string} error - Erro técnico a ser convertido
+ * @param {string} [context] - Contexto da operação (save, update, delete, load)
+ * @return {string} Mensagem amigável e orientadora para o usuário
+ *
+ * @example
+ * getUserFriendlyError(new Error('Lock timeout'));
+ * // 'O sistema está ocupado no momento. Por favor, aguarde alguns segundos...'
+ *
+ * @example
+ * getUserFriendlyError('Permission denied', 'save');
+ * // 'Você não tem permissão para realizar esta operação...'
+ *
+ * @since Deploy 33
  */
 function getUserFriendlyError(error, context) {
   var errorStr = (error && error.toString) ? error.toString().toLowerCase() : String(error).toLowerCase();
-  var friendlyMessage = '';
 
   // Erros de Lock/Concorrência
   if (errorStr.includes('lock') || errorStr.includes('ocupado') || errorStr.includes('busy')) {
@@ -833,11 +1044,28 @@ function getUserFriendlyError(error, context) {
 }
 
 /**
- * Formata erro para exibição ao usuário
- * Inclui código de erro técnico para suporte
- * @param {Error|string} error - Erro original
- * @param {string} context - Contexto da operação
- * @return {Object} { message: string, technicalError: string }
+ * Formata erro para exibição ao usuário incluindo código de rastreamento.
+ * Gera mensagem amigável, preserva erro técnico original e cria código único
+ * para facilitar troubleshooting e suporte.
+ *
+ * @param {Error|string} error - Erro original a ser formatado
+ * @param {string} [context] - Contexto da operação que gerou o erro
+ * @return {Object} Objeto com propriedades:
+ *   - message {string} - Mensagem amigável para o usuário
+ *   - technicalError {string} - Erro técnico original
+ *   - errorCode {string} - Código único de rastreamento (formato: ERR-XXXXX)
+ *   - timestamp {string} - ISO timestamp de quando o erro ocorreu
+ *
+ * @example
+ * const formatted = formatErrorForUser(new Error('Database timeout'), 'save');
+ * // {
+ * //   message: 'A operação demorou muito tempo...',
+ * //   technicalError: 'Error: Database timeout',
+ * //   errorCode: 'ERR-K3N9X',
+ * //   timestamp: '2026-01-02T14:30:45.123Z'
+ * // }
+ *
+ * @since Deploy 33
  */
 function formatErrorForUser(error, context) {
   var friendlyMessage = getUserFriendlyError(error, context);
@@ -862,17 +1090,25 @@ function formatErrorForUser(error, context) {
  */
 
 /**
- * ✅ DEPLOY 115 - FASE 4: Validates email format (versão unificada)
- * @param {string} email - Email to validate
- * @param {boolean} simpleReturn - Se true, retorna boolean; se false/undefined, retorna objeto
- * @return {boolean|Object} - Boolean OU { valid: boolean, error: string }
+ * Valida formato de endereço de email usando regex rigoroso.
+ * Suporta dois modos de retorno: objeto detalhado (padrão) ou boolean simples.
+ * Valida comprimento máximo (100 caracteres) e caracteres permitidos.
+ *
+ * @param {string} email - Endereço de email a ser validado
+ * @param {boolean} [simpleReturn=false] - Se true retorna boolean, se false retorna objeto
+ * @return {boolean|Object} Boolean (se simpleReturn=true) ou objeto com propriedades:
+ *   - valid {boolean} - true se email válido
+ *   - error {string|null} - Mensagem de erro descritiva ou null se válido
  *
  * @example
- * isValidEmail('user@example.com')        // { valid: true, error: null }
- * isValidEmail('invalid')                 // { valid: false, error: 'Email inválido...' }
- * isValidEmail('user@example.com', true)  // true
- * isValidEmail('invalid', true)           // false
+ * isValidEmail('user@example.com'); // { valid: true, error: null }
+ * isValidEmail('invalid'); // { valid: false, error: 'Email inválido...' }
+ * isValidEmail('user@example.com', true); // true
+ * isValidEmail('invalid', true); // false
+ *
+ * @since Deploy 115
  */
+// ✅ DEPLOY 115 - FASE 4: Validates email format (versão unificada)
 function isValidEmail(email, simpleReturn) {
   // Validação: email vazio
   if (!email || typeof email !== 'string' || email.trim() === '') {
@@ -897,9 +1133,21 @@ function isValidEmail(email, simpleReturn) {
 }
 
 /**
- * Validates Brazilian phone format
- * @param {string} phone - Phone to validate
- * @return {Object} - { valid: boolean, error: string }
+ * Valida formato de telefone brasileiro (fixo ou celular).
+ * Aceita telefones com 10 dígitos (fixo) ou 11 dígitos (celular).
+ * Valida DDD (código de área) entre 11-99.
+ *
+ * @param {string} phone - Telefone a ser validado (aceita formatação)
+ * @return {Object} Objeto com propriedades:
+ *   - valid {boolean} - true se telefone válido
+ *   - error {string|null} - Mensagem de erro descritiva ou null se válido
+ *
+ * @example
+ * isValidPhone('(11) 98765-4321'); // { valid: true, error: null }
+ * isValidPhone('11987654321'); // { valid: true, error: null }
+ * isValidPhone('123456'); // { valid: false, error: 'Telefone inválido...' }
+ *
+ * @since Deploy 33
  */
 function isValidPhone(phone) {
   if (!phone || phone.trim() === '') {
@@ -924,9 +1172,21 @@ function isValidPhone(phone) {
 }
 
 /**
- * Validates Brazilian CPF
- * @param {string} cpf - CPF to validate
- * @return {Object} - { valid: boolean, error: string }
+ * Valida CPF brasileiro usando algoritmo de dígitos verificadores.
+ * Verifica comprimento, rejeita sequências repetidas (111.111.111-11) e
+ * valida ambos os dígitos verificadores conforme algoritmo oficial.
+ *
+ * @param {string} cpf - CPF a ser validado (aceita formatação)
+ * @return {Object} Objeto com propriedades:
+ *   - valid {boolean} - true se CPF válido
+ *   - error {string|null} - Mensagem de erro descritiva ou null se válido
+ *
+ * @example
+ * isValidCPF('123.456.789-09'); // { valid: true, error: null }
+ * isValidCPF('12345678909'); // { valid: true, error: null }
+ * isValidCPF('111.111.111-11'); // { valid: false, error: 'CPF inválido' }
+ *
+ * @since Deploy 33
  */
 function isValidCPF(cpf) {
   if (!cpf || cpf.trim() === '') {
@@ -975,9 +1235,21 @@ function isValidCPF(cpf) {
 }
 
 /**
- * Validates Brazilian CNPJ
- * @param {string} cnpj - CNPJ to validate
- * @return {Object} - { valid: boolean, error: string }
+ * Valida CNPJ brasileiro usando algoritmo de dígitos verificadores.
+ * Verifica comprimento (14 dígitos), rejeita sequências repetidas e
+ * valida ambos os dígitos verificadores conforme algoritmo oficial.
+ *
+ * @param {string} cnpj - CNPJ a ser validado (aceita formatação)
+ * @return {Object} Objeto com propriedades:
+ *   - valid {boolean} - true se CNPJ válido
+ *   - error {string|null} - Mensagem de erro descritiva ou null se válido
+ *
+ * @example
+ * isValidCNPJ('11.222.333/0001-81'); // { valid: true, error: null }
+ * isValidCNPJ('11222333000181'); // { valid: true, error: null }
+ * isValidCNPJ('11.111.111/1111-11'); // { valid: false, error: 'CNPJ inválido' }
+ *
+ * @since Deploy 33
  */
 function isValidCNPJ(cnpj) {
   if (!cnpj || cnpj.trim() === '') {
@@ -1034,11 +1306,28 @@ function isValidCNPJ(cnpj) {
 }
 
 /**
- * Validates date format and range
- * @param {string} dateStr - Date string to validate
- * @param {string} format - Expected format ('DD/MM/YYYY' or 'YYYY-MM-DD')
- * @param {Object} options - { minDate, maxDate, allowFuture, allowPast }
- * @return {Object} - { valid: boolean, error: string }
+ * Valida formato e range de data com opções configuráveis.
+ * Suporta formatos DD/MM/YYYY e YYYY-MM-DD com validação de valores numéricos.
+ * Permite restrições de datas futuras, passadas e ranges customizados.
+ *
+ * @param {string} dateStr - String de data a ser validada
+ * @param {string} [format='DD/MM/YYYY'] - Formato esperado ('DD/MM/YYYY' ou 'YYYY-MM-DD')
+ * @param {Object} [options] - Opções de validação:
+ *   - minDate {Date|string} - Data mínima permitida
+ *   - maxDate {Date|string} - Data máxima permitida
+ *   - allowFuture {boolean} - Permite datas futuras (padrão: true)
+ *   - allowPast {boolean} - Permite datas passadas (padrão: true)
+ * @return {Object} Objeto com propriedades:
+ *   - valid {boolean} - true se data válida
+ *   - error {string|null} - Mensagem de erro descritiva ou null se válida
+ *
+ * @example
+ * isValidDate('15/01/2025'); // { valid: true, error: null }
+ * isValidDate('2025-01-15', 'YYYY-MM-DD'); // { valid: true, error: null }
+ * isValidDate('15/01/2030', 'DD/MM/YYYY', { allowFuture: false });
+ * // { valid: false, error: 'Data não pode ser no futuro' }
+ *
+ * @since Deploy 33
  */
 function isValidDate(dateStr, format, options) {
   options = options || {};
@@ -1107,10 +1396,27 @@ function isValidDate(dateStr, format, options) {
 }
 
 /**
- * Validates numeric value and range
- * @param {*} value - Value to validate
- * @param {Object} options - { min, max, integer, positive }
- * @return {Object} - { valid: boolean, error: string }
+ * Valida valor numérico com opções de range e tipo.
+ * Verifica se valor é número válido, finito e atende restrições de
+ * tipo inteiro, positividade e ranges mínimo/máximo.
+ *
+ * @param {*} value - Valor a ser validado como número
+ * @param {Object} [options] - Opções de validação:
+ *   - min {number} - Valor mínimo permitido
+ *   - max {number} - Valor máximo permitido
+ *   - integer {boolean} - Requer número inteiro
+ *   - positive {boolean} - Requer número positivo (> 0)
+ * @return {Object} Objeto com propriedades:
+ *   - valid {boolean} - true se número válido
+ *   - error {string|null} - Mensagem de erro descritiva ou null se válido
+ *
+ * @example
+ * isValidNumber(42); // { valid: true, error: null }
+ * isValidNumber(3.14, { integer: true }); // { valid: false, error: 'Valor deve ser inteiro' }
+ * isValidNumber(-5, { positive: true }); // { valid: false, error: 'Valor deve ser positivo' }
+ * isValidNumber(150, { min: 0, max: 100 }); // { valid: false, error: 'Valor máximo...' }
+ *
+ * @since Deploy 33
  */
 function isValidNumber(value, options) {
   options = options || {};
@@ -1145,9 +1451,22 @@ function isValidNumber(value, options) {
 }
 
 /**
- * Validates Brazilian CEP (postal code)
- * @param {string} cep - CEP to validate
- * @return {Object} - { valid: boolean, error: string }
+ * Valida CEP (Código de Endereçamento Postal) brasileiro.
+ * Verifica comprimento (8 dígitos) e rejeita sequências repetidas.
+ * Aceita CEP com ou sem formatação (XXXXX-XXX ou XXXXXXXX).
+ *
+ * @param {string} cep - CEP a ser validado (aceita formatação)
+ * @return {Object} Objeto com propriedades:
+ *   - valid {boolean} - true se CEP válido
+ *   - error {string|null} - Mensagem de erro descritiva ou null se válido
+ *
+ * @example
+ * isValidCEP('01310-100'); // { valid: true, error: null }
+ * isValidCEP('01310100'); // { valid: true, error: null }
+ * isValidCEP('00000-000'); // { valid: false, error: 'CEP inválido' }
+ * isValidCEP('123'); // { valid: false, error: 'CEP deve ter 8 dígitos...' }
+ *
+ * @since Deploy 33
  */
 function isValidCEP(cep) {
   if (!cep || cep.trim() === '') {
@@ -1171,12 +1490,31 @@ function isValidCEP(cep) {
 }
 
 /**
- * Validates field based on its type
- * @param {string} fieldName - Name of the field
- * @param {*} value - Value to validate
- * @param {string} fieldType - Type of validation (email, phone, cpf, cnpj, date, number, cep)
- * @param {Object} options - Additional validation options
- * @return {Object} - { valid: boolean, error: string, fieldName: string }
+ * Valida campo individual baseado em seu tipo e opções configuráveis.
+ * Suporta validação de campos obrigatórios e tipos: email, phone, cpf, cnpj, date, number, cep.
+ * Retorna resultado detalhado incluindo nome do campo para facilitar feedback ao usuário.
+ *
+ * @param {string} fieldName - Nome do campo sendo validado (para mensagens de erro)
+ * @param {*} value - Valor a ser validado
+ * @param {string} fieldType - Tipo de validação: 'email', 'phone', 'cpf', 'cnpj', 'date', 'number', 'cep'
+ * @param {Object} [options] - Opções de validação:
+ *   - required {boolean} - Campo obrigatório
+ *   - format {string} - Formato esperado (para datas)
+ *   - min, max, integer, positive {*} - Opções específicas de cada validador
+ * @return {Object} Objeto com propriedades:
+ *   - valid {boolean} - true se campo válido
+ *   - error {string|null} - Mensagem de erro ou null se válido
+ *   - fieldName {string} - Nome do campo (echo do parâmetro)
+ *
+ * @example
+ * validateField('Email', 'user@example.com', 'email', { required: true });
+ * // { valid: true, error: null, fieldName: 'Email' }
+ *
+ * @example
+ * validateField('Idade', 'abc', 'number', { min: 18, max: 100 });
+ * // { valid: false, error: 'Campo "Idade": Valor não é um número válido', ... }
+ *
+ * @since Deploy 33
  */
 function validateField(fieldName, value, fieldType, options) {
   options = options || {};
@@ -1242,11 +1580,32 @@ function validateField(fieldName, value, fieldType, options) {
 }
 
 /**
- * Validates multiple fields at once
- * @param {Object} data - Object with field names and values
- * @param {Object} fieldValidations - Object mapping field names to validation configs
- *   Example: { 'Email': { type: 'email', required: true }, 'Telefone': { type: 'phone' } }
- * @return {Object} - { valid: boolean, errors: Array, fieldErrors: Object }
+ * Valida múltiplos campos de uma vez usando configurações por campo.
+ * Executa validateField() para cada campo e agrega os resultados.
+ * Retorna arrays de erros globais e mapa de erros por campo.
+ *
+ * @param {Object} data - Objeto com dados do formulário (campo: valor)
+ * @param {Object} fieldValidations - Mapa de configurações de validação por campo
+ *   Formato: { 'NomeDoCampo': { type: 'email', options: { required: true } } }
+ * @return {Object} Objeto com propriedades:
+ *   - valid {boolean} - true se todos os campos válidos
+ *   - errors {Array<string>} - Array com todas as mensagens de erro
+ *   - fieldErrors {Object} - Mapa campo->erro para feedback específico
+ *
+ * @example
+ * const dados = { 'Email': 'invalid', 'Telefone': '123' };
+ * const config = {
+ *   'Email': { type: 'email', options: { required: true } },
+ *   'Telefone': { type: 'phone' }
+ * };
+ * const resultado = validateFields(dados, config);
+ * // {
+ * //   valid: false,
+ * //   errors: ['Campo "Email": Email inválido...', 'Campo "Telefone": Telefone inválido...'],
+ * //   fieldErrors: { 'Email': '...', 'Telefone': '...' }
+ * // }
+ *
+ * @since Deploy 33
  */
 function validateFields(data, fieldValidations) {
   var result = {

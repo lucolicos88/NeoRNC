@@ -3,18 +3,32 @@
  * FILEMANAGER.GS - Gerenciamento de Arquivos
  * Sistema RNC Neoformula - Deploy 30 Modularizado
  * ============================================
+ *
+ * @namespace FileManager
+ * @description Módulo responsável pelo gerenciamento de arquivos no Google Drive.
+ * Controla upload, download, validação e organização de anexos das RNCs.
+ * @since Deploy 30
  */
 
 var FileManager = (function() {
   'use strict';
   
   /**
-   * Faz upload de arquivos para o Google Drive
-   * Deploy 32 - Retry automático e mensagens amigáveis
-   * @param {string} rncNumber - Número da RNC
-   * @param {Array} files - Array de arquivos
-   * @param {string} section - Seção de origem
-   * @return {Object} Resultado do upload
+   * Faz upload de múltiplos arquivos para o Google Drive vinculados a uma RNC.
+   * Cria pasta da RNC automaticamente, valida arquivos, renomeia se configurado
+   * e registra metadados na planilha de anexos com retry automático.
+   *
+   * @param {string} rncNumber - Número da RNC (ex: 'RNC-2024-001')
+   * @param {Array<Object>} files - Array de arquivos com {name, content, size, mimeType}
+   * @param {string} section - Seção de origem do upload (ex: 'abertura', 'evidencias')
+   * @return {Object} {uploaded: number, failed: number, files: Array, errors: Array, warnings: Array}
+   *
+   * @example
+   * var result = uploadFiles('RNC-2024-001', [{name: 'foto.jpg', content: base64, size: 2048}], 'abertura');
+   * // Returns: {uploaded: 1, failed: 0, files: [{name: 'RNC-2024-001 - Imagem 1 de 1.jpg', id: '...'}], errors: [], warnings: []}
+   *
+   * @memberof FileManager
+   * @since Deploy 32
    */
   function uploadFiles(rncNumber, files, section) {
     var results = {
@@ -181,8 +195,19 @@ return results;
   }
   
   /**
-   * Obtém ou cria pasta da RNC no Drive
+   * Obtém pasta existente da RNC no Google Drive ou cria uma nova.
+   * Usa nomenclatura padronizada 'RNC_XXXX_YYYY' e verifica configuração
+   * do sistema para localizar a pasta pai.
+   *
+   * @param {string} rncNumber - Número da RNC (ex: 'RNC-2024-001')
+   * @return {Folder|null} Objeto Folder do Google Drive ou null em caso de erro
+   *
+   * @example
+   * var folder = getRncFolder('RNC-2024-001');
+   * // Returns: Folder{id: '1a2b3c...', name: 'RNC_RNC-2024-001'}
+   *
    * @private
+   * @since Deploy 30
    */
   function getRncFolder(rncNumber) {
     try {
@@ -221,8 +246,19 @@ return results;
   }
   
   /**
-   * Valida arquivo antes do upload
+   * Valida arquivo antes do upload verificando conteúdo, tamanho e tipo.
+   * Compara com limites e extensões permitidas configuradas no sistema,
+   * retornando detalhes específicos do erro caso a validação falhe.
+   *
+   * @param {Object} file - Objeto arquivo com {content, size, name, mimeType}
+   * @return {Object} {valid: boolean, error: string|null}
+   *
+   * @example
+   * var validation = validateFile({content: 'abc', size: 1024, name: 'test.jpg'});
+   * // Returns: {valid: true, error: null}
+   *
    * @private
+   * @since Deploy 30
    */
   function validateFile(file) {
     var validation = {
@@ -268,8 +304,22 @@ return results;
   }
   
   /**
-   * Gera nome padronizado para arquivo
+   * Gera nome padronizado para arquivo seguindo padrão do sistema.
+   * Formato: 'RNC_XXXX_YYYY - Imagem N de TOTAL.ext', preservando
+   * a extensão original e substituindo caracteres inválidos.
+   *
+   * @param {string} rncNumber - Número da RNC (ex: 'RNC-2024-001')
+   * @param {number} currentNumber - Número sequencial do arquivo atual
+   * @param {number} totalFiles - Total de arquivos da RNC
+   * @param {string} originalName - Nome original do arquivo
+   * @return {string} Nome padronizado do arquivo
+   *
+   * @example
+   * var newName = generateFileName('RNC-2024-001', 3, 5, 'foto_evidencia.jpg');
+   * // Returns: 'RNC_RNC-2024-001 - Imagem 3 de 5.jpg'
+   *
    * @private
+   * @since Deploy 30
    */
   function generateFileName(rncNumber, currentNumber, totalFiles, originalName) {
     try {
@@ -287,13 +337,22 @@ return results;
     }
   }
   
-  /**
- * Busca anexos de uma RNC
- * @param {string} rncNumber - Número da RNC
- * @return {Array} Lista de anexos
- * Deploy 36 - Estrutura padronizada
- */
-function getAnexosRnc(rncNumber) {
+    /**
+   * Busca todos os anexos vinculados a uma RNC específica.
+   * Retorna estrutura padronizada com metadados completos incluindo
+   * ID do Drive, URLs, datas e informações de upload.
+   *
+   * @param {string} rncNumber - Número da RNC (ex: 'RNC-2024-001')
+   * @return {Array<Object>} Lista de anexos com {id, name, originalName, size, mimeType, uploadDate, uploadedBy, section, url}
+   *
+   * @example
+   * var anexos = getAnexosRnc('RNC-2024-001');
+   * // Returns: [{id: '1a2b3c...', name: 'RNC-2024-001 - Imagem 1.jpg', size: 2048, url: 'https://...'}]
+   *
+   * @memberof FileManager
+   * @since Deploy 36
+   */
+  function getAnexosRnc(rncNumber) {
   try {
     Logger.logInfo('getAnexosRnc_START', { rncNumber: rncNumber });
     
@@ -346,10 +405,20 @@ function getAnexosRnc(rncNumber) {
 }
   
   /**
-   * Deleta anexo
-   * @param {string} rncNumber - Número da RNC
-   * @param {string} fileId - ID do arquivo no Drive
-   * @return {Object} Resultado da operação
+   * Deleta anexo do Google Drive e remove registro da planilha.
+   * Move arquivo para lixeira do Drive e atualiza status de anexo
+   * da RNC automaticamente após exclusão bem-sucedida.
+   *
+   * @param {string} rncNumber - Número da RNC (ex: 'RNC-2024-001')
+   * @param {string} fileId - ID do arquivo no Google Drive
+   * @return {Object} {success: boolean, message: string}
+   *
+   * @example
+   * var result = deleteAnexo('RNC-2024-001', '1a2b3c4d5e');
+   * // Returns: {success: true, message: 'Anexo removido com sucesso'}
+   *
+   * @memberof FileManager
+   * @since Deploy 30
    */
   function deleteAnexo(rncNumber, fileId) {
     try {
@@ -405,13 +474,22 @@ return {
     }
   }
   
-/**
- * Faz download de anexo
- * @param {string} fileId - ID do arquivo no Drive
- * @return {Object} Dados do arquivo
- * Deploy 36 - Retorno padronizado
- */
-function downloadAnexo(fileId) {
+  /**
+   * Faz download de anexo do Google Drive retornando conteúdo em base64.
+   * Busca arquivo pelo ID e retorna metadados completos incluindo
+   * conteúdo codificado, URLs e informações do arquivo.
+   *
+   * @param {string} fileId - ID do arquivo no Google Drive
+   * @return {Object} {success: boolean, name: string, mimeType: string, content: string, size: number, url: string, downloadUrl: string}
+   *
+   * @example
+   * var file = downloadAnexo('1a2b3c4d5e');
+   * // Returns: {success: true, name: 'foto.jpg', mimeType: 'image/jpeg', content: 'base64...', size: 2048}
+   *
+   * @memberof FileManager
+   * @since Deploy 36
+   */
+  function downloadAnexo(fileId) {
   try {
     Logger.logInfo('downloadAnexo_START', { fileId: fileId });
     
@@ -444,23 +522,28 @@ function downloadAnexo(fileId) {
 }
   
   /**
-   * Limpa anexos órfãos (sem RNC associada)
-   * @return {Object} Resultado da limpeza
-   */
-  /**
    * ============================================
    * DEPLOY 32: Funções de Retry e Error Handling
    * ============================================
    */
 
   /**
-   * Tenta fazer upload de arquivo com retry automático
-   * @param {Object} file - Arquivo a fazer upload
-   * @param {string} fileName - Nome do arquivo
-   * @param {Folder} folder - Pasta de destino
-   * @param {number} maxAttempts - Número máximo de tentativas
-   * @return {Object} Resultado do upload
+   * Tenta fazer upload de arquivo com retry automático e backoff exponencial.
+   * Realiza até N tentativas com espera progressiva (2s, 4s, 8s) entre falhas,
+   * retornando informações detalhadas de sucesso ou erro amigável ao usuário.
+   *
+   * @param {Object} file - Arquivo com {content, mimeType}
+   * @param {string} fileName - Nome final do arquivo
+   * @param {Folder} folder - Pasta de destino no Google Drive
+   * @param {number} maxAttempts - Número máximo de tentativas (padrão: 3)
+   * @return {Object} {success: boolean, file: File, size: number, attempts: number, error: string, userMessage: string, canRetry: boolean}
+   *
+   * @example
+   * var result = uploadFileWithRetry(fileObj, 'RNC-001.jpg', folder, 3);
+   * // Returns: {success: true, file: File{...}, size: 2048, attempts: 2}
+   *
    * @private
+   * @since Deploy 32
    */
   function uploadFileWithRetry(file, fileName, folder, maxAttempts) {
     var attempts = 0;
@@ -523,10 +606,19 @@ function downloadAnexo(fileId) {
   }
 
   /**
-   * Analisa erro e retorna informações amigáveis para o usuário
-   * @param {Error} error - Erro a analisar
-   * @return {Object} Informações do erro
+   * Analisa erro de upload e retorna informações amigáveis para o usuário.
+   * Categoriza erros (quota, permissão, tamanho, tipo, rede, timeout)
+   * e determina se nova tentativa é viável, fornecendo mensagem adequada.
+   *
+   * @param {Error} error - Erro capturado durante operação de arquivo
+   * @return {Object} {type: string, userMessage: string, canRetry: boolean}
+   *
+   * @example
+   * var errorInfo = getFileErrorInfo(new Error('Storage quota exceeded'));
+   * // Returns: {type: 'quota_exceeded', userMessage: 'Limite de armazenamento atingido...', canRetry: false}
+   *
    * @private
+   * @since Deploy 32
    */
   function getFileErrorInfo(error) {
     var errorStr = error.toString().toLowerCase();
@@ -606,6 +698,20 @@ function downloadAnexo(fileId) {
    * ============================================
    */
 
+  /**
+   * Limpa anexos órfãos que não possuem RNC associada na planilha.
+   * Busca todos os anexos, compara com RNCs existentes e remove
+   * registros órfãos do Drive e planilha, atualizando status automaticamente.
+   *
+   * @return {Object} {success: boolean, orphansRemoved: number, error: string}
+   *
+   * @example
+   * var result = cleanOrphanAttachments();
+   * // Returns: {success: true, orphansRemoved: 3}
+   *
+   * @memberof FileManager
+   * @since Deploy 30
+   */
   function cleanOrphanAttachments() {
     try {
       Logger.logInfo('cleanOrphanAttachments_START');

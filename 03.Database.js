@@ -3,6 +3,12 @@
  * DATABASE.GS - Operações com Planilhas
  * Sistema RNC Neoformula - Deploy 30 Modularizado
  * ============================================
+ *
+ * Módulo responsável por gerenciar todas as operações de leitura e escrita
+ * nas planilhas do Google Sheets com cache TTL, locks otimizados e validação.
+ *
+ * @namespace Database
+ * @since Deploy 30
  */
 
 var Database = (function() {
@@ -18,8 +24,18 @@ var Database = (function() {
   var CACHE_TTL = 5 * 60 * 1000;
   
   /**
-   * TASK-010: Verifica se o cache expirou
+   * Verifica se o cache da planilha expirou baseado no TTL configurado.
+   * Compara o timestamp fornecido com o tempo atual menos o TTL (5 minutos).
+   *
+   * @param {number|null} timestamp - Timestamp Unix em milissegundos da última atualização do cache
+   * @return {boolean} True se o cache expirou ou não existe, false caso contrário
+   *
+   * @example
+   * var expired = isCacheExpired(sheetCacheTimestamps['RNC']);
+   * // Returns: true (se passou mais de 5 minutos)
+   *
    * @private
+   * @since Deploy 116
    */
   function isCacheExpired(timestamp) {
     if (!timestamp) return true;
@@ -28,8 +44,18 @@ var Database = (function() {
   }
 
   /**
-   * Obtém a planilha principal com cache e TTL
+   * Obtém a planilha principal do sistema com cache TTL de 5 minutos.
+   * Utiliza cache para evitar múltiplas chamadas ao Google Sheets e melhorar performance.
+   *
+   * @return {Spreadsheet} Objeto Spreadsheet do Google Sheets
+   * @throws {Error} Se a planilha não for encontrada ou ID inválido
+   *
+   * @example
+   * var ss = getSpreadsheet();
+   * // Returns: Spreadsheet object
+   *
    * @private
+   * @since Deploy 30
    */
   function getSpreadsheet() {
     try {
@@ -46,10 +72,20 @@ var Database = (function() {
   }
   
   /**
-   * Obtém uma aba da planilha, criando se não existir
-   * @param {string} name - Nome da aba
-   * @param {Array} headers - Headers para criar se não existir
-   * @return {Sheet} Objeto da aba
+   * Obtém uma aba da planilha pelo nome, criando automaticamente se não existir.
+   * Utiliza cache TTL de 5 minutos e formata headers com estilo padrão se criar nova aba.
+   *
+   * @param {string} name - Nome da aba a buscar ou criar
+   * @param {Array<string>} [headers] - Array com nomes dos headers para criar se a aba não existir
+   * @return {Sheet} Objeto Sheet do Google Sheets
+   * @throws {Error} Se houver erro ao acessar a planilha
+   *
+   * @example
+   * var sheet = getSheet('RNC', ['Número', 'Data', 'Cliente', 'Status']);
+   * // Returns: Sheet object (cria aba com headers se não existir)
+   *
+   * @memberof Database
+   * @since Deploy 30
    */
   function getSheet(name, headers) {
     try {
@@ -91,11 +127,23 @@ var Database = (function() {
   }
   
   /**
-   * Busca dados com filtros
-   * @param {string} sheetName - Nome da aba
-   * @param {Object} filters - Filtros a aplicar
-   * @param {Object} options - Opções de busca
-   * @return {Array} Dados filtrados
+   * Busca dados na planilha aplicando filtros e opções de ordenação/limite.
+   * Suporta operadores avançados (=, !=, >, <, contains, startsWith, in) e retorna array de objetos.
+   *
+   * @param {string} sheetName - Nome da aba da planilha
+   * @param {Object} filters - Objeto com pares campo:valor para filtrar (ex: {Status: 'Aberto'})
+   * @param {Object} [options] - Opções adicionais de busca
+   * @param {string} [options.orderBy] - Campo para ordenar resultados
+   * @param {boolean} [options.orderDesc] - Se true, ordena em ordem decrescente
+   * @param {number} [options.limit] - Limite máximo de resultados a retornar
+   * @return {Array<Object>} Array de objetos com dados filtrados (cada objeto é uma linha)
+   *
+   * @example
+   * var rncs = findData('RNC', {Status: 'Aberto'}, {orderBy: 'Data', limit: 10});
+   * // Returns: [{Número: 'RNC-001', Status: 'Aberto', ...}, ...]
+   *
+   * @memberof Database
+   * @since Deploy 30
    */
   function findData(sheetName, filters, options) {
     options = options || {};
@@ -186,8 +234,20 @@ var Database = (function() {
   }
   
   /**
-   * Aplica operador de comparação
+   * Aplica operador de comparação entre dois valores para filtros avançados.
+   * Suporta operadores: =, !=, >, >=, <, <=, contains, startsWith, endsWith, in.
+   *
+   * @param {*} value - Valor da célula a comparar
+   * @param {string} operator - Operador de comparação (=, !=, >, <, contains, etc)
+   * @param {*} compareValue - Valor de comparação do filtro
+   * @return {boolean} True se a comparação é verdadeira, false caso contrário
+   *
+   * @example
+   * var match = applyOperator('RNC-2024-001', 'startsWith', 'RNC-2024');
+   * // Returns: true
+   *
    * @private
+   * @since Deploy 30
    */
   function applyOperator(value, operator, compareValue) {
     // TASK-007: Usar strict equality (===) ao invés de loose equality (==)
@@ -219,11 +279,23 @@ var Database = (function() {
   }
   
   /**
-   * Insere dados na planilha
-   * Deploy 32 - Lock otimizado (10s para escrita)
-   * @param {string} sheetName - Nome da aba
-   * @param {Object|Array} data - Dados a inserir
+   * Insere uma ou várias linhas de dados na planilha com lock de 10 segundos.
+   * Converte objetos em arrays baseado nos headers da planilha e adiciona no final.
+   *
+   * @param {string} sheetName - Nome da aba da planilha
+   * @param {Object|Array<Object>} data - Objeto ou array de objetos com dados (campos devem corresponder aos headers)
    * @return {Object} Resultado da operação
+   * @return {boolean} return.success - True se inserção bem-sucedida
+   * @return {number} return.rowsInserted - Quantidade de linhas inseridas
+   * @return {number} return.lastRow - Número da última linha após inserção
+   * @throws {Error} Se sistema ocupado (lock timeout) ou erro de escrita
+   *
+   * @example
+   * var result = insertData('RNC', {Número: 'RNC-001', Data: new Date(), Status: 'Aberto'});
+   * // Returns: {success: true, rowsInserted: 1, lastRow: 15}
+   *
+   * @memberof Database
+   * @since Deploy 32
    */
   function insertData(sheetName, data) {
     var lock = LockService.getScriptLock();
@@ -286,12 +358,23 @@ var Database = (function() {
   }
   
   /**
-   * Atualiza dados na planilha
-   * Deploy 32 - Lock otimizado (10s para escrita)
-   * @param {string} sheetName - Nome da aba
-   * @param {Object} filters - Filtros para encontrar as linhas
-   * @param {Object} updates - Campos a atualizar
+   * Atualiza linhas na planilha que correspondem aos filtros com lock de 10 segundos.
+   * Busca linhas pelos filtros e atualiza apenas os campos especificados no objeto updates.
+   *
+   * @param {string} sheetName - Nome da aba da planilha
+   * @param {Object} filters - Objeto com pares campo:valor para encontrar linhas (ex: {Número: 'RNC-001'})
+   * @param {Object} updates - Objeto com campos a atualizar e novos valores (ex: {Status: 'Fechado'})
    * @return {Object} Resultado da operação
+   * @return {boolean} return.success - True se atualização bem-sucedida
+   * @return {number} return.rowsUpdated - Quantidade de linhas atualizadas
+   * @throws {Error} Se sistema ocupado (lock timeout) ou erro de escrita
+   *
+   * @example
+   * var result = updateData('RNC', {Número: 'RNC-001'}, {Status: 'Fechado', DataFechamento: new Date()});
+   * // Returns: {success: true, rowsUpdated: 1}
+   *
+   * @memberof Database
+   * @since Deploy 32
    */
   function updateData(sheetName, filters, updates) {
     var lock = LockService.getScriptLock();
@@ -369,11 +452,22 @@ var Database = (function() {
   }
   
   /**
-   * Deleta dados da planilha
-   * Deploy 32 - Lock otimizado (10s para escrita)
-   * @param {string} sheetName - Nome da aba
-   * @param {Object} filters - Filtros para encontrar as linhas
+   * Deleta linhas da planilha que correspondem aos filtros com lock de 10 segundos.
+   * Remove permanentemente as linhas de baixo para cima para manter índices corretos.
+   *
+   * @param {string} sheetName - Nome da aba da planilha
+   * @param {Object} filters - Objeto com pares campo:valor para encontrar linhas a deletar (ex: {Status: 'Cancelado'})
    * @return {Object} Resultado da operação
+   * @return {boolean} return.success - True se deleção bem-sucedida
+   * @return {number} return.rowsDeleted - Quantidade de linhas deletadas
+   * @throws {Error} Se sistema ocupado (lock timeout) ou erro de escrita
+   *
+   * @example
+   * var result = deleteData('RNC', {Número: 'RNC-001', Status: 'Cancelado'});
+   * // Returns: {success: true, rowsDeleted: 1}
+   *
+   * @memberof Database
+   * @since Deploy 32
    */
   function deleteData(sheetName, filters) {
     var lock = LockService.getScriptLock();
@@ -440,11 +534,27 @@ var Database = (function() {
   }
   
   /**
-   * Executa operação em batch
-   * @param {string} sheetName - Nome da aba
-   * @param {Function} operation - Função a executar para cada batch
-   * @param {Object} options - Opções do batch
+   * Executa operação customizada em lotes (batches) para processar grandes volumes de dados.
+   * Divide dados em batches com sleep entre eles para evitar timeout do Apps Script.
+   *
+   * @param {string} sheetName - Nome da aba da planilha
+   * @param {Function} operation - Função callback a executar para cada batch (recebe batchData e startRow)
+   * @param {Object} [options] - Opções de configuração do batch
+   * @param {number} [options.batchSize] - Tamanho de cada batch (padrão: CONFIG.LIMITS.BATCH_SIZE)
    * @return {Object} Resultado da operação
+   * @return {boolean} return.success - True se processamento bem-sucedido
+   * @return {number} return.processedRows - Total de linhas processadas
+   * @return {Array} return.results - Array com resultado de cada batch
+   * @throws {Error} Se houver erro durante processamento
+   *
+   * @example
+   * var result = batchOperation('RNC', function(batch, row) {
+   *   return batch.length; // processa batch
+   * }, {batchSize: 100});
+   * // Returns: {success: true, processedRows: 500, results: [100, 100, 100, 100, 100]}
+   *
+   * @memberof Database
+   * @since Deploy 30
    */
   function batchOperation(sheetName, operation, options) {
     options = options || {};
@@ -490,19 +600,44 @@ var Database = (function() {
   }
   
   /**
-   * Limpa o cache de planilhas
+   * Limpa todo o cache de planilhas forçando reload na próxima chamada.
+   * Útil após operações que modificam estrutura ou quando detecta-se dados desatualizados.
+   *
+   * @return {void}
+   *
+   * @example
+   * Database.clearCache();
+   * // Returns: undefined (cache limpo)
+   *
+   * @memberof Database
+   * @since Deploy 30
    */
   function clearCache() {
     sheetCache = {};
+    sheetCacheTimestamps = {};
     spreadsheetCache = null;
+    spreadsheetCacheTimestamp = null;
     Logger.logDebug('clearCache', { message: 'Sheet cache cleared' });
   }
   
   /**
-   * Valida estrutura da planilha
-   * @param {string} sheetName - Nome da aba
-   * @param {Array} requiredHeaders - Headers obrigatórios
+   * Valida se a estrutura da planilha possui todos os headers obrigatórios.
+   * Verifica se a planilha não está vazia e se contém todas as colunas necessárias.
+   *
+   * @param {string} sheetName - Nome da aba da planilha
+   * @param {Array<string>} requiredHeaders - Array com nomes dos headers obrigatórios
    * @return {Object} Resultado da validação
+   * @return {boolean} return.valid - True se estrutura válida, false caso contrário
+   * @return {string} [return.error] - Mensagem de erro se inválida
+   * @return {Array<string>} [return.missingHeaders] - Headers faltando se inválida
+   * @return {Array<string>} [return.headers] - Headers encontrados se válida
+   *
+   * @example
+   * var validation = validateSheetStructure('RNC', ['Número', 'Data', 'Cliente']);
+   * // Returns: {valid: true, headers: ['Número', 'Data', 'Cliente', 'Status', ...]}
+   *
+   * @memberof Database
+   * @since Deploy 30
    */
   function validateSheetStructure(sheetName, requiredHeaders) {
     try {
