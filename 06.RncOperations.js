@@ -3,8 +3,19 @@
  * RNCOPERATIONS.GS - CRUD de RNCs
  * Sistema RNC Neoformula - Deploy 30 Modularizado
  * ============================================
+ *
+ * @fileoverview Módulo de operações CRUD para Registros de Não Conformidade (RNC)
+ * Gerencia criação, atualização, busca e exclusão de RNCs com validação,
+ * cache de performance, controle de status e integração com histórico
+ *
+ * @namespace RncOperations
+ * @since Deploy 30
  */
 
+/**
+ * @namespace RncOperations
+ * @description Módulo IIFE para operações CRUD de RNCs com cache e validação integrados
+ */
 var RncOperations = (function() {
   'use strict';
 
@@ -16,8 +27,17 @@ var RncOperations = (function() {
   var CACHE_TTL = 2 * 60 * 1000; // 2 minutos (120000ms)
 
   /**
-   * Verifica se o cache expirou
+   * Verifica se o cache de RNCs expirou baseado no TTL configurado
+   * Retorna true se não há timestamp ou se o tempo decorrido excedeu o TTL
+   *
+   * @return {boolean} true se cache expirou, false se ainda válido
    * @private
+   *
+   * @example
+   * var expired = isCacheExpired();
+   * // Returns: true (se passou mais de 2 minutos)
+   *
+   * @since Deploy 120
    */
   function isCacheExpired() {
     if (!rncCacheTimestamp) return true;
@@ -26,8 +46,16 @@ var RncOperations = (function() {
   }
 
   /**
-   * Invalida o cache de RNCs
-   * Deve ser chamado após save/update/delete
+   * Invalida o cache de RNCs zerando dados armazenados e timestamp
+   * Deve ser chamado após operações que modificam RNCs (save/update/delete)
+   *
+   * @return {void}
+   *
+   * @example
+   * invalidateRncCache();
+   * // Cache zerado e próxima getAllRncs() buscará do banco
+   *
+   * @since Deploy 120
    */
   function invalidateRncCache() {
     rncCache = null;
@@ -52,10 +80,20 @@ var RncOperations = (function() {
   ];
 
   /**
-   * Converte campos de data para ISO String (otimizado)
+   * Converte campos de data de Date objects para ISO String de forma otimizada
    * FASE 2.2: Usa lista de campos conhecidos ao invés de iterar todas as chaves
-   * @param {Object} obj - Objeto RNC
+   * Também normaliza valores null/undefined para strings vazias
+   *
+   * @param {Object} obj - Objeto RNC com possíveis campos Date
+   * @return {Object} Objeto modificado com datas em ISO String
    * @private
+   *
+   * @example
+   * var rnc = { 'Data Criação': new Date('2024-01-15'), nome: 'Cliente A' };
+   * convertDatesToISO(rnc);
+   * // Returns: { 'Data Criação': '2024-01-15T00:00:00.000Z', nome: 'Cliente A' }
+   *
+   * @since Deploy 120
    */
   function convertDatesToISO(obj) {
     if (!obj) return obj;
@@ -79,8 +117,16 @@ var RncOperations = (function() {
   }
 
   /**
-   * Gera um novo número de RNC
-   * @return {string} Número da RNC no formato XXXX/YYYY
+   * Gera um novo número sequencial de RNC no formato XXXX/YYYY
+   * Busca o último número do ano atual e incrementa, garantindo sequência única
+   *
+   * @return {string} Número da RNC no formato XXXX/YYYY (ex: '0001/2024')
+   *
+   * @example
+   * var numero = generateRncNumber();
+   * // Returns: '0042/2024' (se última RNC do ano foi 0041/2024)
+   *
+   * @since Deploy 120
    */
   function generateRncNumber() {
     try {
@@ -115,10 +161,23 @@ var RncOperations = (function() {
   }
   
   /**
-   * Salva uma nova RNC
-   * @param {Object} formData - Dados do formulário
-   * @param {Array} files - Arquivos anexados
-   * @return {Object} Resultado da operação
+   * Salva uma nova RNC no sistema com validação, upload de arquivos e notificações
+   * Valida permissões, gera número sequencial, valida dados obrigatórios,
+   * insere no banco, invalida cache, registra histórico e envia notificações
+   *
+   * @param {Object} formData - Dados do formulário de abertura da RNC
+   * @param {Array} files - Array de arquivos anexados (opcional)
+   * @return {Object} Resultado com {success: boolean, rncNumber: string, message: string, fileErrors: Array}
+   *
+   * @example
+   * var result = saveRnc({
+   *   'Nome do Cliente': 'Cliente A',
+   *   'Tipo RNC': 'Produto',
+   *   'Descrição do Problema': 'Defeito na embalagem'
+   * }, []);
+   * // Returns: {success: true, rncNumber: '0001/2024', message: 'RNC criada com sucesso'}
+   *
+   * @since Deploy 120
    */
   function saveRnc(formData, files) {
     var startTime = new Date().getTime();
@@ -255,11 +314,23 @@ var RncOperations = (function() {
   }
   
 /**
- * Atualiza uma RNC existente
- * @param {string} rncNumber - Número da RNC
- * @param {Object} formData - Dados do formulário
- * @param {Array} files - Arquivos anexados
- * @return {Object} Resultado da operação
+ * Atualiza uma RNC existente com validação de permissões por seção
+ * Valida permissões granulares por seção, detecta campos modificados,
+ * atualiza status automaticamente, invalida cache, registra histórico e envia notificações
+ *
+ * @param {string} rncNumber - Número da RNC no formato XXXX/YYYY
+ * @param {Object} formData - Dados atualizados do formulário
+ * @param {Array} files - Array de arquivos anexados (opcional)
+ * @return {Object} Resultado com {success: boolean, message: string, rncNumber: string}
+ *
+ * @example
+ * var result = updateRnc('0001/2024', {
+ *   'Status da Ação Corretiva': 'Concluída',
+ *   'Data da conclusão da Ação': '15/01/2024'
+ * }, []);
+ * // Returns: {success: true, message: 'RNC atualizada com sucesso', rncNumber: '0001/2024'}
+ *
+ * @since Deploy 120
  */
 function updateRnc(rncNumber, formData, files) {
     var startTime = new Date().getTime();
@@ -506,12 +577,19 @@ function updateRnc(rncNumber, formData, files) {
 }
   
   /**
-   * Busca RNC por número
-   * @param {string} rncNumber - Número da RNC
-   * @return {Object} Dados da RNC
+   * Busca uma RNC específica pelo número com formatação de datas para interface
+   * Retorna objeto completo da RNC com datas formatadas em DD/MM/YYYY,
+   * campos normalizados, anexos carregados e todos os campos necessários preenchidos
+   *
+   * @param {string} rncNumber - Número da RNC no formato XXXX/YYYY
+   * @return {Object|null} Objeto RNC completo ou null se não encontrada
+   *
+   * @example
+   * var rnc = getRncByNumber('0001/2024');
+   * // Returns: { 'Nº RNC': '0001/2024', 'Nome do Cliente': 'Cliente A', _anexos: [...] }
+   *
+   * @since Deploy 120
    */
-  
-
 function getRncByNumber(rncNumber) {
   try {
     Logger.logDebug('getRncByNumber', { rncNumber: rncNumber });
@@ -654,10 +732,21 @@ function getRncByNumber(rncNumber) {
   }
 }
   /**
-   * Busca todas as RNCs
+   * Busca todas as RNCs do sistema com cache inteligente para performance
    * FASE 2.1: Cache implementado para 70-80% ganho de performance
-   * @param {Object} filters - Filtros opcionais
-   * @return {Array} Lista de RNCs
+   * Usa cache quando sem filtros, busca direta do banco com filtros aplicados
+   *
+   * @param {Object} filters - Objeto com filtros opcionais (ex: {'Status Geral': 'Abertura RNC'})
+   * @return {Array} Array de objetos RNC ordenados por Data Criação (mais recentes primeiro)
+   *
+   * @example
+   * var todasRncs = getAllRncs();
+   * // Returns: [{...}, {...}] (todas as RNCs do cache)
+   *
+   * var rncsFiltradas = getAllRncs({'Status Geral': 'Finalizada'});
+   * // Returns: [{...}] (apenas RNCs finalizadas, sem cache)
+   *
+   * @since Deploy 120
    */
   function getAllRncs(filters) {
     try {
@@ -707,8 +796,16 @@ function getRncByNumber(rncNumber) {
   }
   
   /**
-   * Busca números de RNC disponíveis
-   * @return {Array} Lista de números
+   * Busca todos os números de RNC disponíveis no sistema ordenados
+   * Retorna apenas os números (ex: '0001/2024') ordenados por ano e número decrescente
+   *
+   * @return {Array} Array de strings com números de RNC no formato XXXX/YYYY
+   *
+   * @example
+   * var numeros = getAllRncNumbers();
+   * // Returns: ['0042/2024', '0041/2024', '0100/2023', ...]
+   *
+   * @since Deploy 120
    */
   function getAllRncNumbers() {
     try {
@@ -742,9 +839,21 @@ function getRncByNumber(rncNumber) {
   }
   
   /**
-   * Busca RNCs com termo de pesquisa
-   * @param {string} searchTerm - Termo de busca
-   * @return {Array} RNCs encontradas
+   * Busca RNCs que contenham o termo de pesquisa em campos principais
+   * Faz busca case-insensitive em múltiplos campos incluindo número, cliente,
+   * status, responsável, descrição, tipo e setor
+   *
+   * @param {string} searchTerm - Termo de busca (case-insensitive)
+   * @return {Array} Array de objetos RNC que contêm o termo
+   *
+   * @example
+   * var results = searchRncs('Cliente A');
+   * // Returns: [{...}, {...}] (RNCs que mencionam 'Cliente A')
+   *
+   * var vazio = searchRncs('');
+   * // Returns: getAllRncs() (retorna todas se termo vazio)
+   *
+   * @since Deploy 120
    */
   function searchRncs(searchTerm) {
     try {
@@ -792,10 +901,29 @@ function getRncByNumber(rncNumber) {
   }
   
 /**
- * Prepara dados da RNC para inserção/atualização
+ * Prepara e sanitiza dados da RNC para inserção/atualização no banco
  * Deploy 32 - Sanitização de input adicionada
  * Deploy 37 - Formatação de datas padronizada
+ * Mapeia campos do formulário para colunas da planilha, sanitiza dados,
+ * formata datas para padrão brasileiro e adiciona metadados do sistema
+ *
+ * @param {Object} formData - Dados do formulário não sanitizados
+ * @param {string} rncNumber - Número da RNC no formato XXXX/YYYY
+ * @param {string} user - Email do usuário que está salvando
+ * @param {boolean} isNew - true se é nova RNC, false se é atualização
+ * @return {Object} Objeto RNC preparado e sanitizado para inserção no banco
  * @private
+ *
+ * @example
+ * var dados = prepareRncData(
+ *   {'Nome do Cliente': 'Cliente A', 'Data de Abertura': '2024-01-15'},
+ *   '0001/2024',
+ *   'user@example.com',
+ *   true
+ * );
+ * // Returns: { 'Nome do Cliente': 'Cliente A', 'Data de Abertura': '15/01/2024', 'Nº RNC': '0001/2024', ... }
+ *
+ * @since Deploy 120
  */
 function prepareRncData(formData, rncNumber, user, isNew) {
   var rncData = {};
@@ -853,9 +981,24 @@ function prepareRncData(formData, rncNumber, user, isNew) {
 }
   
   /**
-   * Valida dados da RNC
+   * Valida dados da RNC usando regras da planilha ConfigCampos
    * Deploy 33 - Usa ValidaçãoRegex da planilha ConfigCampos
+   * Verifica campos obrigatórios e aplica validação regex configurável,
+   * incluindo proteção contra padrões regex perigosos (ReDoS)
+   *
+   * @param {Object} rncData - Dados da RNC já preparados para validar
+   * @param {string} section - Nome da seção sendo validada (ex: 'Abertura', 'Análise Qualidade')
+   * @return {Object} Objeto com {valid: boolean, errors: Array, warnings: Array}
    * @private
+   *
+   * @example
+   * var validation = validateRncData(
+   *   {'Nome do Cliente': 'Cliente A', 'Tipo RNC': ''},
+   *   'Abertura'
+   * );
+   * // Returns: {valid: false, errors: ['Campo obrigatório não preenchido: Tipo RNC'], warnings: []}
+   *
+   * @since Deploy 120
    */
   function validateRncData(rncData, section) {
     var validation = {
@@ -979,12 +1122,25 @@ function prepareRncData(formData, rncNumber, user, isNew) {
    */
 
   /**
-   * Valida se uma transição de status é permitida
-   * @param {string} currentStatus - Status atual
+   * Valida se uma transição de status é permitida segundo regras do workflow
+   * Verifica se a transição é válida e se campos obrigatórios estão preenchidos
+   * para o novo status (ex: 'Risco' é obrigatório para 'Análise Qualidade')
+   *
+   * @param {string} currentStatus - Status atual da RNC
    * @param {string} newStatus - Novo status desejado
-   * @param {Object} rncData - Dados completos da RNC (atuais + updates)
-   * @return {Object} { valid: boolean, errors: Array }
+   * @param {Object} rncData - Dados completos da RNC (atuais + updates mesclados)
+   * @return {Object} Objeto com {valid: boolean, errors: Array, warnings: Array}
    * @private
+   *
+   * @example
+   * var validation = validateStatusTransition(
+   *   'Abertura RNC',
+   *   'Análise Qualidade',
+   *   {'Risco': '', 'Tipo de Falha': 'Produto'}
+   * );
+   * // Returns: {valid: false, errors: ['Campos obrigatórios não preenchidos: Risco'], warnings: []}
+   *
+   * @since Deploy 120
    */
   function validateStatusTransition(currentStatus, newStatus, rncData) {
     var validation = {
@@ -1090,14 +1246,28 @@ function prepareRncData(formData, rncNumber, user, isNew) {
   }
   
  /**
- * Determina novo status baseado nos campos preenchidos
+ * Determina automaticamente o novo status baseado nos campos preenchidos
  * Deploy 32 - Validação de transição adicionada
+ * Aplica regras de workflow automático e valida se transição é permitida
+ *
  * REGRAS:
- * 1. Nova RNC → Abertura RNC
- * 2. Campo de Qualidade preenchido → Análise Qualidade
+ * 1. Tipo RNC = Não Procede → Finalizada (prioridade máxima)
+ * 2. Status Ação = Concluída → Finalizada
  * 3. Campo de Liderança preenchido → Análise do problema e Ação Corretiva
- * 4. Status Ação = Concluída OU Tipo RNC = Não Procede → Finalizada
- * @return {Object} { status: string, validation: Object }
+ * 4. Campo de Qualidade preenchido → Análise Qualidade
+ *
+ * @param {Object} currentRnc - Dados atuais da RNC (antes das mudanças)
+ * @param {Object} updates - Dados sendo atualizados
+ * @return {Object} Objeto com {status: string, validation: Object, statusChanged: boolean}
+ *
+ * @example
+ * var result = determineNewStatus(
+ *   {'Status Geral': 'Abertura RNC', 'Risco': ''},
+ *   {'Risco': 'Alto', 'Tipo de Falha': 'Produto'}
+ * );
+ * // Returns: {status: 'Análise Qualidade', validation: {...}, statusChanged: true}
+ *
+ * @since Deploy 120
  */
 function determineNewStatus(currentRnc, updates) {
     try {
@@ -1265,9 +1435,18 @@ function determineNewStatus(currentRnc, updates) {
 }
   
   /**
-   * Deleta uma RNC (soft delete - marca como deletada)
-   * @param {string} rncNumber - Número da RNC
-   * @return {Object} Resultado da operação
+   * Deleta uma RNC usando soft delete (marca como deletada sem remover)
+   * Marca o status como 'DELETADA' e registra data/usuário da deleção,
+   * invalida cache mas mantém dados para possível restauração
+   *
+   * @param {string} rncNumber - Número da RNC no formato XXXX/YYYY
+   * @return {Object} Resultado com {success: boolean, message: string}
+   *
+   * @example
+   * var result = deleteRnc('0001/2024');
+   * // Returns: {success: true, message: 'RNC marcada como deletada'}
+   *
+   * @since Deploy 120
    */
   function deleteRnc(rncNumber) {
     try {
@@ -1321,9 +1500,17 @@ function determineNewStatus(currentRnc, updates) {
   }
   
   /**
-   * Restaura uma RNC deletada
-   * @param {string} rncNumber - Número da RNC
-   * @return {Object} Resultado da operação
+   * Restaura uma RNC anteriormente deletada retornando para status Abertura
+   * Verifica se RNC existe e está com status 'DELETADA' antes de restaurar
+   *
+   * @param {string} rncNumber - Número da RNC no formato XXXX/YYYY
+   * @return {Object} Resultado com {success: boolean, message: string}
+   *
+   * @example
+   * var result = restoreRnc('0001/2024');
+   * // Returns: {success: true, message: 'RNC restaurada com sucesso'}
+   *
+   * @since Deploy 120
    */
   function restoreRnc(rncNumber) {
     try {
@@ -1372,9 +1559,21 @@ function determineNewStatus(currentRnc, updates) {
   }
   
   /**
- * Busca RNCs por setor
+ * Busca RNCs filtradas por setor específico considerando setores múltiplos
  * Deploy 66: Usa campo "Setor onde ocorreu a não conformidade"
- * Deploy 74.5: Filtra por "contém" para considerar setores múltiplos
+ * Deploy 74.5: Filtra por "contém" para considerar setores múltiplos separados por vírgula
+ *
+ * @param {string} setor - Nome do setor para filtrar ou 'Todos' para retornar todas
+ * @return {Array} Array de objetos RNC do setor ordenados por Data Criação descendente
+ *
+ * @example
+ * var rncsProducao = getRncsBySetor('Produção');
+ * // Returns: [{...}, {...}] (RNCs onde 'Produção' está no campo setor)
+ *
+ * var todas = getRncsBySetor('Todos');
+ * // Returns: getAllRncs()
+ *
+ * @since Deploy 120
  */
 function getRncsBySetor(setor) {
     try {
@@ -1422,10 +1621,18 @@ function getRncsBySetor(setor) {
 }
 
 /**
- * Deploy 67: Busca RNCs do setor do usuário
- * Retorna RNCs onde o usuário está no setor de abertura OU setor da não conformidade
- * @param {string} email - Email do usuário
- * @return {Array} Lista de RNCs do setor do usuário
+ * Busca RNCs vinculadas ao setor do usuário logado
+ * Deploy 67: Retorna RNCs onde o usuário está no setor de abertura OU setor da não conformidade
+ * Útil para visualizações filtradas por departamento do usuário
+ *
+ * @param {string} email - Email do usuário para identificar setor
+ * @return {Array} Array de objetos RNC do setor do usuário
+ *
+ * @example
+ * var minhasRncs = getRncsByUserSetor('user@example.com');
+ * // Returns: [{...}] (RNCs do setor 'Produção' se user pertence a Produção)
+ *
+ * @since Deploy 120
  */
 function getRncsByUserSetor(email) {
     try {
@@ -1469,10 +1676,18 @@ function getRncsByUserSetor(email) {
 }
 
 /**
- * Helper: Separa setores que estão salvos com vírgula ou ponto-e-vírgula
- * Deploy 74.7: Aceita tanto vírgula (,) quanto ponto-e-vírgula (;)
+ * Separa string de setores múltiplos em array de setores individuais
+ * Helper: Aceita vírgula (,) ou ponto-e-vírgula (;) como separadores
+ * Deploy 74.7: Normaliza separadores e remove espaços extras
+ *
  * @param {string} setorString - String com setores separados por vírgula ou ponto-e-vírgula
- * @return {Array} Array de setores individuais
+ * @return {Array} Array de setores individuais trimmed
+ *
+ * @example
+ * var setores = splitSetores('Produção; Qualidade, Logística');
+ * // Returns: ['Produção', 'Qualidade', 'Logística']
+ *
+ * @since Deploy 120
  */
 function splitSetores(setorString) {
     if (!setorString || typeof setorString !== 'string') {
@@ -1488,8 +1703,17 @@ function splitSetores(setorString) {
 }
 
 /**
- * Lista setores únicos
- * Deploy 74.5: Considera setores múltiplos separados por vírgula
+ * Lista todos os setores únicos presentes nas RNCs do sistema
+ * Deploy 74.5: Considera setores múltiplos separados por vírgula ou ponto-e-vírgula
+ * Extrai setores do campo 'Setor onde foi feita abertura' e retorna ordenados
+ *
+ * @return {Array} Array de strings com setores únicos ordenados alfabeticamente
+ *
+ * @example
+ * var setores = getSetoresUnicos();
+ * // Returns: ['Logística', 'Produção', 'Qualidade', ...]
+ *
+ * @since Deploy 120
  */
 function getSetoresUnicos() {
     try {
@@ -1518,7 +1742,17 @@ function getSetoresUnicos() {
 }
 
 /**
- * Números de RNC por setor
+ * Busca apenas os números de RNC filtrados por setor específico
+ * Retorna números ordenados por ano e sequência decrescente
+ *
+ * @param {string} setor - Nome do setor para filtrar
+ * @return {Array} Array de strings com números de RNC no formato XXXX/YYYY
+ *
+ * @example
+ * var numeros = getRncNumbersBySetor('Produção');
+ * // Returns: ['0010/2024', '0009/2024', '0008/2024', ...]
+ *
+ * @since Deploy 120
  */
 function getRncNumbersBySetor(setor) {
     try {

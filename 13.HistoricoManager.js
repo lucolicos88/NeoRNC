@@ -10,16 +10,33 @@
  * - Conformidade e auditoria
  */
 
+/**
+ * @namespace HistoricoManager
+ * @description Sistema de auditoria e rastreamento de alterações em RNCs.
+ * Gerencia histórico completo com timeline, usuários, campos modificados e tipos de alteração.
+ *
+ * @since Deploy 34
+ */
 var HistoricoManager = (function() {
 
   /**
-   * Registra alteração de campo no histórico
-   * @param {string} rncNumber - Número da RNC
-   * @param {string} fieldName - Nome do campo alterado
-   * @param {string} oldValue - Valor anterior
-   * @param {string} newValue - Valor novo
-   * @param {string} section - Seção do campo
-   * @param {string} userEmail - Email do usuário que fez a alteração
+   * Registra uma alteração individual de campo no histórico da RNC.
+   * Cria automaticamente a aba 'Historico' se não existir e adiciona registro completo
+   * incluindo timestamp, usuário, seção, campo, valores anterior/novo e tipo de alteração.
+   *
+   * @param {string} rncNumber - Número identificador da RNC (ex: "RNC-2025-001")
+   * @param {string} fieldName - Nome do campo que foi alterado (ex: "Descrição", "Status")
+   * @param {string} oldValue - Valor anterior do campo antes da alteração
+   * @param {string} newValue - Novo valor do campo após a alteração
+   * @param {string} section - Seção onde o campo está localizado (ex: "Dados Básicos", "Análise")
+   * @param {string} userEmail - Email do usuário que realizou a alteração
+   * @return {boolean} true se registrou com sucesso, false em caso de erro
+   *
+   * @example
+   * var success = registrarAlteracao('RNC-2025-001', 'Status', 'Aberta', 'Em Análise', 'Dados Básicos', 'user@email.com');
+   * // Returns: true
+   *
+   * @since Deploy 120
    */
   function registrarAlteracao(rncNumber, fieldName, oldValue, newValue, section, userEmail) {
     try {
@@ -97,10 +114,24 @@ var HistoricoManager = (function() {
   }
 
   /**
-   * Registra múltiplas alterações de uma vez
-   * @param {string} rncNumber - Número da RNC
-   * @param {object} modifiedFields - Objeto com campos modificados
-   * @param {string} userEmail - Email do usuário
+   * Registra múltiplas alterações de campos em lote (batch) no histórico da RNC.
+   * Processa um objeto com múltiplos campos modificados e registra cada alteração individualmente,
+   * retornando estatísticas de sucesso e total de campos registrados.
+   *
+   * @param {string} rncNumber - Número identificador da RNC (ex: "RNC-2025-001")
+   * @param {Object} modifiedFields - Objeto contendo campos modificados com estrutura {fieldName: {old: valor, new: valor, section: seção}}
+   * @param {string} userEmail - Email do usuário que realizou as alterações
+   * @return {Object} Objeto com {success: boolean, registrados: number, error?: string}
+   *
+   * @example
+   * var changes = {
+   *   'Status': {old: 'Aberta', new: 'Em Análise', section: 'Dados Básicos'},
+   *   'Responsável': {old: 'João', new: 'Maria', section: 'Análise'}
+   * };
+   * var result = registrarAlteracoes('RNC-2025-001', changes, 'user@email.com');
+   * // Returns: {success: true, registrados: 2}
+   *
+   * @since Deploy 120
    */
   function registrarAlteracoes(rncNumber, modifiedFields, userEmail) {
     try {
@@ -143,9 +174,18 @@ var HistoricoManager = (function() {
   }
 
   /**
-   * Busca histórico de uma RNC específica
-   * @param {string} rncNumber - Número da RNC
-   * @returns {Array} Array de alterações
+   * Recupera todo o histórico de alterações de uma RNC específica ordenado cronologicamente.
+   * Busca na aba 'Historico' todas as alterações relacionadas ao número da RNC informado,
+   * retornando array com timestamp, usuário, seção, campo, valores e tipo de cada alteração.
+   *
+   * @param {string} rncNumber - Número identificador da RNC para buscar histórico (ex: "RNC-2025-001")
+   * @return {Array<Object>} Array de objetos com {timestamp, usuario, secao, campo, valorAnterior, valorNovo, tipo}, ordenado do mais recente ao mais antigo
+   *
+   * @example
+   * var historico = getHistoricoRnc('RNC-2025-001');
+   * // Returns: [{timestamp: '2025-01-02T10:30:00.000Z', usuario: 'user@email.com', secao: 'Dados Básicos', campo: 'Status', valorAnterior: 'Aberta', valorNovo: 'Em Análise', tipo: 'Mudança Status'}]
+   *
+   * @since Deploy 120
    */
   function getHistoricoRnc(rncNumber) {
     try {
@@ -235,7 +275,20 @@ var HistoricoManager = (function() {
   }
 
   /**
-   * Determina o tipo de alteração baseado no campo
+   * Determina automaticamente o tipo de alteração baseado no contexto do campo e valores.
+   * Analisa nome do campo e valores anterior/novo para classificar como Criação, Remoção,
+   * Mudança Status, Arquivo ou Edição, facilitando filtros e visualizações do histórico.
+   *
+   * @param {string} fieldName - Nome do campo alterado para análise contextual
+   * @param {string} oldValue - Valor anterior do campo (vazio indica criação)
+   * @param {string} newValue - Novo valor do campo (vazio indica remoção)
+   * @return {string} Tipo da alteração: 'Criação', 'Remoção', 'Mudança Status', 'Arquivo' ou 'Edição'
+   *
+   * @example
+   * var tipo = determinarTipoAlteracao('Status', 'Aberta', 'Fechada');
+   * // Returns: 'Mudança Status'
+   *
+   * @since Deploy 120
    */
   function determinarTipoAlteracao(fieldName, oldValue, newValue) {
     if (!oldValue || oldValue === '(vazio)') {
@@ -258,7 +311,20 @@ var HistoricoManager = (function() {
   }
 
   /**
-   * Registra criação de RNC
+   * Registra o evento de criação inicial de uma nova RNC no histórico.
+   * Cria entrada especial marcando o momento de criação da RNC, incluindo usuário criador
+   * e timestamp, servindo como primeiro registro na timeline de auditoria.
+   *
+   * @param {string} rncNumber - Número identificador da RNC recém-criada (ex: "RNC-2025-001")
+   * @param {string} userEmail - Email do usuário que criou a RNC
+   * @param {Object} dadosIniciais - Objeto com dados iniciais da RNC (opcional, não utilizado atualmente)
+   * @return {boolean} true se registrou com sucesso, false em caso de erro
+   *
+   * @example
+   * var success = registrarCriacao('RNC-2025-001', 'user@email.com', {});
+   * // Returns: true
+   *
+   * @since Deploy 120
    */
   function registrarCriacao(rncNumber, userEmail, dadosIniciais) {
     try {
@@ -299,7 +365,21 @@ var HistoricoManager = (function() {
   }
 
   /**
-   * Registra anexo adicionado/removido
+   * Registra adição ou remoção de arquivo anexo no histórico da RNC.
+   * Cria registro específico para operações com anexos, diferenciando entre upload e exclusão
+   * de arquivos, registrando nome do arquivo e usuário responsável pela ação.
+   *
+   * @param {string} rncNumber - Número identificador da RNC (ex: "RNC-2025-001")
+   * @param {string} fileName - Nome do arquivo anexado ou removido
+   * @param {string} acao - Tipo de ação realizada: 'adicionar' ou 'remover'
+   * @param {string} userEmail - Email do usuário que realizou a operação com o anexo
+   * @return {boolean} true se registrou com sucesso, false em caso de erro
+   *
+   * @example
+   * var success = registrarAnexo('RNC-2025-001', 'documento.pdf', 'adicionar', 'user@email.com');
+   * // Returns: true
+   *
+   * @since Deploy 120
    */
   function registrarAnexo(rncNumber, fileName, acao, userEmail) {
     try {

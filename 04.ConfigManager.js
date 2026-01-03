@@ -3,7 +3,15 @@
  * CONFIGMANAGER.GS - Gerenciamento de Configurações
  * Sistema RNC Neoformula - Deploy 30 Modularizado
  * Deploy 33 - Cache de configuração
+ * Deploy 120 - Documentação JSDoc completa
  * ============================================
+ *
+ * @namespace ConfigManager
+ * @description Módulo responsável pelo gerenciamento de configurações do sistema RNC.
+ * Controla seções, campos, listas e sincronização com a planilha principal.
+ * Implementa sistema de cache para otimização de performance.
+ *
+ * @since Deploy 30
  */
 
 var ConfigManager = (function() {
@@ -20,10 +28,19 @@ var ConfigManager = (function() {
   var CACHE_PREFIX = 'config_';
 
   /**
-   * Obtém valor do cache
-   * @param {string} key - Chave do cache
-   * @return {*} Valor ou null
+   * Obtém valor do cache de configurações do sistema.
+   * Busca dados previamente armazenados em cache para otimizar performance
+   * e reduzir acesso à planilha do Google Sheets.
+   *
+   * @param {string} key - Chave do cache a ser buscada
+   * @return {*} Valor do cache parseado como JSON ou null se não encontrado
    * @private
+   *
+   * @example
+   * var cached = getFromCache('sections');
+   * // Returns: [{nome: 'Abertura', descricao: '...'}] ou null
+   *
+   * @since Deploy 33
    */
   function getFromCache(key) {
     try {
@@ -42,10 +59,20 @@ var ConfigManager = (function() {
   }
 
   /**
-   * Salva valor no cache
-   * @param {string} key - Chave do cache
-   * @param {*} value - Valor a cachear
+   * Salva valor no cache de configurações do sistema.
+   * Armazena dados em cache com TTL configurado para otimizar performance
+   * de futuras consultas às mesmas configurações.
+   *
+   * @param {string} key - Chave do cache onde o valor será armazenado
+   * @param {*} value - Valor a ser armazenado (será convertido para JSON)
    * @private
+   *
+   * @example
+   * var sections = [{nome: 'Abertura', descricao: 'Seção de abertura'}];
+   * saveToCache('sections', sections);
+   * // Returns: undefined (armazena no cache)
+   *
+   * @since Deploy 33
    */
   function saveToCache(key, value) {
     try {
@@ -58,8 +85,22 @@ var ConfigManager = (function() {
   }
 
   /**
-   * Limpa cache específico
-   * @param {string} key - Chave do cache
+   * Limpa cache específico ou todos os caches de configuração.
+   * Permite invalidação manual do cache quando configurações são alteradas,
+   * garantindo que próximas consultas busquem dados atualizados.
+   *
+   * @param {string} key - Chave do cache a limpar (opcional, se vazio limpa todos)
+   * @return {void}
+   *
+   * @example
+   * clearCache('sections');
+   * // Returns: undefined (limpa cache de seções)
+   *
+   * @example
+   * clearCache();
+   * // Returns: undefined (limpa todos os caches de configuração)
+   *
+   * @since Deploy 33
    */
   function clearCache(key) {
     try {
@@ -80,12 +121,20 @@ var ConfigManager = (function() {
   }
 
   /**
- * Obtém campos configurados para uma seção
- * Deploy 33 - Com cache (10 minutos)
- * @param {string} sectionName - Nome da seção
- * @return {Array} Lista de campos
- */
-function getFieldsForSection(sectionName) {
+   * Obtém campos configurados para uma seção específica.
+   * Busca todos os campos ativos da seção ordenados por ordem de exibição,
+   * implementando cache para otimizar performance em consultas subsequentes.
+   *
+   * @param {string} sectionName - Nome da seção (ex: 'Abertura', 'Qualidade', 'Liderança')
+   * @return {Array} Lista de objetos com configuração dos campos da seção
+   *
+   * @example
+   * var fields = ConfigManager.getFieldsForSection('Abertura');
+   * // Returns: [{name: 'Produto', type: 'text', required: true, placeholder: 'Nome do produto', list: '', order: 1}]
+   *
+   * @since Deploy 33
+   */
+  function getFieldsForSection(sectionName) {
   try {
     // ✅ DEPLOY 33: Tentar obter do cache
     var cacheKey = 'fields_' + sectionName;
@@ -132,9 +181,17 @@ function getFieldsForSection(sectionName) {
 }
   
   /**
-   * Obtém todas as seções configuradas
-   * Deploy 33 - Com cache (10 minutos)
-   * @return {Array} Lista de seções
+   * Obtém todas as seções configuradas do sistema.
+   * Retorna lista de seções ativas ordenadas por ordem de exibição,
+   * com cache implementado para otimização de performance.
+   *
+   * @return {Array} Lista de objetos representando seções do sistema
+   *
+   * @example
+   * var sections = ConfigManager.getSections();
+   * // Returns: [{nome: 'Abertura', descricao: 'Dados iniciais', ordem: 1, ativo: 'Sim'}]
+   *
+   * @since Deploy 33
    */
   function getSections() {
     try {
@@ -175,9 +232,17 @@ function getFieldsForSection(sectionName) {
   }
   
   /**
-   * Obtém listas configuradas
-   * Deploy 33 - Com cache (10 minutos)
-   * @return {Object} Objeto com todas as listas
+   * Obtém todas as listas configuradas do sistema.
+   * Retorna objeto com todas as listas disponíveis para campos tipo 'select',
+   * processando a planilha de listas e implementando cache.
+   *
+   * @return {Object} Objeto onde chaves são nomes das listas e valores são arrays de itens
+   *
+   * @example
+   * var lists = ConfigManager.getLists();
+   * // Returns: {Setores: ['Produção', 'Qualidade'], TipoRNC: ['Produto', 'Processo']}
+   *
+   * @since Deploy 33
    */
   function getLists() {
     try {
@@ -226,10 +291,19 @@ function getFieldsForSection(sectionName) {
   }
   
   /**
-   * Salva ou atualiza uma lista
-   * @param {string} listName - Nome da lista
-   * @param {Array} items - Itens da lista
-   * @return {Object} Resultado da operação
+   * Salva ou atualiza uma lista de opções no sistema.
+   * Cria nova coluna se a lista não existir ou atualiza coluna existente,
+   * utilizado para gerenciar opções de campos tipo 'select'.
+   *
+   * @param {string} listName - Nome da lista a ser salva ou atualizada
+   * @param {Array} items - Array de strings com os itens da lista
+   * @return {Object} Objeto com resultado da operação (success, configChanged, action, listName)
+   *
+   * @example
+   * var result = ConfigManager.saveList('Setores', ['Produção', 'Qualidade', 'Logística']);
+   * // Returns: {success: true, configChanged: true, action: 'updated', listName: 'Setores'}
+   *
+   * @since Deploy 120
    */
   function saveList(listName, items) {
     try {
@@ -275,9 +349,18 @@ function getFieldsForSection(sectionName) {
   }
   
   /**
-   * Deleta uma lista
-   * @param {string} listName - Nome da lista
-   * @return {Object} Resultado da operação
+   * Deleta uma lista de opções do sistema.
+   * Remove completamente a coluna da lista da planilha de Listas,
+   * impedindo seu uso em campos tipo 'select'.
+   *
+   * @param {string} listName - Nome da lista a ser deletada
+   * @return {Object} Objeto com resultado da operação (success, configChanged, action, listName)
+   *
+   * @example
+   * var result = ConfigManager.deleteList('SetoresAntigos');
+   * // Returns: {success: true, configChanged: true, action: 'deleted', listName: 'SetoresAntigos'}
+   *
+   * @since Deploy 120
    */
   function deleteList(listName) {
     try {
@@ -307,9 +390,35 @@ function getFieldsForSection(sectionName) {
   }
   
   /**
-   * Salva configuração de campo
-   * @param {Object} fieldData - Dados do campo
-   * @return {Object} Resultado da operação
+   * Salva configuração de campo do sistema.
+   * Cria novo campo ou atualiza campo existente na configuração,
+   * sincronizando automaticamente com a planilha RNC principal.
+   *
+   * @param {Object} fieldData - Objeto com dados completos do campo a salvar
+   * @param {string} fieldData.secao - Seção onde o campo será exibido
+   * @param {string} fieldData.campo - Nome do campo
+   * @param {string} fieldData.tipo - Tipo do campo (text, number, select, date, etc)
+   * @param {string} fieldData.obrigatorio - Se o campo é obrigatório ('Sim' ou 'Não')
+   * @param {string} fieldData.placeholder - Texto de placeholder do campo
+   * @param {string} fieldData.lista - Nome da lista (se tipo for select)
+   * @param {number} fieldData.ordem - Ordem de exibição do campo
+   * @param {string} fieldData.ativo - Se o campo está ativo ('Sim' ou 'Não')
+   * @return {Object} Objeto com resultado da operação (success, configChanged, action, fieldName)
+   *
+   * @example
+   * var result = ConfigManager.saveFieldConfiguration({
+   *   secao: 'Abertura',
+   *   campo: 'Produto',
+   *   tipo: 'text',
+   *   obrigatorio: 'Sim',
+   *   placeholder: 'Nome do produto',
+   *   lista: '',
+   *   ordem: 1,
+   *   ativo: 'Sim'
+   * });
+   * // Returns: {success: true, configChanged: true, action: 'created', fieldName: 'Produto'}
+   *
+   * @since Deploy 120
    */
   function saveFieldConfiguration(fieldData) {
     try {
@@ -369,10 +478,19 @@ return {
   }
   
   /**
-   * Deleta configuração de campo
-   * @param {string} secao - Seção do campo
-   * @param {string} campo - Nome do campo
-   * @return {Object} Resultado da operação
+   * Deleta configuração de campo do sistema.
+   * Remove campo da configuração e sincroniza automaticamente com planilha RNC,
+   * removendo a coluna correspondente da planilha principal.
+   *
+   * @param {string} secao - Nome da seção onde o campo está localizado
+   * @param {string} campo - Nome do campo a ser deletado
+   * @return {Object} Objeto com resultado da operação (success, configChanged, action, fieldName)
+   *
+   * @example
+   * var result = ConfigManager.deleteFieldConfiguration('Abertura', 'ProdutoAntigo');
+   * // Returns: {success: true, configChanged: true, action: 'deleted', fieldName: 'ProdutoAntigo'}
+   *
+   * @since Deploy 120
    */
   function deleteFieldConfiguration(secao, campo) {
     try {
@@ -412,8 +530,17 @@ return {
   }
   
   /**
-   * Obtém todos os campos configurados
-   * @return {Array} Lista de campos
+   * Obtém todos os campos configurados do sistema.
+   * Retorna lista completa de campos de todas as seções, ordenados por ordem de exibição,
+   * utilizado para sincronização e validação de configuração.
+   *
+   * @return {Array} Array de objetos com dados completos de todos os campos configurados
+   *
+   * @example
+   * var allFields = ConfigManager.getAllFieldsFromConfig();
+   * // Returns: [{secao: 'Abertura', campo: 'Produto', tipo: 'text', obrigatorio: 'Sim', ...}]
+   *
+   * @since Deploy 120
    */
   function getAllFieldsFromConfig() {
     try {
@@ -447,9 +574,27 @@ return {
   }
   
   /**
-   * Salva configuração de seção
-   * @param {Object} sectionData - Dados da seção
-   * @return {Object} Resultado da operação
+   * Salva configuração de seção do sistema.
+   * Cria nova seção ou atualiza seção existente, controlando agrupamento de campos
+   * no formulário de RNC e ordem de exibição.
+   *
+   * @param {Object} sectionData - Objeto com dados completos da seção
+   * @param {string} sectionData.nome - Nome da seção
+   * @param {string} sectionData.descricao - Descrição da seção
+   * @param {number} sectionData.ordem - Ordem de exibição da seção
+   * @param {string} sectionData.ativo - Se a seção está ativa ('Sim' ou 'Não')
+   * @return {Object} Objeto com resultado da operação (success, configChanged, action, sectionName)
+   *
+   * @example
+   * var result = ConfigManager.saveSection({
+   *   nome: 'Abertura',
+   *   descricao: 'Dados iniciais da RNC',
+   *   ordem: 1,
+   *   ativo: 'Sim'
+   * });
+   * // Returns: {success: true, configChanged: true, action: 'updated', sectionName: 'Abertura'}
+   *
+   * @since Deploy 120
    */
   function saveSection(sectionData) {
     try {
@@ -491,9 +636,18 @@ return {
   }
   
   /**
-   * Deleta uma seção
-   * @param {string} sectionName - Nome da seção
-   * @return {Object} Resultado da operação
+   * Deleta uma seção do sistema.
+   * Remove seção da configuração, impedindo seu uso no formulário de RNC.
+   * Atenção: não remove campos associados à seção.
+   *
+   * @param {string} sectionName - Nome da seção a ser deletada
+   * @return {Object} Objeto com resultado da operação (success, configChanged, action, sectionName)
+   *
+   * @example
+   * var result = ConfigManager.deleteSection('SecaoAntiga');
+   * // Returns: {success: true, configChanged: true, action: 'deleted', sectionName: 'SecaoAntiga'}
+   *
+   * @since Deploy 120
    */
   function deleteSection(sectionName) {
     try {
@@ -517,12 +671,21 @@ return {
     }
   }
   
-/**
- * Adiciona apenas a coluna do novo campo criado
- * @param {string} fieldName - Nome do campo a adicionar
- * @return {Object} Resultado da operação
- */
-function addFieldColumn(fieldName) {
+  /**
+   * Adiciona coluna de novo campo na planilha RNC.
+   * Cria coluna no final da planilha quando novo campo é configurado,
+   * aplicando formatação padrão de header e auto-redimensionamento.
+   *
+   * @param {string} fieldName - Nome do campo cuja coluna será adicionada
+   * @return {Object} Objeto com resultado da operação (success, fieldName, columnPosition)
+   *
+   * @example
+   * var result = ConfigManager.addFieldColumn('Novo Campo');
+   * // Returns: {success: true, fieldName: 'Novo Campo', columnPosition: 15}
+   *
+   * @since Deploy 120
+   */
+  function addFieldColumn(fieldName) {
   try {
     Logger.logInfo('addFieldColumn_START', { fieldName: fieldName });
     
@@ -565,12 +728,21 @@ function addFieldColumn(fieldName) {
   }
 }
 
-/**
- * Remove coluna do campo deletado
- * @param {string} fieldName - Nome do campo a remover
- * @return {Object} Resultado da operação
- */
-function removeFieldColumn(fieldName) {
+  /**
+   * Remove coluna de campo deletado da planilha RNC.
+   * Deleta coluna da planilha quando campo é removido da configuração,
+   * mantendo sincronização entre configuração e planilha.
+   *
+   * @param {string} fieldName - Nome do campo cuja coluna será removida
+   * @return {Object} Objeto com resultado da operação (success, fieldName, removedFromPosition)
+   *
+   * @example
+   * var result = ConfigManager.removeFieldColumn('Campo Antigo');
+   * // Returns: {success: true, fieldName: 'Campo Antigo', removedFromPosition: 12}
+   *
+   * @since Deploy 120
+   */
+  function removeFieldColumn(fieldName) {
   try {
     Logger.logInfo('removeFieldColumn_START', { fieldName: fieldName });
     
@@ -603,12 +775,21 @@ function removeFieldColumn(fieldName) {
   }
 }
 
-/**
- * Sincronização completa entre ConfigCampos e aba RNC
- * @param {boolean} forceReorder - Se deve reorganizar completamente
- * @return {Object} Resultado da operação
- */
-function fullSyncRncWithConfig(forceReorder) {
+  /**
+   * Sincronização completa entre configuração de campos e planilha RNC.
+   * Garante que todos os campos configurados tenham colunas correspondentes na planilha,
+   * removendo colunas órfãs e adicionando colunas faltantes de forma incremental.
+   *
+   * @param {boolean} forceReorder - Se true, reorganiza completamente headers (apenas se não há dados)
+   * @return {Object} Objeto com resultado da operação (success, action, headersCount ou changes)
+   *
+   * @example
+   * var result = ConfigManager.fullSyncRncWithConfig(false);
+   * // Returns: {success: true, action: 'incremental_sync', changes: {added: ['NovoCampo'], removed: []}}
+   *
+   * @since Deploy 120
+   */
+  function fullSyncRncWithConfig(forceReorder) {
   forceReorder = forceReorder || false;
   
   try {
@@ -699,11 +880,24 @@ function fullSyncRncWithConfig(forceReorder) {
   }
 }
 
-/**
- * Reorganização completa dos headers
- * @private
- */
-function fullReorganizeHeaders(rncSheet, idealHeaders, hasData) {
+  /**
+   * Reorganização completa dos headers da planilha RNC.
+   * Redefine completamente a ordem das colunas conforme configuração,
+   * só pode ser executado quando planilha está vazia para evitar perda de dados.
+   *
+   * @param {Sheet} rncSheet - Objeto da planilha RNC
+   * @param {Array} idealHeaders - Array com nomes dos headers na ordem ideal
+   * @param {boolean} hasData - Se a planilha contém dados (throw error se true)
+   * @return {Object} Objeto com resultado da operação (success, action, headersCount)
+   * @private
+   *
+   * @example
+   * var result = fullReorganizeHeaders(sheet, ['Nº RNC', 'Status', 'Produto'], false);
+   * // Returns: {success: true, action: 'full_reorganize', headersCount: 3}
+   *
+   * @since Deploy 120
+   */
+  function fullReorganizeHeaders(rncSheet, idealHeaders, hasData) {
   if (hasData) {
     throw new Error('Não é possível reorganizar headers quando há dados');
   }
@@ -726,11 +920,24 @@ function fullReorganizeHeaders(rncSheet, idealHeaders, hasData) {
   };
 }
 
-/**
- * Sincronização incremental
- * @private
- */
-function incrementalSync(rncSheet, idealHeaders, currentHeaders) {
+  /**
+   * Sincronização incremental entre configuração e planilha RNC.
+   * Adiciona colunas de novos campos e remove colunas órfãs sem reorganizar,
+   * permite sincronização segura mesmo com dados na planilha.
+   *
+   * @param {Sheet} rncSheet - Objeto da planilha RNC
+   * @param {Array} idealHeaders - Array com nomes dos headers esperados
+   * @param {Array} currentHeaders - Array com headers atuais da planilha
+   * @return {Object} Objeto com resultado da operação (success, action, changes)
+   * @private
+   *
+   * @example
+   * var result = incrementalSync(sheet, ['Nº RNC', 'Produto'], ['Nº RNC']);
+   * // Returns: {success: true, action: 'incremental_sync', changes: {added: ['Produto'], removed: []}}
+   *
+   * @since Deploy 120
+   */
+  function incrementalSync(rncSheet, idealHeaders, currentHeaders) {
   var changes = {
     added: [],
     removed: []
@@ -779,11 +986,24 @@ function incrementalSync(rncSheet, idealHeaders, currentHeaders) {
   };
 }
 
-/**
- * Formata headers
- * @private
- */
-function formatHeaders(sheet, startCol, count) {
+  /**
+   * Formata headers da planilha RNC com estilo padrão.
+   * Aplica formatação visual aos headers (negrito, fundo verde, texto branco)
+   * e auto-redimensiona colunas para melhor visualização.
+   *
+   * @param {Sheet} sheet - Objeto da planilha a formatar
+   * @param {number} startCol - Coluna inicial da formatação (base 1)
+   * @param {number} count - Quantidade de colunas a formatar
+   * @return {void}
+   * @private
+   *
+   * @example
+   * formatHeaders(sheet, 1, 10);
+   * // Returns: undefined (formata colunas 1 a 10)
+   *
+   * @since Deploy 120
+   */
+  function formatHeaders(sheet, startCol, count) {
   sheet.getRange(1, startCol, 1, count)
     .setFontWeight('bold')
     .setBackground('#009688')
@@ -794,12 +1014,21 @@ function formatHeaders(sheet, startCol, count) {
   }
 }
 
-/**
- * Atualiza status de anexos para uma RNC
- * @param {string} rncNumber - Número da RNC
- * @return {Object} Resultado da operação
- */
-function updateAttachmentStatus(rncNumber) {
+  /**
+   * Atualiza status de anexos de uma RNC específica.
+   * Verifica planilha de anexos e atualiza campo 'Anexo de Documentos' na RNC,
+   * indicando se há ou não arquivos anexados.
+   *
+   * @param {string} rncNumber - Número da RNC a verificar anexos
+   * @return {Object} Objeto com resultado da operação (success, hasAttachments)
+   *
+   * @example
+   * var result = ConfigManager.updateAttachmentStatus('RNC-2024-001');
+   * // Returns: {success: true, hasAttachments: 'Sim'}
+   *
+   * @since Deploy 120
+   */
+  function updateAttachmentStatus(rncNumber) {
   try {
     var attachments = Database.findData(CONFIG.SHEETS.ANEXOS, {
       'RncNumero': rncNumber
@@ -824,8 +1053,17 @@ function updateAttachmentStatus(rncNumber) {
 
 
   /**
-   * Deploy 68: Obtém lista de setores da planilha Listas
-   * @return {Array} Lista de setores
+   * Obtém lista de setores da planilha Listas.
+   * Busca especificamente a coluna 'Setores' da planilha de listas,
+   * utilizado para popular campos de seleção de setor no sistema.
+   *
+   * @return {Array} Array de strings com nomes dos setores disponíveis
+   *
+   * @example
+   * var setores = ConfigManager.getSetoresFromListas();
+   * // Returns: ['Produção', 'Qualidade', 'Logística', 'Administrativo']
+   *
+   * @since Deploy 68
    */
   function getSetoresFromListas() {
     try {
@@ -849,23 +1087,33 @@ function updateAttachmentStatus(rncNumber) {
     }
   }
 
-// API Pública
-return {
-  getFieldsForSection: getFieldsForSection,
-  getSections: getSections,
-  getLists: getLists,
-  saveList: saveList,
-  deleteList: deleteList,
-  saveFieldConfiguration: saveFieldConfiguration,
-  deleteFieldConfiguration: deleteFieldConfiguration,
-  getAllFieldsFromConfig: getAllFieldsFromConfig,
-  saveSection: saveSection,
-  deleteSection: deleteSection,
-  addFieldColumn: addFieldColumn,
-  removeFieldColumn: removeFieldColumn,
-  fullSyncRncWithConfig: fullSyncRncWithConfig,
-  updateAttachmentStatus: updateAttachmentStatus,
-  clearCache: clearCache,                           // ✅ DEPLOY 33
-  getSetoresFromListas: getSetoresFromListas        // ✅ DEPLOY 68: Novo
-};
+  /**
+   * ============================================
+   * API PÚBLICA DO MÓDULO
+   * ============================================
+   *
+   * Exposição das funções públicas do ConfigManager.
+   * Todas as funções estão documentadas com JSDoc completo.
+   *
+   * @public
+   * @since Deploy 30
+   */
+  return {
+    getFieldsForSection: getFieldsForSection,
+    getSections: getSections,
+    getLists: getLists,
+    saveList: saveList,
+    deleteList: deleteList,
+    saveFieldConfiguration: saveFieldConfiguration,
+    deleteFieldConfiguration: deleteFieldConfiguration,
+    getAllFieldsFromConfig: getAllFieldsFromConfig,
+    saveSection: saveSection,
+    deleteSection: deleteSection,
+    addFieldColumn: addFieldColumn,
+    removeFieldColumn: removeFieldColumn,
+    fullSyncRncWithConfig: fullSyncRncWithConfig,
+    updateAttachmentStatus: updateAttachmentStatus,
+    clearCache: clearCache,                           // ✅ DEPLOY 33
+    getSetoresFromListas: getSetoresFromListas        // ✅ DEPLOY 68: Novo
+  };
 })();

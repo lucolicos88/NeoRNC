@@ -8,13 +8,30 @@
  * baseado no setor da RNC.
  */
 
+/**
+ * @namespace NotificationManager
+ * @description Módulo responsável pelo gerenciamento e envio de notificações por email
+ * relacionadas às RNCs. Gerencia diferentes tipos de notificações (criação, atualização,
+ * mudança de status) e controla os destinatários baseado nos setores envolvidos.
+ *
+ * @since Deploy 120
+ */
 var NotificationManager = (function() {
   'use strict';
 
   /**
-   * Obtém usuários de um setor específico
-   * @param {string} setor - Nome do setor
-   * @return {Array} Lista de emails de usuários do setor
+   * Obtém lista de usuários ativos de um setor específico.
+   * Busca na planilha de permissões todos os usuários ativos do setor informado
+   * e retorna uma lista única de emails sem duplicatas.
+   *
+   * @param {string} setor - Nome do setor para buscar usuários
+   * @return {Array<string>} Lista de emails de usuários ativos do setor
+   *
+   * @example
+   * var usuarios = getUsersBySetor('Qualidade');
+   * // Returns: ['user1@neoformula.com.br', 'user2@neoformula.com.br']
+   *
+   * @since Deploy 120
    */
   function getUsersBySetor(setor) {
     try {
@@ -52,8 +69,17 @@ var NotificationManager = (function() {
   }
 
   /**
-   * Obtém todos os administradores do sistema
-   * @return {Array} Lista de emails de administradores
+   * Obtém lista completa de todos os administradores do sistema.
+   * Busca na planilha de permissões todos os usuários com Role 'Admin' que estejam ativos
+   * e retorna uma lista única de emails sem duplicatas.
+   *
+   * @return {Array<string>} Lista de emails dos administradores ativos
+   *
+   * @example
+   * var admins = getAdminUsers();
+   * // Returns: ['admin1@neoformula.com.br', 'admin2@neoformula.com.br']
+   *
+   * @since Deploy 120
    */
   function getAdminUsers() {
     try {
@@ -81,10 +107,18 @@ var NotificationManager = (function() {
   }
 
   /**
-   * Monta o link para visualizar uma RNC específica
-   * Deploy 72.5: Link corrigido - abre sistema e navega para RNC
-   * @param {string} rncNumber - Número da RNC
-   * @return {string} URL completa para a RNC
+   * Monta URL completa para visualizar uma RNC específica no sistema.
+   * Deploy 72.5: Link corrigido - abre sistema e navega para RNC.
+   * Gera um link direto que abre a webapp e navega automaticamente para a RNC solicitada.
+   *
+   * @param {string} rncNumber - Número da RNC a ser vinculada (ex: 'RNC-2024-001')
+   * @return {string} URL completa para acesso direto à RNC no sistema
+   *
+   * @example
+   * var link = getRncLink('RNC-2024-001');
+   * // Returns: 'https://script.google.com/macros/s/ABC123/exec#rnc=RNC-2024-001'
+   *
+   * @since Deploy 120
    */
   function getRncLink(rncNumber) {
     try {
@@ -98,11 +132,20 @@ var NotificationManager = (function() {
   }
 
   /**
-   * Cria template HTML base para emails
-   * Deploy 72.5: Email profissional com logo
-   * @param {string} title - Título do email
-   * @param {string} content - Conteúdo HTML
-   * @return {string} HTML completo do email
+   * Cria template HTML profissional para emails do sistema RNC.
+   * Deploy 72.5: Email profissional com logo Neoformula.
+   * Gera estrutura HTML completa com header personalizado, logo da empresa, estilos CSS
+   * responsivos e footer padronizado.
+   *
+   * @param {string} title - Título do email exibido no header
+   * @param {string} content - Conteúdo HTML a ser inserido no corpo do email
+   * @return {string} HTML completo formatado e pronto para envio
+   *
+   * @example
+   * var html = createEmailTemplate('Nova RNC', '<p>RNC criada com sucesso</p>');
+   * // Returns: '<!DOCTYPE html><html>...[HTML completo com logo e estilos]...</html>'
+   *
+   * @since Deploy 120
    */
   function createEmailTemplate(title, content) {
     var logoUrl = 'https://neoformula.com.br/cdn/shop/files/Logotipo-NeoFormula-Manipulacao-Homeopatia_76b2fa98-5ffa-4cc3-ac0a-6d41e1bc8810.png?height=200&v=1677088468';
@@ -159,10 +202,19 @@ var NotificationManager = (function() {
   }
 
   /**
-   * Formata valor para exibição no email (datas em DD/MM/YYYY)
-   * Deploy 72.8: Formatar datas automaticamente
-   * @param {*} value - Valor a formatar
-   * @return {string} Valor formatado
+   * Formata valores para exibição otimizada em emails.
+   * Deploy 72.8: Formatar datas automaticamente em DD/MM/YYYY.
+   * Detecta automaticamente valores de data nos formatos YYYY-MM-DD ou ISO e converte
+   * para o formato brasileiro DD/MM/YYYY. Valores vazios retornam '(vazio)'.
+   *
+   * @param {*} value - Valor a ser formatado (pode ser string, Date, ou qualquer tipo)
+   * @return {string} Valor formatado para exibição no email
+   *
+   * @example
+   * var formatted = formatValueForEmail('2024-01-15');
+   * // Returns: '15/01/2024'
+   *
+   * @since Deploy 120
    */
   function formatValueForEmail(value) {
     if (!value || value === '(vazio)') return value || '(vazio)';
@@ -182,13 +234,25 @@ var NotificationManager = (function() {
   }
 
   /**
-   * Envia email de notificação
-   * Deploy 72.5: Usa nome "Sistema de RNC" e HTML
-   * @param {Array} recipients - Lista de emails destinatários
+   * Envia email de notificação para múltiplos destinatários.
+   * Deploy 72.5: Usa nome "Sistema de RNC" e formato HTML.
+   * Deploy 72.7.3: Nome personalizado "Sistema de RNC".
+   * Deploy 72.7.5: Registra envio no histórico da RNC.
+   * Envia email individual para cada destinatário e registra a operação no histórico
+   * da RNC e nos logs do sistema.
+   *
+   * @param {Array<string>} recipients - Lista de emails destinatários
    * @param {string} subject - Assunto do email
-   * @param {string} htmlBody - Corpo do email em HTML
-   * @param {string} rncNumber - Número da RNC (para histórico)
+   * @param {string} htmlBody - Corpo do email em formato HTML
+   * @param {string} rncNumber - Número da RNC (usado para registro no histórico)
+   * @return {Object} Objeto com resultado do envio {success, successCount, failCount, sentTo}
    * @private
+   *
+   * @example
+   * var result = sendEmail(['user@example.com'], 'Teste', '<p>Conteúdo</p>', 'RNC-001');
+   * // Returns: {success: true, successCount: 1, failCount: 0, sentTo: ['user@example.com']}
+   *
+   * @since Deploy 120
    */
   function sendEmail(recipients, subject, htmlBody, rncNumber) {
     try {
@@ -278,11 +342,24 @@ var NotificationManager = (function() {
   }
 
   /**
-   * Notifica usuários sobre criação de nova RNC
-   * Deploy 67: Notifica setor de ABERTURA + Admins
-   * @param {string} rncNumber - Número da RNC criada
-   * @param {Object} rncData - Dados da RNC
-   * @return {Object} Resultado da notificação
+   * Notifica usuários sobre a criação de uma nova RNC.
+   * Deploy 67: Notifica setor de ABERTURA + Administradores.
+   * Envia email profissional em HTML com todos os dados da abertura da RNC para usuários
+   * do setor onde foi feita a abertura e para todos os administradores do sistema.
+   *
+   * @param {string} rncNumber - Número da RNC criada (ex: 'RNC-2024-001')
+   * @param {Object} rncData - Objeto contendo todos os dados da RNC criada
+   * @return {Object} Objeto com resultado do envio {success, successCount, failCount, sentTo}
+   *
+   * @example
+   * var result = notifyRncCreated('RNC-2024-001', {
+   *   'Setor onde foi feita abertura': 'Qualidade',
+   *   'Status Geral': 'Abertura RNC',
+   *   'Responsável pela abertura da RNC': 'João Silva'
+   * });
+   * // Returns: {success: true, successCount: 5, failCount: 0, sentTo: [...]}
+   *
+   * @since Deploy 120
    */
   function notifyRncCreated(rncNumber, rncData) {
     try {
@@ -386,11 +463,24 @@ var NotificationManager = (function() {
   }
 
   /**
-   * Notifica usuários sobre atualização de RNC
-   * @param {string} rncNumber - Número da RNC
-   * @param {Object} changes - Alterações realizadas
-   * @param {string} userEmail - Email do usuário que fez a alteração
-   * @return {Object} Resultado da notificação
+   * Notifica usuários sobre atualização de campos de uma RNC.
+   * Deploy 72.8: Formata datas automaticamente nas alterações.
+   * Envia email detalhado mostrando todas as mudanças realizadas (valores antigos vs novos)
+   * para usuários do setor da não conformidade e administradores, exceto quem fez a alteração.
+   *
+   * @param {string} rncNumber - Número da RNC atualizada
+   * @param {Object} changes - Objeto com alterações {campo: {old: valor_antigo, new: valor_novo}}
+   * @param {string} userEmail - Email do usuário que realizou a alteração (será excluído dos destinatários)
+   * @return {Object} Objeto com resultado do envio {success, successCount, failCount, sentTo}
+   *
+   * @example
+   * var result = notifyRncUpdated('RNC-2024-001', {
+   *   'Status Geral': {old: 'Abertura', new: 'Em Análise'},
+   *   'Responsável': {old: 'João', new: 'Maria'}
+   * }, 'user@example.com');
+   * // Returns: {success: true, successCount: 3, failCount: 0, sentTo: [...]}
+   *
+   * @since Deploy 120
    */
   function notifyRncUpdated(rncNumber, changes, userEmail) {
     try {
@@ -508,13 +598,22 @@ var NotificationManager = (function() {
   }
 
   /**
-   * Notifica usuários sobre mudança de status da RNC
-   * Deploy 67: Notifica setor ABERTURA + setor NÃO CONFORMIDADE + Admins
-   * @param {string} rncNumber - Número da RNC
-   * @param {string} oldStatus - Status anterior
-   * @param {string} newStatus - Novo status
-   * @param {string} userEmail - Email do usuário que alterou
-   * @return {Object} Resultado da notificação
+   * Notifica usuários sobre mudança de status da RNC.
+   * Deploy 67: Notifica setor ABERTURA + setor NÃO CONFORMIDADE + Administradores.
+   * Envia email destacado com informações sobre a mudança de status, incluindo alerta visual
+   * diferenciado conforme o novo status (Finalizada=verde, Análise=amarelo, etc).
+   *
+   * @param {string} rncNumber - Número da RNC que teve status alterado
+   * @param {string} oldStatus - Status anterior da RNC
+   * @param {string} newStatus - Novo status da RNC
+   * @param {string} userEmail - Email do usuário que alterou o status (será excluído dos destinatários)
+   * @return {Object} Objeto com resultado do envio {success, successCount, failCount, sentTo}
+   *
+   * @example
+   * var result = notifyStatusChanged('RNC-2024-001', 'Abertura RNC', 'Finalizada', 'user@example.com');
+   * // Returns: {success: true, successCount: 7, failCount: 0, sentTo: [...]}
+   *
+   * @since Deploy 120
    */
   function notifyStatusChanged(rncNumber, oldStatus, newStatus, userEmail) {
     try {
@@ -659,12 +758,21 @@ var NotificationManager = (function() {
   }
 
   /**
-   * Reenvio manual de notificação para uma RNC
-   * Deploy 72.5: Permite reenvio manual em caso de falha
-   * @param {string} rncNumber - Número da RNC
-   * @param {string} notificationType - Tipo: 'created', 'updated', 'statusChanged'
-   * @param {Array} additionalRecipients - Emails adicionais (opcional)
-   * @return {Object} Resultado do envio
+   * Reenvio manual de notificação para uma RNC.
+   * Deploy 72.5: Permite reenvio manual em caso de falha ou necessidade específica.
+   * Permite reenviar qualquer tipo de notificação (criação, atualização, mudança de status)
+   * e opcionalmente incluir destinatários adicionais além dos padrões do sistema.
+   *
+   * @param {string} rncNumber - Número da RNC para reenviar notificação
+   * @param {string} notificationType - Tipo de notificação: 'created', 'updated' ou 'statusChanged'
+   * @param {Array<string>} additionalRecipients - Emails adicionais para receber a notificação (opcional)
+   * @return {Object} Objeto com resultado do envio {success, successCount, failCount, sentTo}
+   *
+   * @example
+   * var result = manualNotify('RNC-2024-001', 'created', ['extra@example.com']);
+   * // Returns: {success: true, successCount: 6, failCount: 0, sentTo: [...]}
+   *
+   * @since Deploy 120
    */
   function manualNotify(rncNumber, notificationType, additionalRecipients) {
     try {
