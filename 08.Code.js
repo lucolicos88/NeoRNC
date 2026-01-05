@@ -1276,11 +1276,24 @@ function getSetoresFromListas() {
 function getRncNumbersBySetor(tipoSetor, setor) {
   try {
     var allRncs = RncOperations.getAllRncs();
-    
+
+    // Deploy 124 PARTE 6: Logs detalhados para debug
+    Logger.logDebug('getRncNumbersBySetor - INICIO', {
+      tipoSetor: tipoSetor,
+      setor: setor,
+      totalRncsNoSistema: allRncs.length
+    });
+
     if (!setor || setor === 'Todos') {
       // Deploy 124 PARTE 5: Verificar se é admin para filtro "Todos"
       var userEmail = Session.getActiveUser().getEmail();
       var isAdmin = PermissionsManager.isAdmin(userEmail);
+
+      Logger.logDebug('getRncNumbersBySetor - Filtro TODOS', {
+        userEmail: userEmail,
+        isAdmin: isAdmin,
+        setor: setor
+      });
 
       if (isAdmin) {
         // Admin: Retornar TODAS as RNCs do sistema
@@ -1289,6 +1302,12 @@ function getRncNumbersBySetor(tipoSetor, setor) {
         }).filter(function(num) {
           return num !== null && num !== '';
         });
+
+        Logger.logDebug('getRncNumbersBySetor - ADMIN retornando', {
+          totalRncs: allNumbers.length,
+          primeiras3: allNumbers.slice(0, 3)
+        });
+
         return sortRncNumbers(allNumbers);
 
       } else {

@@ -5895,12 +5895,12 @@ async function loadSetoresFilter() {
                 ? setores.setoresAbertura
                 : setores.setoresQualidade;
 
-            // Deploy 124: Admins E não-admins com múltiplos setores veem "Todos"
+            // Deploy 124 PARTE 6: Admins E não-admins veem "Todos os Setores"
             if (isAdmin) {
                 setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
             } else if (listaSetores.length > 1) {
-                // Deploy 124: Não-admin com múltiplos setores vê "Todos os Meus Setores"
-                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Meus Setores</option>';
+                // Deploy 124 PARTE 6: Não-admin com múltiplos setores também vê "Todos os Setores"
+                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
             } else {
                 setorFilterSelect.innerHTML = '';
             }
@@ -7451,12 +7451,12 @@ async function loadSetoresKanban() {
                 ? setores.setoresAbertura
                 : setores.setoresQualidade;
 
-            // Deploy 124: Admins E não-admins com múltiplos setores veem "Todos"
+            // Deploy 124 PARTE 6: Admins E não-admins veem "Todos os Setores"
             if (isAdmin) {
                 setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
             } else if (listaSetores.length > 1) {
-                // Deploy 124: Não-admin com múltiplos setores vê "Todos os Meus Setores"
-                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Meus Setores</option>';
+                // Deploy 124 PARTE 6: Não-admin com múltiplos setores também vê "Todos os Setores"
+                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
             } else {
                 setorFilterSelect.innerHTML = '';
             }
@@ -7675,12 +7675,12 @@ async function refreshKanban() {
                 ? setores.setoresAbertura
                 : setores.setoresQualidade;
 
-            // Deploy 124: Admins E não-admins com múltiplos setores veem "Todos"
+            // Deploy 124 PARTE 6: Admins E não-admins veem "Todos os Setores"
             if (isAdmin) {
                 setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
             } else if (listaSetores.length > 1) {
-                // Deploy 124: Não-admin com múltiplos setores vê "Todos os Meus Setores"
-                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Meus Setores</option>';
+                // Deploy 124 PARTE 6: Não-admin com múltiplos setores também vê "Todos os Setores"
+                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
             } else {
                 setorFilterSelect.innerHTML = '';
             }
