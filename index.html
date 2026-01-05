@@ -5313,6 +5313,96 @@ function showErrorModal(title, message) {
 }
 
 /**
+ * Modal de sucesso para configurações
+ * Deploy 124 - Feedback visual para todas as operações de configuração
+ */
+function showConfigSuccessModal(title, message) {
+    console.log('✅ showConfigSuccessModal chamado:', title, message);
+
+    try {
+        return new Promise((resolve) => {
+            // Remover modais anteriores
+            const oldModal = document.getElementById('configSuccessModal');
+            if (oldModal) oldModal.remove();
+
+            const modalHtml = `
+                <div id="configSuccessModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s;">
+                    <div style="background: white; padding: 2.5rem; border-radius: 16px; max-width: 600px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.3s;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                        <h2 style="color: #10B981; margin-bottom: 15px; font-size: 24px; font-weight: 700;">${title}</h2>
+                        <div style="color: #666; font-size: 15px; line-height: 1.8; margin-bottom: 30px; text-align: left; max-height: 300px; overflow-y: auto; padding: 15px; background: #F0FDF4; border-left: 4px solid #10B981; border-radius: 8px;">${message}</div>
+                        <button id="configSuccessModalOk" style="
+                            background: linear-gradient(135deg, #10B981, #059669);
+                            color: white;
+                            border: none;
+                            padding: 14px 40px;
+                            border-radius: 8px;
+                            font-size: 16px;
+                            font-weight: 700;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                            min-width: 150px;
+                            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                        " onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">
+                            OK, ENTENDI
+                        </button>
+                    </div>
+                </div>
+                <style>
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes slideUp {
+                        from { transform: translateY(50px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                </style>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            console.log('✅ Modal de sucesso inserido no DOM');
+
+            const modal = document.getElementById('configSuccessModal');
+            const btnOk = document.getElementById('configSuccessModalOk');
+
+            if (!modal || !btnOk) {
+                console.error('❌ Modal ou botão não encontrado!');
+                resolve(true);
+                return;
+            }
+
+            // Função para remover modal
+            const removeModal = () => {
+                if (modal && modal.parentNode) {
+                    modal.style.animation = 'fadeOut 0.3s';
+                    setTimeout(() => modal.remove(), 300);
+                }
+            };
+
+            // Evento de clique no OK
+            btnOk.addEventListener('click', () => {
+                console.log('✅ Botão OK clicado');
+                removeModal();
+                resolve(true);
+            });
+
+            // Fechar ao clicar fora
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    console.log('✅ Clicado fora do modal');
+                    removeModal();
+                    resolve(true);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('❌ Erro ao mostrar modal de sucesso:', error);
+        return Promise.resolve(true);
+    }
+}
+
+/**
  * Modal de confirmação customizado
  * Deploy 35 - Padronização de UI
  */
@@ -5805,9 +5895,12 @@ async function loadSetoresFilter() {
                 ? setores.setoresAbertura
                 : setores.setoresQualidade;
 
-            // Deploy 68: Admins veem "Todos", não-admins não
+            // Deploy 124: Admins E não-admins com múltiplos setores veem "Todos"
             if (isAdmin) {
                 setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
+            } else if (listaSetores.length > 1) {
+                // Deploy 124: Não-admin com múltiplos setores vê "Todos os Meus Setores"
+                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Meus Setores</option>';
             } else {
                 setorFilterSelect.innerHTML = '';
             }
@@ -7358,9 +7451,12 @@ async function loadSetoresKanban() {
                 ? setores.setoresAbertura
                 : setores.setoresQualidade;
 
-            // Deploy 68: Admins veem "Todos", não-admins não
+            // Deploy 124: Admins E não-admins com múltiplos setores veem "Todos"
             if (isAdmin) {
                 setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
+            } else if (listaSetores.length > 1) {
+                // Deploy 124: Não-admin com múltiplos setores vê "Todos os Meus Setores"
+                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Meus Setores</option>';
             } else {
                 setorFilterSelect.innerHTML = '';
             }
@@ -7579,9 +7675,12 @@ async function refreshKanban() {
                 ? setores.setoresAbertura
                 : setores.setoresQualidade;
 
-            // Deploy 68: Admins veem "Todos", não-admins não
+            // Deploy 124: Admins E não-admins com múltiplos setores veem "Todos"
             if (isAdmin) {
                 setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Setores</option>';
+            } else if (listaSetores.length > 1) {
+                // Deploy 124: Não-admin com múltiplos setores vê "Todos os Meus Setores"
+                setorFilterSelect.innerHTML = '<option value="Todos">📋 Todos os Meus Setores</option>';
             } else {
                 setorFilterSelect.innerHTML = '';
             }
@@ -10403,16 +10502,22 @@ function clearFilters() {
                 
                 await apiCall('setSystemConfig', ['PastaGID', pastaGID, 'ID da pasta do Google Drive para anexos']);
                 await apiCall('setSystemConfig', ['RenomearArquivos', renomearArquivos, 'Renomear arquivos anexados']);
-                
-                showSuccess('Configurações salvas com sucesso!');
+
                 hideLoading();
-                
+
+                // Deploy 124: Modal de sucesso
+                await showConfigSuccessModal(
+                    'Configurações Salvas',
+                    `<strong>Pasta GID:</strong> ${pastaGID}<br>
+                     <strong>Renomear Arquivos:</strong> ${renomearArquivos}`
+                );
+
                 debugLog('success', '✅ Configurações do sistema salvas Deploy 72.3');
-                
+
             } catch (error) {
                 debugLog('error', '❌ Erro ao salvar configurações Deploy 72.3', { error: error.message });
-                showError('Erro ao salvar configurações: ' + error.message);
                 hideLoading();
+                await showErrorModal('Erro ao Salvar Configurações', error.message);
             }
         }
         
@@ -13011,13 +13116,21 @@ async function saveNewUser() {
             }
         }
 
-        // Deploy 124: Mensagem com múltiplos setores
+        hideLoading();
+
+        // Deploy 124: Modal de sucesso com múltiplos setores
         const setoresText = setores.join(', ');
-        showSuccess(`✅ Usuário ${email} adicionado aos setores: ${setoresText} com ${selectedRoles.length} role(s)`);
+        const rolesText = selectedRoles.join(', ');
+
+        await showConfigSuccessModal(
+            'Usuário Adicionado com Sucesso',
+            `<strong>Email:</strong> ${email}<br>
+             <strong>Setores:</strong> ${setoresText}<br>
+             <strong>Permissões:</strong> ${rolesText}`
+        );
 
         closeAddUserModal();
         loadUsers();
-        hideLoading();
 
     } catch (error) {
         debugLog('error', '❌ Erro ao adicionar usuário', { error: error.message });
@@ -13223,20 +13336,28 @@ async function saveUserRolesFixed(email) {
             }
         }
 
-        // Deploy 124: Mensagem com múltiplos setores
+        hideLoading();
+
+        // Deploy 124: Modal de sucesso com múltiplos setores
         const setoresText = newSetores.join(', ');
-        showSuccess(`✅ Usuário atualizado! Setores: ${setoresText}`);
+        const rolesText = newRoles.join(', ');
+
+        await showConfigSuccessModal(
+            'Usuário Atualizado com Sucesso',
+            `<strong>Email:</strong> ${email}<br>
+             <strong>Setores:</strong> ${setoresText}<br>
+             <strong>Permissões:</strong> ${rolesText}`
+        );
 
         closeEditUserRolesModal();
         loadUsers();
-        hideLoading();
 
         // Limpar variável temporária
         delete window.currentEditingUserRoles;
 
         // Se for o próprio usuário, recarregar página
         if (email === appContext.email) {
-            showInfo('Suas permissões foram alteradas. Recarregando página...');
+            await showErrorModal('Atenção', 'Suas permissões foram alteradas. A página será recarregada.');
             setTimeout(() => location.reload(), window.NeoRNC.constants.RELOAD_DELAY);
         }
 
@@ -13343,10 +13464,16 @@ async function deleteUser(email) {
             await apiCall('removeUserRole', [email, user.roles[i]]);
         }
 
-        showSuccess(`✅ Usuário ${email} removido com sucesso`);
+        hideLoading();
+
+        // Deploy 124: Modal de sucesso
+        await showConfigSuccessModal(
+            'Usuário Removido',
+            `<strong>Email:</strong> ${email}<br>
+             <strong>Permissões removidas:</strong> ${user.roles.length}`
+        );
 
         loadUsers();
-        hideLoading();
 
     } catch (error) {
         debugLog('error', '❌ Erro ao remover usuário', { error: error.message });
