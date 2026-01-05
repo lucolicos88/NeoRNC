@@ -13433,6 +13433,7 @@ async function saveUserRoles(email, oldRoles) {
 
 /**
  * Confirmar remoção de usuário
+ * Deploy 124 PARTE 5: Modal HTML de confirmação
  */
 async function confirmDeleteUser(email) {
     if (email === appContext.email) {
@@ -13440,8 +13441,16 @@ async function confirmDeleteUser(email) {
         return;
     }
 
-    if (confirm(`⚠️ ATENÇÃO!\n\nDeseja realmente remover TODAS as permissões do usuário:\n${email}\n\nEsta ação não pode ser desfeita!`)) {
-        deleteUser(email);
+    // Deploy 124: Usar modal HTML ao invés de confirm() nativo
+    const confirmed = await showConfirmModal(
+        '⚠️ Confirmar Remoção de Usuário',
+        `Deseja realmente remover TODAS as permissões do usuário:<br><br>
+        <strong>${email}</strong><br><br>
+        <span style="color: #F44336; font-weight: 600;">⚠️ Esta ação não pode ser desfeita!</span>`
+    );
+
+    if (confirmed) {
+        await deleteUser(email);
     }
 }
 

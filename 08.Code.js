@@ -1278,16 +1278,67 @@ function getRncNumbersBySetor(tipoSetor, setor) {
     var allRncs = RncOperations.getAllRncs();
     
     if (!setor || setor === 'Todos') {
-      // Retornar todos os números
-      var allNumbers = allRncs.map(function(rnc) {
-        return rnc['Nº RNC'];
-      }).filter(function(num) {
-        // TASK-007: Usar strict equality (!==) ao invés de loose equality (!=)
-        return num !== null && num !== '';
-      });
+      // Deploy 124 PARTE 5: Verificar se é admin para filtro "Todos"
+      var userEmail = Session.getActiveUser().getEmail();
+      var isAdmin = PermissionsManager.isAdmin(userEmail);
 
-      // ✅ FASE 2.4: Ordenar usando função otimizada (30-40% mais rápido)
-      return sortRncNumbers(allNumbers);
+      if (isAdmin) {
+        // Admin: Retornar TODAS as RNCs do sistema
+        var allNumbers = allRncs.map(function(rnc) {
+          return rnc['Nº RNC'];
+        }).filter(function(num) {
+          return num !== null && num !== '';
+        });
+        return sortRncNumbers(allNumbers);
+
+      } else {
+        // Não-admin: Retornar apenas RNCs dos setores do usuário
+        var userSetores = PermissionsManager.getUserSetor(userEmail); // Array
+
+        if (!userSetores || userSetores.length === 0) {
+          return []; // Sem setores = sem RNCs
+        }
+
+        // Determinar qual campo de setor usar
+        var campoSetor;
+        if (tipoSetor === 'abertura') {
+          campoSetor = 'Setor onde foi feita abertura\n';
+        } else {
+          campoSetor = 'Setor onde ocorreu a não conformidade';
+        }
+
+        // Filtrar RNCs que pertencem a QUALQUER um dos setores do usuário
+        var filtered = [];
+        allRncs.forEach(function(rnc) {
+          var rncSetor = rnc[campoSetor] || rnc[campoSetor.replace('\n', '')] || '';
+
+          if (rncSetor) {
+            var setoresSeparados = splitSetores(rncSetor);
+
+            // Verificar se algum setor do usuário está na RNC
+            for (var i = 0; i < userSetores.length; i++) {
+              for (var j = 0; j < setoresSeparados.length; j++) {
+                if (setoresSeparados[j] === userSetores[i]) {
+                  filtered.push(rnc['Nº RNC']);
+                  i = userSetores.length; // Break outer loop
+                  break;
+                }
+              }
+            }
+          }
+        });
+
+        Logger.logDebug('getRncNumbersBySetor - Todos os Meus Setores', {
+          userEmail: userEmail,
+          userSetores: userSetores,
+          tipoSetor: tipoSetor,
+          totalRncs: filtered.length
+        });
+
+        return sortRncNumbers(filtered.filter(function(num) {
+          return num !== null && num !== '';
+        }));
+      }
     }
     
     // Determinar qual campo de setor usar
