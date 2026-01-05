@@ -11299,10 +11299,17 @@ document.getElementById('addNewUser').addEventListener('click', function() {
                 </div>
 
                 <div class="form-group" style="margin-top: 20px;">
-                    <label>🏢 Setor do Usuário</label>
-                    <select id="newUserSetor" class="form-control">
-                        <option value="">Carregando setores...</option>
-                    </select>
+                    <label>🏢 Setor(es) do Usuário</label>
+                    <div class="multiselect-wrapper">
+                        <!-- Container de chips selecionados -->
+                        <div class="chips-container" id="newUserSetorChips" style="min-height: 50px; background: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+                            <span style="color: #999; font-size: 13px; font-style: italic;">Nenhum setor selecionado</span>
+                        </div>
+                        <!-- Dropdown de seleção -->
+                        <select id="newUserSetor" class="form-control" style="margin-top: 8px;" onchange="addSetorChipToNew(this)">
+                            <option value="">➕ Adicionar setor...</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group" style="margin-top: 20px;">
@@ -11351,7 +11358,7 @@ document.getElementById('addNewUser').addEventListener('click', function() {
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-    // Deploy 68: Carregar setores da planilha Listas
+    // Deploy 124: Carregar setores da planilha Listas
     (async function loadSetoresForNewUser() {
         try {
             const response = await apiCall('getSetoresFromListas', []);
@@ -11359,13 +11366,16 @@ document.getElementById('addNewUser').addEventListener('click', function() {
             const setorSelect = document.getElementById('newUserSetor');
 
             if (setorSelect && setores && setores.length > 0) {
-                setorSelect.innerHTML = '<option value="">Selecione um setor</option>';
+                // Deploy 124: Usar placeholder para adicionar setores (multiselect)
+                setorSelect.innerHTML = '<option value="">➕ Adicionar setor...</option>';
                 setores.forEach(function(setor) {
                     const option = document.createElement('option');
                     option.value = setor;
                     option.textContent = setor;
                     setorSelect.appendChild(option);
                 });
+
+                debugLog('info', '✅ Setores carregados para novo usuário', { total: setores.length });
             } else if (setorSelect) {
                 setorSelect.innerHTML = '<option value="">Nenhum setor disponível</option>';
             }
@@ -12943,7 +12953,8 @@ function closeAddUserModal() {
 async function saveNewUser() {
     try {
         const email = document.getElementById('newUserEmail').value.trim();
-        const setor = document.getElementById('newUserSetor').value.trim(); // Deploy 67: Obter setor
+        // Deploy 124: Obter ARRAY de setores selecionados dos chips
+        const setores = getSelectedSetores('newUserSetorChips');
 
         if (!email) {
             await showErrorModal('Campo Obrigatório', 'Digite um email válido.');
@@ -12957,9 +12968,9 @@ async function saveNewUser() {
             return;
         }
 
-        // Deploy 67: Validar setor
-        if (!setor) {
-            await showErrorModal('Campo Obrigatório', 'Selecione um setor para o usuário.');
+        // Deploy 124: Validar se pelo menos um setor foi selecionado
+        if (setores.length === 0) {
+            await showErrorModal('Campo Obrigatório', 'Selecione pelo menos um setor para o usuário.');
             return;
         }
 
@@ -12979,16 +12990,19 @@ async function saveNewUser() {
 
         showLoading('Adicionando usuário...');
 
-        // Deploy 67: Adicionar cada role COM setor
+        // Deploy 124: Adicionar cada role para CADA setor selecionado
         for (let i = 0; i < selectedRoles.length; i++) {
-            const result = await apiCall('addUserRole', [email, selectedRoles[i], setor]);
+            // Passar ARRAY de setores (backend aceitará e armazenará como "Setor1;Setor2")
+            const result = await apiCall('addUserRole', [email, selectedRoles[i], setores]);
 
             if (!result.success && !result.message.includes('já possui')) {
                 throw new Error(result.message);
             }
         }
 
-        showSuccess(`✅ Usuário ${email} adicionado ao setor ${setor} com ${selectedRoles.length} role(s)`);
+        // Deploy 124: Mensagem com múltiplos setores
+        const setoresText = setores.join(', ');
+        showSuccess(`✅ Usuário ${email} adicionado aos setores: ${setoresText} com ${selectedRoles.length} role(s)`);
 
         closeAddUserModal();
         loadUsers();
@@ -13033,10 +13047,17 @@ async function editUserRoles(email) {
                     <h3 style="margin-bottom: 1rem; color: #009688;">✏️ Editar Roles de ${email}</h3>
 
                     <div class="form-group">
-                        <label>🏢 Setor do Usuário</label>
-                        <select id="editUserSetor" class="form-control">
-                            <option value="">Carregando setores...</option>
-                        </select>
+                        <label>🏢 Setor(es) do Usuário</label>
+                        <div class="multiselect-wrapper">
+                            <!-- Container de chips selecionados -->
+                            <div class="chips-container" id="editUserSetorChips" style="min-height: 50px; background: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+                                <span style="color: #999; font-size: 13px; font-style: italic;">Nenhum setor selecionado</span>
+                            </div>
+                            <!-- Dropdown de seleção -->
+                            <select id="editUserSetor" class="form-control" style="margin-top: 8px;" onchange="addSetorChipToEdit(this)">
+                                <option value="">➕ Adicionar setor...</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group" style="margin-top: 20px;">
@@ -13084,13 +13105,13 @@ async function editUserRoles(email) {
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-        // Deploy 72: Carregar setores e selecionar setor atual do usuário
+        // Deploy 124: Carregar setores e popular chips com setores atuais do usuário
         (async function loadSetoresForEditUser() {
             try {
                 // Deploy 68: Buscar setores da planilha Listas
                 const response = await apiCall('getSetoresFromListas', []);
                 const setores = response && response.data ? response.data : response;
-                // Deploy 72: Usar setor do objeto user que já foi carregado
+                // Deploy 124: Usar setor(es) do objeto user que já foi carregado (pode ser string ou array)
                 const currentSetor = user.setor || '';
 
                 debugLog('info', 'Carregando setores para edição', {
@@ -13102,18 +13123,19 @@ async function editUserRoles(email) {
                 const setorSelect = document.getElementById('editUserSetor');
 
                 if (setorSelect && setores && setores.length > 0) {
-                    setorSelect.innerHTML = '<option value="">Selecione um setor</option>';
+                    // Deploy 124: Usar placeholder para adicionar setores (não pré-selecionar)
+                    setorSelect.innerHTML = '<option value="">➕ Adicionar setor...</option>';
                     setores.forEach(function(setor) {
                         const option = document.createElement('option');
                         option.value = setor;
                         option.textContent = setor;
-                        // Deploy 72: Pré-selecionar setor atual do usuário
-                        if (setor === currentSetor) {
-                            option.selected = true;
-                            debugLog('info', 'Setor selecionado', { setor: setor });
-                        }
                         setorSelect.appendChild(option);
                     });
+
+                    // Deploy 124: Popular chips com setores atuais do usuário
+                    populateSetorChips(currentSetor, 'editUserSetorChips', 'editUserSetor');
+
+                    debugLog('info', '✅ Chips populados com setores atuais', { setores: currentSetor });
                 } else if (setorSelect) {
                     setorSelect.innerHTML = '<option value="">Nenhum setor disponível</option>';
                 }
@@ -13140,12 +13162,12 @@ async function saveUserRolesFixed(email) {
     try {
         showLoading('Salvando alterações...');
 
-        // Deploy 67: Coletar setor selecionado
-        const newSetor = document.getElementById('editUserSetor').value.trim();
+        // Deploy 124: Obter ARRAY de setores selecionados dos chips
+        const newSetores = getSelectedSetores('editUserSetorChips');
 
-        if (!newSetor) {
+        if (newSetores.length === 0) {
             hideLoading();
-            await showErrorModal('Campo Obrigatório', 'Selecione um setor para o usuário.');
+            await showErrorModal('Campo Obrigatório', 'Selecione pelo menos um setor para o usuário.');
             return;
         }
 
@@ -13167,12 +13189,12 @@ async function saveUserRolesFixed(email) {
         // ✅ USAR ROLES SALVAS NO WINDOW
         const oldRoles = window.currentEditingUserRoles || [];
 
-        // Deploy 67: Atualizar setor primeiro
-        const setorResult = await apiCall('updateUserSetor', [email, newSetor]);
+        // Deploy 124: Atualizar setores primeiro (passar ARRAY)
+        const setorResult = await apiCall('updateUserSetor', [email, newSetores]);
         if (!setorResult.success) {
-            throw new Error('Erro ao atualizar setor: ' + setorResult.message);
+            throw new Error('Erro ao atualizar setores: ' + setorResult.message);
         }
-        debugLog('info', `🏢 Setor atualizado: ${newSetor}`);
+        debugLog('info', `🏢 Setores atualizados: ${newSetores.join(', ')}`);
 
         // Remover roles antigas que não estão mais selecionadas
         for (let i = 0; i < oldRoles.length; i++) {
@@ -13182,15 +13204,17 @@ async function saveUserRolesFixed(email) {
             }
         }
 
-        // Adicionar novas roles COM setor
+        // Deploy 124: Adicionar novas roles COM array de setores
         for (let i = 0; i < newRoles.length; i++) {
             if (oldRoles.indexOf(newRoles[i]) === -1) {
-                await apiCall('addUserRole', [email, newRoles[i], newSetor]);
+                await apiCall('addUserRole', [email, newRoles[i], newSetores]);
                 debugLog('info', `➕ Role adicionada: ${newRoles[i]}`);
             }
         }
 
-        showSuccess(`✅ Usuário atualizado! Setor: ${newSetor}`);
+        // Deploy 124: Mensagem com múltiplos setores
+        const setoresText = newSetores.join(', ');
+        showSuccess(`✅ Usuário atualizado! Setores: ${setoresText}`);
 
         closeEditUserRolesModal();
         loadUsers();
@@ -13198,7 +13222,7 @@ async function saveUserRolesFixed(email) {
 
         // Limpar variável temporária
         delete window.currentEditingUserRoles;
-        
+
         // Se for o próprio usuário, recarregar página
         if (email === appContext.email) {
             showInfo('Suas permissões foram alteradas. Recarregando página...');
@@ -14165,6 +14189,263 @@ function testComparacao() {
         console.log('⚠️ Alguns testes falharam. Verifique a implementação.');
     }
 }
+
+// ============================================
+// 🎯 DEPLOY 124 - MÚLTIPLOS SETORES (CHIPS)
+// ============================================
+
+/**
+ * Adiciona chip de setor no modal de NOVO usuário
+ * @param {HTMLSelectElement} selectElement - Select que disparou o evento
+ */
+function addSetorChipToNew(selectElement) {
+  const setorValue = selectElement.value;
+
+  if (!setorValue) {
+    return; // Opção vazia selecionada
+  }
+
+  addSetorChip(setorValue, 'newUserSetorChips', selectElement);
+
+  // Reset select para voltar ao placeholder
+  selectElement.value = '';
+}
+
+/**
+ * Adiciona chip de setor no modal de EDITAR usuário
+ * @param {HTMLSelectElement} selectElement - Select que disparou o evento
+ */
+function addSetorChipToEdit(selectElement) {
+  const setorValue = selectElement.value;
+
+  if (!setorValue) {
+    return; // Opção vazia selecionada
+  }
+
+  addSetorChip(setorValue, 'editUserSetorChips', selectElement);
+
+  // Reset select para voltar ao placeholder
+  selectElement.value = '';
+}
+
+/**
+ * Adiciona um chip de setor ao container
+ * @param {string} setorValue - Valor do setor
+ * @param {string} containerId - ID do container de chips
+ * @param {HTMLSelectElement} selectElement - Select para desabilitar opção
+ */
+function addSetorChip(setorValue, containerId, selectElement) {
+  const container = document.getElementById(containerId);
+
+  if (!container) {
+    console.error('Container de chips não encontrado:', containerId);
+    return;
+  }
+
+  // Verificar se o setor já foi adicionado
+  const existingChips = container.querySelectorAll('.setor-chip');
+  for (let i = 0; i < existingChips.length; i++) {
+    if (existingChips[i].getAttribute('data-setor') === setorValue) {
+      showWarning('⚠️ Este setor já foi adicionado');
+      return;
+    }
+  }
+
+  // Remover mensagem de "nenhum setor selecionado" se existir
+  const emptyMessage = container.querySelector('span[style*="italic"]');
+  if (emptyMessage) {
+    emptyMessage.remove();
+  }
+
+  // Criar chip
+  const chip = document.createElement('span');
+  chip.className = 'setor-chip';
+  chip.setAttribute('data-setor', setorValue);
+  chip.style.cssText = `
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #009688, #00796B);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 150, 136, 0.3);
+    transition: all 0.2s;
+  `;
+
+  // Texto do setor
+  const text = document.createElement('span');
+  text.textContent = setorValue;
+  chip.appendChild(text);
+
+  // Botão de remover
+  const removeBtn = document.createElement('button');
+  removeBtn.innerHTML = '×';
+  removeBtn.style.cssText = `
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+    transition: background 0.2s;
+  `;
+
+  removeBtn.onmouseover = function() {
+    this.style.background = 'rgba(255, 255, 255, 0.5)';
+  };
+
+  removeBtn.onmouseout = function() {
+    this.style.background = 'rgba(255, 255, 255, 0.3)';
+  };
+
+  removeBtn.onclick = function() {
+    removeSetorChip(chip, containerId, selectElement);
+  };
+
+  chip.appendChild(removeBtn);
+
+  // Adicionar chip ao container
+  container.appendChild(chip);
+
+  // Desabilitar opção no select para evitar duplicatas
+  if (selectElement) {
+    const option = selectElement.querySelector(`option[value="${setorValue}"]`);
+    if (option) {
+      option.disabled = true;
+    }
+  }
+
+  debugLog('info', '✅ Setor adicionado', { setor: setorValue, container: containerId });
+}
+
+/**
+ * Remove um chip de setor
+ * @param {HTMLElement} chipElement - Elemento do chip a ser removido
+ * @param {string} containerId - ID do container de chips
+ * @param {HTMLSelectElement} selectElement - Select para reabilitar opção
+ */
+function removeSetorChip(chipElement, containerId, selectElement) {
+  const setorValue = chipElement.getAttribute('data-setor');
+  const container = document.getElementById(containerId);
+
+  // Remover chip
+  chipElement.remove();
+
+  // Reabilitar opção no select
+  if (selectElement) {
+    const option = selectElement.querySelector(`option[value="${setorValue}"]`);
+    if (option) {
+      option.disabled = false;
+    }
+  }
+
+  // Se não houver mais chips, mostrar mensagem de "nenhum setor"
+  const remainingChips = container.querySelectorAll('.setor-chip');
+  if (remainingChips.length === 0) {
+    const emptyMessage = document.createElement('span');
+    emptyMessage.style.cssText = 'color: #999; font-size: 13px; font-style: italic;';
+    emptyMessage.textContent = 'Nenhum setor selecionado';
+    container.appendChild(emptyMessage);
+  }
+
+  debugLog('info', '❌ Setor removido', { setor: setorValue, container: containerId });
+}
+
+/**
+ * Obtém array de setores selecionados a partir dos chips
+ * @param {string} containerId - ID do container de chips
+ * @return {Array<string>} Array de setores selecionados
+ */
+function getSelectedSetores(containerId) {
+  const container = document.getElementById(containerId);
+
+  if (!container) {
+    console.error('Container de chips não encontrado:', containerId);
+    return [];
+  }
+
+  const chips = container.querySelectorAll('.setor-chip');
+  const setores = [];
+
+  for (let i = 0; i < chips.length; i++) {
+    const setor = chips[i].getAttribute('data-setor');
+    if (setor) {
+      setores.push(setor);
+    }
+  }
+
+  return setores;
+}
+
+/**
+ * Popula chips a partir de um array de setores
+ * @param {Array<string>|string} setores - Array de setores ou string separada por vírgula/ponto-e-vírgula
+ * @param {string} containerId - ID do container de chips
+ * @param {string} selectId - ID do select para desabilitar opções
+ */
+function populateSetorChips(setores, containerId, selectId) {
+  const container = document.getElementById(containerId);
+  const selectElement = document.getElementById(selectId);
+
+  if (!container) {
+    console.error('Container de chips não encontrado:', containerId);
+    return;
+  }
+
+  // Limpar container (remover mensagem vazia e chips antigos)
+  container.innerHTML = '';
+
+  // Reabilitar todas as opções do select
+  if (selectElement) {
+    const options = selectElement.querySelectorAll('option');
+    for (let i = 0; i < options.length; i++) {
+      options[i].disabled = false;
+    }
+  }
+
+  // Converter para array se for string
+  let setoresArray = [];
+  if (typeof setores === 'string') {
+    // Split por vírgula ou ponto-e-vírgula
+    setoresArray = setores.split(/[;,]/).map(function(s) { return s.trim(); }).filter(function(s) { return s !== ''; });
+  } else if (Array.isArray(setores)) {
+    setoresArray = setores;
+  }
+
+  // Se não houver setores, mostrar mensagem vazia
+  if (setoresArray.length === 0) {
+    const emptyMessage = document.createElement('span');
+    emptyMessage.style.cssText = 'color: #999; font-size: 13px; font-style: italic;';
+    emptyMessage.textContent = 'Nenhum setor selecionado';
+    container.appendChild(emptyMessage);
+    return;
+  }
+
+  // Adicionar cada setor como chip
+  for (let i = 0; i < setoresArray.length; i++) {
+    const setor = setoresArray[i];
+    if (setor) {
+      addSetorChip(setor, containerId, selectElement);
+    }
+  }
+
+  debugLog('info', '✅ Chips populados', { setores: setoresArray, container: containerId });
+}
+
+// ============================================
+// FIM - DEPLOY 124
+// ============================================
+
     </script>
 </body>
 </html>
