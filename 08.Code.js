@@ -1285,12 +1285,14 @@ function getRncNumbersBySetor(tipoSetor, setor) {
     });
 
     if (!setor || setor === 'Todos') {
-      // Deploy 124 PARTE 5: Verificar se é admin para filtro "Todos"
+      // Deploy 124 PARTE 9: Verificar se é admin para filtro "Todos" (CORRIGIDO)
       var userEmail = Session.getActiveUser().getEmail();
-      var isAdmin = PermissionsManager.isAdmin(userEmail);
+      var userRoles = PermissionsManager.getUserRoles(userEmail);  // ✅ CORREÇÃO: Obter roles primeiro
+      var isAdmin = PermissionsManager.isAdmin(userRoles);          // ✅ CORREÇÃO: Passar roles, não email
 
       Logger.logDebug('getRncNumbersBySetor - Filtro TODOS', {
         userEmail: userEmail,
+        userRoles: userRoles,
         isAdmin: isAdmin,
         setor: setor
       });
