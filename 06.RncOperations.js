@@ -1621,16 +1621,17 @@ function getRncsBySetor(setor) {
 }
 
 /**
- * Busca RNCs vinculadas ao setor do usuário logado
+ * Busca RNCs vinculadas ao(s) setor(es) do usuário logado
  * Deploy 67: Retorna RNCs onde o usuário está no setor de abertura OU setor da não conformidade
+ * Deploy 124: Suporte para múltiplos setores por usuário
  * Útil para visualizações filtradas por departamento do usuário
  *
- * @param {string} email - Email do usuário para identificar setor
- * @return {Array} Array de objetos RNC do setor do usuário
+ * @param {string} email - Email do usuário para identificar setor(es)
+ * @return {Array} Array de objetos RNC dos setores do usuário
  *
  * @example
  * var minhasRncs = getRncsByUserSetor('user@example.com');
- * // Returns: [{...}] (RNCs do setor 'Produção' se user pertence a Produção)
+ * // Returns: [{...}] (RNCs dos setores 'Produção' e 'Qualidade' se user pertence a ambos)
  *
  * @since Deploy 120
  */
@@ -1638,15 +1639,15 @@ function getRncsByUserSetor(email) {
     try {
         Logger.logDebug('getRncsByUserSetor_START', { email: email });
 
-        // Obter setor do usuário
-        var userSetor = PermissionsManager.getUserSetor(email);
+        // Deploy 124: Obter setores do usuário (retorna array)
+        var userSetores = PermissionsManager.getUserSetor(email);
 
-        if (!userSetor) {
+        if (!userSetores || userSetores.length === 0) {
             Logger.logWarning('getRncsByUserSetor_NO_SETOR', { email: email });
             return [];
         }
 
-        // Deploy 67: Buscar TODAS as RNCs e filtrar por ambos os setores
+        // Deploy 124: Buscar TODAS as RNCs e filtrar por QUALQUER setor do usuário
         var allRncs = getAllRncs();
         var filteredRncs = [];
 
@@ -1655,15 +1656,23 @@ function getRncsByUserSetor(email) {
             var setorAbertura = rnc['Setor onde foi feita abertura'] || '';
             var setorNaoConformidade = rnc['Setor onde ocorreu a não conformidade'] || '';
 
-            // Incluir RNC se o usuário está no setor de abertura OU setor da não conformidade
-            if (setorAbertura === userSetor || setorNaoConformidade === userSetor) {
+            // Deploy 124: Incluir RNC se QUALQUER setor do usuário está presente
+            var incluirRnc = false;
+            for (var j = 0; j < userSetores.length; j++) {
+                if (setorAbertura === userSetores[j] || setorNaoConformidade === userSetores[j]) {
+                    incluirRnc = true;
+                    break;
+                }
+            }
+
+            if (incluirRnc) {
                 filteredRncs.push(rnc);
             }
         }
 
         Logger.logInfo('getRncsByUserSetor_SUCCESS', {
             email: email,
-            setor: userSetor,
+            setores: userSetores.join(', '),
             count: filteredRncs.length
         });
 

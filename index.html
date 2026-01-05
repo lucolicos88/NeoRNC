@@ -4563,7 +4563,15 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
 
         var userSetorEl = document.getElementById('userSetor');
         if (userSetorEl) {
-            var setorText = appContext.setor || 'Sem setor';
+            // Deploy 124: Suporte para múltiplos setores
+            var setorText = 'Sem setor';
+            if (appContext.setor) {
+                if (Array.isArray(appContext.setor)) {
+                    setorText = appContext.setor.length > 0 ? appContext.setor.join(', ') : 'Sem setor';
+                } else {
+                    setorText = appContext.setor; // Retrocompatibilidade
+                }
+            }
             userSetorEl.innerHTML = '<span>🏢</span><span>' + sanitizeHTML(setorText) + '</span>';
         }
 
@@ -5773,7 +5781,7 @@ async function loadSetoresFilter() {
 
         debugLog('info', '🏢 Carregando filtros de setores - Editar RNC');
 
-        // Deploy 68: Verificar se é admin
+        // Deploy 124: Verificar se é admin e suporte para múltiplos setores
         const isAdmin = appContext && appContext.isAdmin;
         const userSetor = appContext && appContext.setor;
 
@@ -5782,10 +5790,11 @@ async function loadSetoresFilter() {
             // Admin vê todos os setores
             setores = await apiCall('getSetoresDuplos', []);
         } else {
-            // Não-admin vê apenas seu setor
+            // Deploy 124: Não-admin vê TODOS os seus setores (array)
+            var userSetores = userSetor ? (Array.isArray(userSetor) ? userSetor : [userSetor]) : [];
             setores = {
-                setoresAbertura: userSetor ? [userSetor] : [],
-                setoresQualidade: userSetor ? [userSetor] : []
+                setoresAbertura: userSetores,
+                setoresQualidade: userSetores
             };
         }
 
@@ -7325,7 +7334,7 @@ async function loadSetoresKanban() {
 
         debugLog('info', '🏢 Carregando filtros de setores - Kanban');
 
-        // Deploy 68: Verificar se é admin
+        // Deploy 124: Verificar se é admin e suporte para múltiplos setores
         const isAdmin = appContext && appContext.isAdmin;
         const userSetor = appContext && appContext.setor;
 
@@ -7334,10 +7343,11 @@ async function loadSetoresKanban() {
             // Admin vê todos os setores
             setores = await apiCall('getSetoresDuplos', []);
         } else {
-            // Não-admin vê apenas seu setor
+            // Deploy 124: Não-admin vê TODOS os seus setores (array)
+            var userSetores = userSetor ? (Array.isArray(userSetor) ? userSetor : [userSetor]) : [];
             setores = {
-                setoresAbertura: userSetor ? [userSetor] : [],
-                setoresQualidade: userSetor ? [userSetor] : []
+                setoresAbertura: userSetores,
+                setoresQualidade: userSetores
             };
         }
 
@@ -7546,7 +7556,7 @@ async function refreshKanban() {
 
         debugLog('info', '🏢 Carregando filtros de setores - Dashboard');
 
-        // Deploy 68: Verificar se é admin
+        // Deploy 124: Verificar se é admin e suporte para múltiplos setores
         const isAdmin = appContext && appContext.isAdmin;
         const userSetor = appContext && appContext.setor;
 
@@ -7555,10 +7565,11 @@ async function refreshKanban() {
             // Admin vê todos os setores
             setores = await apiCall('getSetoresDuplos', []);
         } else {
-            // Não-admin vê apenas seu setor
+            // Deploy 124: Não-admin vê TODOS os seus setores (array)
+            var userSetores = userSetor ? (Array.isArray(userSetor) ? userSetor : [userSetor]) : [];
             setores = {
-                setoresAbertura: userSetor ? [userSetor] : [],
-                setoresQualidade: userSetor ? [userSetor] : []
+                setoresAbertura: userSetores,
+                setoresQualidade: userSetores
             };
         }
 

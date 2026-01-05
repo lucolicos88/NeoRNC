@@ -23,6 +23,7 @@ var NotificationManager = (function() {
    * Obtém lista de usuários ativos de um setor específico.
    * Busca na planilha de permissões todos os usuários ativos do setor informado
    * e retorna uma lista única de emails sem duplicatas.
+   * Deploy 124: Suporta múltiplos setores por usuário (campo "Setor" pode conter "Setor1;Setor2")
    *
    * @param {string} setor - Nome do setor para buscar usuários
    * @return {Array<string>} Lista de emails de usuários ativos do setor
@@ -41,17 +42,25 @@ var NotificationManager = (function() {
         return [];
       }
 
+      // Deploy 124: Buscar TODAS as permissões ativas e filtrar manualmente
       var permissions = Database.findData(CONFIG.SHEETS.PERMISSOES, {
-        'Setor': setor,
         'Ativo': 'Sim'
       });
 
       var emails = [];
 
       for (var i = 0; i < permissions.length; i++) {
+        var setorField = permissions[i]['Setor'] || '';
         var email = permissions[i]['Email'];
-        if (email && emails.indexOf(email) === -1) {
-          emails.push(email);
+
+        if (email && setorField) {
+          // Deploy 124: Split por vírgula ou ponto-e-vírgula
+          var setoresArray = setorField.split(/[;,]/).map(function(s) { return s.trim(); }).filter(function(s) { return s !== ''; });
+
+          // Verificar se o setor buscado está na lista de setores do usuário
+          if (setoresArray.indexOf(setor) !== -1 && emails.indexOf(email) === -1) {
+            emails.push(email);
+          }
         }
       }
 
