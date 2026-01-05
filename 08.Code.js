@@ -1917,9 +1917,15 @@ function limparAbaLogs() {
       };
     }
 
-    // Limpar todas as linhas exceto o cabeçalho
+    // Deploy 124 PARTE 10: Limpar mantendo estrutura mínima
     var logsRemovidos = lastRow - 1;
-    logSheet.deleteRows(2, logsRemovidos);
+
+    // Limpar conteúdo ao invés de deletar linhas (mais seguro)
+    if (logsRemovidos > 0) {
+      // Obter range de dados (excluindo cabeçalho)
+      var rangeToDelete = logSheet.getRange(2, 1, logsRemovidos, logSheet.getLastColumn());
+      rangeToDelete.clearContent();  // Limpa conteúdo mas mantém linhas
+    }
 
     Logger.logInfo('LOGS_LIMPOS', {
       logsRemovidos: logsRemovidos,
