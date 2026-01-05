@@ -1784,6 +1784,15 @@ function removeUserRole(email, role) { return PermissionsManager.removeUserRole(
  */
 function getAllUsers() { return PermissionsManager.getAllUsers(); }
 
+/**
+ * Atualiza o setor de um usuário
+ * @param {string} email - Email do usuário
+ * @param {string} novoSetor - Novo setor a ser atribuído
+ * @return {Object} Resultado da operação {success, message}
+ * @since Deploy 123 HOTFIX
+ */
+function updateUserSetor(email, novoSetor) { return PermissionsManager.updateUserSetor(email, novoSetor); }
+
 // ===== CACHE MANAGEMENT (Deploy 74.5) =====
 /**
  * Limpa a aba de Logs da planilha
