@@ -1297,18 +1297,40 @@ function getRncNumbersBySetor(tipoSetor, setor) {
 
       if (isAdmin) {
         // Admin: Retornar TODAS as RNCs do sistema
+        console.log('🔍 ADMIN PASSO 1 - Total RNCs:', allRncs.length);
+        console.log('🔍 ADMIN PASSO 1 - Primeira RNC:', allRncs.length > 0 ? JSON.stringify(allRncs[0]) : 'NENHUMA');
+
+        Logger.logDebug('getRncNumbersBySetor - ADMIN PASSO 1', {
+          totalRncsAntesDeFiltrar: allRncs.length,
+          primeiraRnc: allRncs.length > 0 ? allRncs[0] : null,
+          chavesDisponveis: allRncs.length > 0 ? Object.keys(allRncs[0]) : []
+        });
+
         var allNumbers = allRncs.map(function(rnc) {
           return rnc['Nº RNC'];
         }).filter(function(num) {
           return num !== null && num !== '';
         });
 
-        Logger.logDebug('getRncNumbersBySetor - ADMIN retornando', {
-          totalRncs: allNumbers.length,
-          primeiras3: allNumbers.slice(0, 3)
+        console.log('🔍 ADMIN PASSO 2 - Depois do map/filter:', allNumbers.length);
+        console.log('🔍 ADMIN PASSO 2 - Primeiros 5:', JSON.stringify(allNumbers.slice(0, 5)));
+
+        Logger.logDebug('getRncNumbersBySetor - ADMIN PASSO 2', {
+          totalDepoisDoMap: allNumbers.length,
+          primeiras5: allNumbers.slice(0, 5)
         });
 
-        return sortRncNumbers(allNumbers);
+        var sorted = sortRncNumbers(allNumbers);
+
+        console.log('🔍 ADMIN PASSO 3 - Depois do sort:', sorted.length);
+        console.log('🔍 ADMIN PASSO 3 - Primeiros 5 sorted:', JSON.stringify(sorted.slice(0, 5)));
+
+        Logger.logDebug('getRncNumbersBySetor - ADMIN PASSO 3 (FINAL)', {
+          totalDepoisDoSort: sorted.length,
+          primeiras5Sorted: sorted.slice(0, 5)
+        });
+
+        return sorted;
 
       } else {
         // Não-admin: Retornar apenas RNCs dos setores do usuário
