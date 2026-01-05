@@ -5823,9 +5823,20 @@ async function saveRnc() {
         const setorAtual = setor || (setorFilter ? setorFilter.value : 'Todos');
         
         debugLog('info', '📋 Carregando RNCs', { tipoSetor, setor: setorAtual });
-        
+
         let numbers = await apiCall('getRncNumbersBySetor', [tipoSetor, setorAtual]);
-        
+
+        // Deploy 124 PARTE 7: Log detalhado da resposta do backend
+        console.log('🔍 [DEBUG] getRncNumbersBySetor - RESPOSTA:', {
+            tipoSetor: tipoSetor,
+            setorEnviado: setorAtual,
+            respostaRecebida: numbers,
+            tipoResposta: typeof numbers,
+            isArray: Array.isArray(numbers),
+            tamanho: numbers ? numbers.length : 0,
+            primeiros3: numbers && numbers.length > 0 ? numbers.slice(0, 3) : 'vazio'
+        });
+
         availableRncs = numbers || [];
         
         select.innerHTML = '<option value="">Selecione uma RNC</option>';
