@@ -105,19 +105,21 @@ var PermissionsManager = (function() {
   }
 
   /**
-   * Obtém o setor associado ao usuário consultando a planilha de permissões.
-   * Retorna o primeiro setor encontrado nas permissões ativas do usuário.
+   * Obtém TODOS os setores associados ao usuário consultando a planilha de permissões.
+   * Retorna array com todos os setores únicos encontrados nas permissões ativas do usuário.
+   * DEPLOY 124: Modificado para retornar array em vez de string única (suporte a múltiplos setores).
    *
    * @param {string} email - Email do usuário a ser consultado
-   * @return {string|null} Nome do setor do usuário ou null se não encontrado
+   * @return {Array<string>} Array de setores do usuário (pode estar vazio)
    *
    * @example
-   * var setor = getUserSetor('usuario@exemplo.com');
-   * // Returns: 'Produção' ou null
+   * var setores = getUserSetor('usuario@exemplo.com');
+   * // Returns: ['Produção', 'Qualidade', 'TI'] ou []
    *
    * @memberof PermissionsManager
    * @private
    * @since Deploy 66
+   * @updated Deploy 124 - Suporte a múltiplos setores
    */
   function getUserSetor(email) {
     try {
@@ -128,24 +130,39 @@ var PermissionsManager = (function() {
         'Ativo': 'Sim'
       });
 
-      // Retornar o primeiro setor encontrado
+      // DEPLOY 124: Coletar TODOS os setores (não apenas o primeiro)
+      var setores = [];
+      var setoresUnicos = {}; // Para evitar duplicatas
+
       for (var i = 0; i < permissions.length; i++) {
-        var setor = permissions[i]['Setor'];
-        if (setor && setor.trim() !== '') {
-          Logger.logDebug('getUserSetor_SUCCESS', {
-            email: email,
-            setor: setor
-          });
-          return setor.trim();
+        var setorField = permissions[i]['Setor'];
+        if (setorField && setorField.trim() !== '') {
+          // DEPLOY 124: Split por ponto e vírgula para suportar múltiplos setores
+          // Formato: "Produção;Qualidade;TI"
+          var setoresArray = setorField.split(/[;,]/).map(function(s) { return s.trim(); }).filter(function(s) { return s !== ''; });
+
+          for (var j = 0; j < setoresArray.length; j++) {
+            var setorTrimmed = setoresArray[j];
+            // Adicionar apenas se ainda não foi adicionado (evitar duplicatas)
+            if (!setoresUnicos[setorTrimmed]) {
+              setores.push(setorTrimmed);
+              setoresUnicos[setorTrimmed] = true;
+            }
+          }
         }
       }
 
-      Logger.logDebug('getUserSetor_NOT_FOUND', { email: email });
-      return null;
+      Logger.logDebug('getUserSetor_SUCCESS', {
+        email: email,
+        setores: setores.join(', '),
+        count: setores.length
+      });
+
+      return setores;
 
     } catch (error) {
       Logger.logError('getUserSetor_ERROR', error, { email: email });
-      return null;
+      return []; // Retorna array vazio em caso de erro
     }
   }
   
@@ -497,32 +514,53 @@ var PermissionsManager = (function() {
   }
   
   /**
-   * Atualiza o setor de todas as permissões ativas de um usuário.
+   * Atualiza o setor (ou setores) de todas as permissões ativas de um usuário.
    * Aplica a mudança em todos os registros de permissão do usuário simultaneamente.
+   * DEPLOY 124: Modificado para aceitar string ou array de setores (suporte a múltiplos setores).
    *
    * @param {string} email - Email do usuário a ter setor atualizado
-   * @param {string} novoSetor - Novo setor a ser atribuído
+   * @param {string|Array<string>} novosSetores - Novo(s) setor(es) a ser(em) atribuído(s) (string ou array)
    * @return {Object} Objeto com propriedades:
    *   - success {boolean} - Indica se a operação foi bem-sucedida
    *   - message {string} - Mensagem descritiva do resultado
    *
    * @example
+   * // String única (retrocompatível)
    * var result = updateUserSetor('usuario@exemplo.com', 'Logística');
-   * // Returns: { success: true, message: 'Setor atualizado em 2 permissão(ões)' }
+   * // Returns: { success: true, message: 'Setor(es) atualizado(s) em 2 permissão(ões)' }
+   *
+   * // Array de setores (Deploy 124)
+   * var result = updateUserSetor('usuario@exemplo.com', ['Produção', 'Qualidade', 'TI']);
+   * // Returns: { success: true, message: 'Setor(es) atualizado(s) em 2 permissão(ões)' }
    *
    * @memberof PermissionsManager
    * @since Deploy 67
+   * @updated Deploy 124 - Suporte a múltiplos setores
    */
-  function updateUserSetor(email, novoSetor) {
+  function updateUserSetor(email, novosSetores) {
     try {
-      Logger.logInfo('updateUserSetor_START', { email: email, novoSetor: novoSetor });
+      Logger.logInfo('updateUserSetor_START', { email: email, novosSetores: novosSetores });
 
-      if (!email || !novoSetor) {
+      if (!email || !novosSetores) {
         return {
           success: false,
           message: 'Email e setor são obrigatórios'
         };
       }
+
+      // DEPLOY 124: Converter para array se for string (retrocompatibilidade)
+      var setoresArray = Array.isArray(novosSetores) ? novosSetores : [novosSetores];
+
+      // Validar que há pelo menos 1 setor
+      if (setoresArray.length === 0) {
+        return {
+          success: false,
+          message: 'Pelo menos um setor deve ser fornecido'
+        };
+      }
+
+      // Converter array para string separada por ponto e vírgula
+      var setoresString = setoresArray.map(function(s) { return s.trim(); }).join(';');
 
       // Buscar todas as permissões ativas do usuário
       var permissions = Database.findData(CONFIG.SHEETS.PERMISSOES, {
@@ -548,7 +586,7 @@ var PermissionsManager = (function() {
             'Ativo': 'Sim'
           },
           {
-            'Setor': novoSetor.trim()
+            'Setor': setoresString
           }
         );
         if (result.success) {
@@ -558,13 +596,13 @@ var PermissionsManager = (function() {
 
       Logger.logInfo('updateUserSetor_SUCCESS', {
         email: email,
-        novoSetor: novoSetor,
+        setoresString: setoresString,
         updatedCount: updateCount
       });
 
       return {
         success: true,
-        message: 'Setor atualizado em ' + updateCount + ' permissão(ões)'
+        message: 'Setor(es) atualizado(s) em ' + updateCount + ' permissão(ões)'
       };
 
     } catch (error) {
