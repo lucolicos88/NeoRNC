@@ -376,16 +376,18 @@ var PermissionsManager = (function() {
   /**
    * Adiciona uma nova role a um usuário na planilha de permissões.
    * Valida se a role é válida e se o usuário já não possui essa role.
+   * Deploy 124: Suporte para múltiplos setores (aceita string ou array).
    *
    * @param {string} email - Email do usuário a receber a role
    * @param {string} role - Role a adicionar (Admin, Abertura, Qualidade, Liderança, Espectador)
-   * @param {string} [setor] - Setor do usuário (opcional)
+   * @param {string|Array<string>} [setor] - Setor(es) do usuário (string ou array, opcional)
    * @return {Object} Objeto com propriedades:
    *   - success {boolean} - Indica se a operação foi bem-sucedida
    *   - message {string} - Mensagem descritiva do resultado
    *
    * @example
    * var result = addUserRole('usuario@exemplo.com', 'Qualidade', 'Produção');
+   * var result2 = addUserRole('usuario@exemplo.com', 'Admin', ['Produção', 'Qualidade']);
    * // Returns: { success: true, message: 'Role adicionada com sucesso' }
    *
    * @memberof PermissionsManager
@@ -425,9 +427,22 @@ var PermissionsManager = (function() {
         'Ativo': 'Sim'
       };
 
-      // Adicionar setor se fornecido
-      if (setor && setor.trim() !== '') {
-        newPermission['Setor'] = setor.trim();
+      // Deploy 124: Converter array para string se necessário
+      if (setor) {
+        var setorString = '';
+
+        if (Array.isArray(setor)) {
+          // Se for array, converter para string separada por ponto-e-vírgula
+          var setoresArray = setor.map(function(s) { return s.trim(); }).filter(function(s) { return s !== ''; });
+          setorString = setoresArray.join(';');
+        } else if (typeof setor === 'string' && setor.trim() !== '') {
+          // Se for string, usar diretamente
+          setorString = setor.trim();
+        }
+
+        if (setorString !== '') {
+          newPermission['Setor'] = setorString;
+        }
       }
 
       // Adicionar nova role

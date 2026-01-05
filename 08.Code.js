@@ -1763,10 +1763,12 @@ function checkPermissionToSave(secao) { return PermissionsManager.checkPermissio
  * Adiciona role a um usuário
  * @param {string} email - Email do usuário
  * @param {string} role - Role a adicionar ('Admin', 'Usuario', etc)
+ * @param {string|Array<string>} setor - Setor(es) do usuário (string ou array)
  * @return {Object} Resultado da operação
  * @since Deploy 119
+ * @updated Deploy 124 - Suporte para múltiplos setores
  */
-function addUserRole(email, role) { return PermissionsManager.addUserRole(email, role); }
+function addUserRole(email, role, setor) { return PermissionsManager.addUserRole(email, role, setor); }
 
 /**
  * Remove role de um usuário
