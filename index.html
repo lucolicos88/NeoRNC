@@ -8021,13 +8021,16 @@ function renderDashboard(stats) {
                 </div>
             </div>
             
-            <!-- KPI 7: Taxa Cumprimento Prazo -->
+            <!-- KPI 7: Taxa Cumprimento Prazo + Tempo Médio - Deploy 125 -->
             <div class="dashboard-card" style="border-top-color: ${stats.taxaCumprimentoPrazo >= 80 ? '#4CAF50' : stats.taxaCumprimentoPrazo >= 60 ? '#FFC107' : '#F44336'};">
                 <div class="dashboard-icon">⏰</div>
                 <div class="dashboard-number">${stats.taxaCumprimentoPrazo || 0}%</div>
                 <div class="dashboard-label">Cumprimento de Prazo</div>
-                <div style="font-size: 11px; color: #666; margin-top: 5px;">
-                    RNCs finalizadas no prazo
+                <div style="font-size: 12px; color: #333; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
+                    <span style="color: ${stats.tempoMedioResolucao > 30 ? '#F44336' : stats.tempoMedioResolucao > 15 ? '#FF9800' : '#4CAF50'}; font-weight: 600;">
+                        ⏱️ ${stats.tempoMedioResolucao || 0} dias
+                    </span>
+                    <span style="color: #666; font-size: 10px;"> tempo médio</span>
                 </div>
             </div>
         </div>
