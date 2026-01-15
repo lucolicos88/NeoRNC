@@ -232,11 +232,12 @@ var Reports = (function() {
     var thisYear = today.getFullYear();
 
     // Pesos para Índice de Severidade
+    // Deploy 125: Atualizado valores de risco (Menor/Maior/Crítico)
     var pesosSeveridade = {
       'Crítico': 10,
-      'Alto': 7,
-      'Médio': 4,
-      'Baixo': 1
+      'Maior': 7,
+      'Menor': 4,
+      'Não Informado': 0
     };
 
     // === DEPLOY 36: VARIÁVEIS AUXILIARES PARA NOVOS KPIs ===
@@ -341,8 +342,9 @@ var Reports = (function() {
       }
       
       // === KPI 6: ÍNDICE DE SEVERIDADE PONDERADO (ISP) ===
-      var risco = rnc['Risco'] || 'Baixo';
-      var peso = pesosSeveridade[risco] || 1;
+      // Deploy 125: Valores vazios mostram como "Não Informado"
+      var risco = rnc['Risco'] || 'Não Informado';
+      var peso = pesosSeveridade[risco] || 0;
       stats.indiceSeveridadePonderado += peso;
       
       // === KPI 7: TAXA DE CUMPRIMENTO DE PRAZO ===
@@ -1644,20 +1646,21 @@ function calculateReportStats(rncs) {
   var temposResolucao = [];
   var today = new Date();
   
-  // Pesos ISP
+  // Pesos ISP - Deploy 125: Atualizado valores de risco
   var pesosSeveridade = {
     'Crítico': 10,
-    'Alto': 7,
-    'Médio': 4,
-    'Baixo': 1
+    'Maior': 7,
+    'Menor': 4,
+    'Não Informado': 0
   };
-  
+
   // LOOP PRINCIPAL
   for (var i = 0; i < rncs.length; i++) {
     var rnc = rncs[i];
     var status = rnc['Status Geral'] || CONFIG.STATUS_PIPELINE.ABERTURA;
     var tipoRnc = rnc['Tipo da RNC'] || rnc['Tipo RNC'] || 'Não informado';
-    var risco = rnc['Risco'] || 'Baixo';
+    // Deploy 125: Valores vazios mostram como "Não Informado"
+    var risco = rnc['Risco'] || 'Não Informado';
     var valor = parseFloat(rnc['Valor']) || 0;
     
     // Custo total
@@ -1675,8 +1678,8 @@ function calculateReportStats(rncs) {
       stats.abertas++;
     }
 
-    // Críticas (Risco Alto/Crítico)
-    if (risco === 'Crítico' || risco === 'Alto') {
+    // Críticas (Risco Crítico ou Maior) - Deploy 125
+    if (risco === 'Crítico' || risco === 'Maior') {
       stats.criticas++;
     }
 

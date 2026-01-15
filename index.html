@@ -1486,10 +1486,11 @@ textarea.form-control,
             margin-top: 0.5rem;
         }
         
-        .risco-baixo { background: #DCFCE7; color: #166534; }
-        .risco-medio { background: #FEF3C7; color: #92400E; }
-        .risco-alto { background: #FEE2E2; color: #991B1B; }
-        .risco-critico { background: #FDF2F8; color: #9D174D; }
+        /* Deploy 125: Atualizado valores de risco (Menor/Maior/Crítico/Não Informado) */
+        .risco-menor { background: #DCFCE7; color: #166534; }
+        .risco-maior { background: #FEF3C7; color: #92400E; }
+        .risco-critico { background: #FEE2E2; color: #991B1B; }
+        .risco-nao-informado { background: #F3F4F6; color: #6B7280; }
         
         .card-tags {
             display: flex;
@@ -7574,11 +7575,11 @@ async function refreshKanban() {
                     `;
                     
                     items.forEach(item => {
-                        const risco = item.risco || '';
+                        // Deploy 125: Atualizado valores de risco (Menor/Maior/Crítico)
+                        const risco = item.risco || 'Não Informado';
                         const riscoClass = risco.toLowerCase().includes('crítico') ? 'risco-critico' :
-                                         risco.toLowerCase().includes('alto') ? 'risco-alto' :
-                                         risco.toLowerCase().includes('médio') ? 'risco-medio' :
-                                         risco.toLowerCase().includes('baixo') ? 'risco-baixo' : '';
+                                         risco.toLowerCase().includes('maior') ? 'risco-maior' :
+                                         risco.toLowerCase().includes('menor') ? 'risco-menor' : 'risco-nao-informado';
                         
                         const priorityClass = item.prioridade === 'Alta' ? 'priority-alta' :
                                             item.prioridade === 'Média' ? 'priority-media' : 'priority-normal';
@@ -9180,10 +9181,10 @@ function editRncFromReport(rncNumber) {
                             <td style="padding: 8px; text-align: center;">
                                 <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px;
                                     background: ${(rnc['Risco'] || '').toLowerCase().includes('crítico') ? '#F44336' :
-                                               (rnc['Risco'] || '').toLowerCase().includes('alto') ? '#FF9800' :
-                                               (rnc['Risco'] || '').toLowerCase().includes('médio') ? '#FFC107' : '#4CAF50'};
+                                               (rnc['Risco'] || '').toLowerCase().includes('maior') ? '#FF9800' :
+                                               (rnc['Risco'] || '').toLowerCase().includes('menor') ? '#4CAF50' : '#9CA3AF'};
                                     color: white;">
-                                    ${rnc['Risco'] || 'Baixo'}
+                                    ${rnc['Risco'] || 'Não Informado'}
                                 </span>
                             </td>
                             <td style="padding: 8px; text-align: right;">R$ ${(parseFloat(rnc['Valor']) || 0).toFixed(2)}</td>
