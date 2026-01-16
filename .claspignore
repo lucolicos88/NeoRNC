@@ -7,6 +7,9 @@
 **/*.bat
 **/*.py
 **/*.js
+**/*.d.ts
+**/jsconfig.json
+**/tmpclaude-*
 !01.Config.js
 !02.Logger.js
 !03.Database.js

@@ -1889,6 +1889,16 @@ function getAllUsers() { return PermissionsManager.getAllUsers(); }
  */
 function updateUserSetor(email, novoSetor) { return PermissionsManager.updateUserSetor(email, novoSetor); }
 
+/**
+ * Atualiza os email(s) de notificações de um usuário
+ * Deploy 128: Permite configurar emails alternativos para receber notificações
+ * @param {string} email - Email do usuário (login)
+ * @param {string} emailNotificacoes - Email(s) alternativo(s) separados por ; ou ,
+ * @return {Object} Resultado da operação {success, message}
+ * @since Deploy 128
+ */
+function updateUserEmailNotificacoes(email, emailNotificacoes) { return PermissionsManager.updateUserEmailNotificacoes(email, emailNotificacoes); }
+
 // ===== CACHE MANAGEMENT (Deploy 74.5) =====
 /**
  * Limpa a aba de Logs da planilha

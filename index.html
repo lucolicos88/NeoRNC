@@ -11480,7 +11480,15 @@ document.getElementById('addNewUser').addEventListener('click', function() {
                         </label>
                     </div>
                 </div>
-                
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>📬 Email(s) para Notificações <span style="font-size: 12px; color: #999;">(opcional)</span></label>
+                    <input type="text" id="newUserEmailNotificacoes" class="form-control" placeholder="email@hotmail.com; outro@gmail.com">
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        Emails alternativos para receber notificações. Separe múltiplos emails com <strong>;</strong> ou <strong>,</strong>
+                    </small>
+                </div>
+
                 <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 30px;">
                     <button onclick="closeAddUserModal()" class="btn btn-secondary">Cancelar</button>
                     <button onclick="saveNewUser()" class="btn btn-primary">➕ Adicionar Usuário</button>
@@ -11663,16 +11671,58 @@ function formatDate(dateStr) {
     }
 }
         
+        // Deploy 129: Flag global para prevenir cliques duplos durante processamento
+        let isSystemProcessing = false;
+
         function showLoading(message = 'Carregando...') {
+            isSystemProcessing = true;
             const overlay = document.getElementById('loadingOverlay');
             const messageEl = document.getElementById('loadingMessage');
             messageEl.textContent = message;
             overlay.classList.remove('hidden');
+            // Deploy 129: Desabilitar todos os botões durante loading
+            disableAllButtons();
         }
-        
+
         function hideLoading() {
+            isSystemProcessing = false;
             const overlay = document.getElementById('loadingOverlay');
             overlay.classList.add('hidden');
+            // Deploy 129: Reabilitar todos os botões após loading
+            enableAllButtons();
+        }
+
+        // Deploy 129: Desabilita todos os botões da página durante processamento
+        function disableAllButtons() {
+            document.querySelectorAll('button, .btn, input[type="submit"]').forEach(btn => {
+                if (!btn.classList.contains('loading-exempt')) {
+                    btn.dataset.wasDisabled = btn.disabled;
+                    btn.disabled = true;
+                    btn.style.opacity = '0.6';
+                    btn.style.cursor = 'not-allowed';
+                }
+            });
+        }
+
+        // Deploy 129: Reabilita todos os botões da página após processamento
+        function enableAllButtons() {
+            document.querySelectorAll('button, .btn, input[type="submit"]').forEach(btn => {
+                if (!btn.classList.contains('loading-exempt')) {
+                    btn.disabled = btn.dataset.wasDisabled === 'true';
+                    btn.style.opacity = '';
+                    btn.style.cursor = '';
+                    delete btn.dataset.wasDisabled;
+                }
+            });
+        }
+
+        // Deploy 129: Verifica se o sistema está processando antes de executar uma ação
+        function checkProcessing() {
+            if (isSystemProcessing) {
+                debugLog('warning', '⚠️ Ação bloqueada - sistema processando');
+                return true;
+            }
+            return false;
         }
         
         // === SISTEMA DE ALERTAS MELHORADO (Deploy 30) ===
@@ -13121,6 +13171,9 @@ async function saveNewUser() {
             return;
         }
 
+        // Deploy 128: Coletar emails de notificações (opcional)
+        const emailNotificacoes = document.getElementById('newUserEmailNotificacoes').value.trim();
+
         showLoading('Adicionando usuário...');
 
         // Deploy 124: Adicionar cada role para CADA setor selecionado
@@ -13130,6 +13183,14 @@ async function saveNewUser() {
 
             if (!result.success && !result.message.includes('já possui')) {
                 throw new Error(result.message);
+            }
+        }
+
+        // Deploy 128: Salvar emails de notificações se fornecidos
+        if (emailNotificacoes) {
+            const emailResult = await apiCall('updateUserEmailNotificacoes', [email, emailNotificacoes]);
+            if (!emailResult.success) {
+                debugLog('warning', 'Aviso: Não foi possível salvar emails de notificações', { error: emailResult.message });
             }
         }
 
@@ -13235,7 +13296,15 @@ async function editUserRoles(email) {
                             </label>
                         </div>
                     </div>
-                    
+
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>📬 Email(s) para Notificações <span style="font-size: 12px; color: #999;">(opcional)</span></label>
+                        <input type="text" id="editUserEmailNotificacoes" class="form-control" value="${user.emailNotificacoes || ''}" placeholder="email@hotmail.com; outro@gmail.com">
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            Emails alternativos para receber notificações. Separe múltiplos emails com <strong>;</strong> ou <strong>,</strong>
+                        </small>
+                    </div>
+
                     <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 30px;">
                         <button onclick="closeEditUserRolesModal()" class="btn btn-secondary">Cancelar</button>
                         <button onclick="saveUserRolesFixed('${email}')" class="btn btn-primary">💾 Salvar Alterações</button>
@@ -13351,6 +13420,15 @@ async function saveUserRolesFixed(email) {
                 await apiCall('addUserRole', [email, newRoles[i], newSetores]);
                 debugLog('info', `➕ Role adicionada: ${newRoles[i]}`);
             }
+        }
+
+        // Deploy 128: Atualizar emails de notificações
+        const emailNotificacoes = document.getElementById('editUserEmailNotificacoes').value.trim();
+        const emailResult = await apiCall('updateUserEmailNotificacoes', [email, emailNotificacoes]);
+        if (!emailResult.success) {
+            debugLog('warning', 'Aviso: Não foi possível salvar emails de notificações', { error: emailResult.message });
+        } else {
+            debugLog('info', `📬 Emails de notificações atualizados: ${emailNotificacoes || '(vazio)'}`);
         }
 
         hideLoading();

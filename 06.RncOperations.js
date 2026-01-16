@@ -1204,42 +1204,10 @@ function prepareRncData(formData, rncNumber, user, isNew) {
       return validation;
     }
 
-    // Definir campos obrigatórios para cada status
-    var requiredFieldsByStatus = {
-      'Análise Qualidade': [
-        'Data da Análise',
-        'Risco',
-        'Tipo de Falha'
-      ],
-      'Análise do problema e Ação Corretiva': [
-        'Plano de ação',
-        'Responsável pela ação corretiva'
-      ],
-      'Finalizada': [
-        'Status da Ação Corretiva'
-      ]
-    };
-
-    // Validar campos obrigatórios para o novo status
-    var requiredFields = requiredFieldsByStatus[newStatus] || [];
-    var missingFields = [];
-
-    for (var i = 0; i < requiredFields.length; i++) {
-      var fieldName = requiredFields[i];
-      var value = rncData[fieldName];
-
-      if (!value || (typeof value === 'string' && value.trim() === '')) {
-        missingFields.push(fieldName);
-      }
-    }
-
-    if (missingFields.length > 0) {
-      validation.valid = false;
-      validation.errors.push(
-        'Campos obrigatórios não preenchidos para o status "' + newStatus + '": ' +
-        missingFields.join(', ')
-      );
-    }
+    // Deploy 130: REMOVIDO - Validação de campos obrigatórios por status
+    // A obrigatoriedade dos campos é controlada pela planilha ConfigCampos
+    // Não devemos ter validação hardcoded que ignora a configuração do usuário
+    // Campos obrigatórios são validados em checkPermissionToSave() baseado em ConfigCampos
 
     // Validações especiais
     if (newStatus === 'Finalizada') {

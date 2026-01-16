@@ -289,15 +289,27 @@ var PrintManager = (function() {
         fieldValue = '';
       }
       
-      // ✅ FORMATAR DATAS - Deploy 37
+      // ✅ FORMATAR DATAS - Deploy 37 / Deploy 130: Corrigido para não converter números
       if (fieldValue instanceof Date) {
         fieldValue = formatDateBR(fieldValue);
-      } 
-      else if (typeof fieldValue === 'string') {
-        // Tentar converter qualquer formato de data
+      }
+      else if (typeof fieldValue === 'string' && fieldType === 'date') {
+        // Deploy 130: Só converter strings se o campo for do tipo 'date'
         var converted = formatDateBR(fieldValue);
         if (converted && converted !== fieldValue) {
           fieldValue = converted;
+        }
+      }
+      else if (typeof fieldValue === 'string') {
+        // Deploy 130: Para outros tipos, só converter se claramente parece uma data
+        // (contém barras ou hífens no formato de data, não apenas números)
+        var looksLikeDate = /^\d{2}\/\d{2}\/\d{4}$/.test(fieldValue) || // DD/MM/YYYY
+                           /^\d{4}-\d{2}-\d{2}/.test(fieldValue);       // YYYY-MM-DD
+        if (looksLikeDate) {
+          var converted = formatDateBR(fieldValue);
+          if (converted && converted !== fieldValue) {
+            fieldValue = converted;
+          }
         }
       }
       

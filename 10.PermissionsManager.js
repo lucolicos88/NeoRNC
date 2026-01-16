@@ -663,12 +663,15 @@ var PermissionsManager = (function() {
         var email = perm['Email'];
         var role = perm['Role'];
         var setor = perm['Setor'] || '';
+        // Deploy 128: Incluir Email Notificações
+        var emailNotificacoes = perm['Email Notificações'] || perm['Email Notificacoes'] || '';
 
         if (!usersMap[email]) {
           usersMap[email] = {
             email: email,
             roles: [],
-            setor: setor  // Deploy 71: Incluir setor
+            setor: setor,  // Deploy 71: Incluir setor
+            emailNotificacoes: emailNotificacoes  // Deploy 128: Email(s) alternativo(s)
           };
         }
 
@@ -679,6 +682,11 @@ var PermissionsManager = (function() {
         // Deploy 71: Atualizar setor se ainda não estiver definido
         if (!usersMap[email].setor && setor) {
           usersMap[email].setor = setor;
+        }
+
+        // Deploy 128: Atualizar emailNotificacoes se ainda não estiver definido
+        if (!usersMap[email].emailNotificacoes && emailNotificacoes) {
+          usersMap[email].emailNotificacoes = emailNotificacoes;
         }
       });
 
@@ -698,6 +706,92 @@ var PermissionsManager = (function() {
   }
 
   /**
+   * Atualiza o campo Email Notificações de um usuário.
+   * Deploy 128: Permite configurar emails alternativos para receber notificações.
+   * Suporta múltiplos emails separados por ; ou ,
+   *
+   * @param {string} email - Email do usuário (login)
+   * @param {string} emailNotificacoes - Email(s) alternativo(s) para notificações
+   * @return {Object} { success: boolean, message: string }
+   *
+   * @example
+   * var result = updateUserEmailNotificacoes('user@empresa.com', 'user@hotmail.com;user@gmail.com');
+   *
+   * @memberof PermissionsManager
+   * @since Deploy 128
+   */
+  function updateUserEmailNotificacoes(email, emailNotificacoes) {
+    try {
+      Logger.logInfo('updateUserEmailNotificacoes_START', { email: email, emailNotificacoes: emailNotificacoes });
+
+      if (!email) {
+        return {
+          success: false,
+          message: 'Email é obrigatório'
+        };
+      }
+
+      // Buscar todas as permissões ativas do usuário
+      var permissions = Database.findData(CONFIG.SHEETS.PERMISSOES, {
+        'Email': email,
+        'Ativo': 'Sim'
+      });
+
+      if (permissions.length === 0) {
+        return {
+          success: false,
+          message: 'Nenhuma permissão encontrada para o usuário'
+        };
+      }
+
+      // Limpar e normalizar os emails alternativos
+      var emailsLimpos = '';
+      if (emailNotificacoes && emailNotificacoes.trim() !== '') {
+        // Normalizar separadores e limpar espaços
+        var emailsArray = emailNotificacoes.split(/[;,]/).map(function(e) { return e.trim(); }).filter(function(e) { return e !== ''; });
+        emailsLimpos = emailsArray.join(';');
+      }
+
+      // Atualizar Email Notificações em todas as permissões do usuário
+      var updateCount = 0;
+      for (var i = 0; i < permissions.length; i++) {
+        var result = Database.updateData(
+          CONFIG.SHEETS.PERMISSOES,
+          {
+            'Email': email,
+            'Role': permissions[i]['Role'],
+            'Ativo': 'Sim'
+          },
+          {
+            'Email Notificações': emailsLimpos
+          }
+        );
+        if (result.success) {
+          updateCount++;
+        }
+      }
+
+      Logger.logInfo('updateUserEmailNotificacoes_SUCCESS', {
+        email: email,
+        emailNotificacoes: emailsLimpos,
+        updatedCount: updateCount
+      });
+
+      return {
+        success: true,
+        message: 'Email(s) de notificações atualizado(s) em ' + updateCount + ' permissão(ões)'
+      };
+
+    } catch (error) {
+      Logger.logError('updateUserEmailNotificacoes_ERROR', error, { email: email });
+      return {
+        success: false,
+        message: 'Erro ao atualizar email de notificações: ' + error.toString()
+      };
+    }
+  }
+
+  /**
    * API Pública do PermissionsManager
    * Expõe métodos para gerenciamento de permissões, roles e setores de usuários.
    *
@@ -713,6 +807,7 @@ var PermissionsManager = (function() {
     addUserRole: addUserRole,
     removeUserRole: removeUserRole,
     updateUserSetor: updateUserSetor, // Deploy 67
+    updateUserEmailNotificacoes: updateUserEmailNotificacoes, // Deploy 128
     getAllUsers: getAllUsers,
     isAdmin: isAdmin
   };

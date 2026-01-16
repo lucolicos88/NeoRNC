@@ -418,15 +418,28 @@ var Database = (function() {
           for (var updateField in updates) {
             if (updates.hasOwnProperty(updateField)) {
               var updateColIdx = columnIndex[updateField];
-              if (updateColIdx !== undefined) {
-                var newValue = updates[updateField];
-                
-                // Atualizar na planilha
-                sheet.getRange(row + 1, updateColIdx + 1).setValue(newValue);
-                
-                // Atualizar no array local para consistência
-                data[row][updateColIdx] = newValue;
+
+              // Deploy 129: Criar coluna se não existir
+              if (updateColIdx === undefined) {
+                var newColIndex = headers.length;
+                sheet.getRange(1, newColIndex + 1).setValue(updateField);
+                headers.push(updateField);
+                columnIndex[updateField] = newColIndex;
+                updateColIdx = newColIndex;
+                Logger.logInfo('updateData_COLUMN_CREATED', {
+                  sheet: sheetName,
+                  column: updateField,
+                  index: newColIndex
+                });
               }
+
+              var newValue = updates[updateField];
+
+              // Atualizar na planilha
+              sheet.getRange(row + 1, updateColIdx + 1).setValue(newValue);
+
+              // Atualizar no array local para consistência
+              data[row][updateColIdx] = newValue;
             }
           }
           updatedCount++;
