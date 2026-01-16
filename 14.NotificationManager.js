@@ -877,6 +877,111 @@ var NotificationManager = (function() {
     }
   }
 
+  /**
+   * Notifica o setor Financeiro sobre RNC com custo de cortesia.
+   * Deploy 127: Envia email quando "Gerou custo de cortesia?" = "Sim"
+   * Notifica usuários do setor Financeiro com detalhes da RNC e valor da cortesia.
+   *
+   * @param {string} rncNumber - Número da RNC com cortesia
+   * @param {Object} rncData - Dados da RNC contendo informações de cortesia
+   * @return {Object} Objeto com resultado do envio {success, successCount, failCount, sentTo}
+   *
+   * @example
+   * var result = notifyFinanceiroCortesia('RNC-2024-001', {
+   *   'Gerou custo de cortesia?': 'Sim',
+   *   'Valor': '150.00',
+   *   'Req de Cortesia': 'REQ-001'
+   * });
+   *
+   * @since Deploy 127
+   */
+  function notifyFinanceiroCortesia(rncNumber, rncData) {
+    try {
+      Logger.logInfo('notifyFinanceiroCortesia_START', { rncNumber: rncNumber });
+
+      // Verificar se realmente tem cortesia
+      var gerouCortesia = rncData['Gerou custo de cortesia?'] || '';
+      if (gerouCortesia.toLowerCase() !== 'sim') {
+        Logger.logDebug('notifyFinanceiroCortesia_NOT_CORTESIA', { rncNumber: rncNumber });
+        return { success: false, message: 'RNC não possui cortesia' };
+      }
+
+      // Obter usuários do setor Financeiro
+      var recipients = getUsersBySetor('Financeiro');
+
+      // Incluir admins também
+      var admins = getAdminUsers();
+      admins.forEach(function(admin) {
+        if (recipients.indexOf(admin) === -1) {
+          recipients.push(admin);
+        }
+      });
+
+      if (recipients.length === 0) {
+        Logger.logWarning('notifyFinanceiroCortesia_NO_USERS', { rncNumber: rncNumber });
+        return { success: false, message: 'Nenhum usuário no setor Financeiro' };
+      }
+
+      // Obter dados da cortesia
+      var valorCortesia = rncData['Valor'] || rncData['Valor da Cortesia'] || '0.00';
+      var reqCortesia = rncData['Req de Cortesia'] || 'Não informado';
+      var cliente = rncData['Nome do Cliente'] || 'Não informado';
+      var setorAbertura = rncData['Setor onde foi feita abertura'] || 'Não informado';
+
+      // Montar email HTML profissional
+      var subject = '[RNC] ⚠️ Cortesia Gerada - ' + rncNumber;
+      var link = getRncLink(rncNumber);
+
+      var content = `
+        <p style="font-size: 16px; color: #555;">Uma RNC gerou <strong style="color: #F44336;">custo de cortesia</strong> e requer atenção do setor Financeiro.</p>
+
+        <div class="info-box alert-warning">
+          <h3>💰 Dados da Cortesia</h3>
+          <div class="info-row"><span class="info-label">Número RNC:</span> <span class="info-value" style="font-size: 18px; font-weight: bold; color: #009688;">${rncNumber}</span></div>
+          <div class="info-row"><span class="info-label">Valor da Cortesia:</span> <span class="info-value" style="font-size: 20px; font-weight: bold; color: #F44336;">R$ ${valorCortesia}</span></div>
+          <div class="info-row"><span class="info-label">Requisição de Cortesia:</span> <span class="info-value">${reqCortesia}</span></div>
+        </div>
+
+        <div class="info-box">
+          <h3>📋 Dados da RNC</h3>
+          <div class="info-row"><span class="info-label">Cliente:</span> <span class="info-value">${cliente}</span></div>
+          <div class="info-row"><span class="info-label">Setor de Abertura:</span> <span class="info-value">${setorAbertura}</span></div>
+          <div class="info-row"><span class="info-label">Tipo RNC:</span> <span class="info-value">${rncData['Tipo da RNC'] || rncData['Tipo RNC'] || 'Não informado'}</span></div>
+          <div class="info-row"><span class="info-label">Status:</span> <span class="info-value">${rncData['Status Geral'] || 'Não informado'}</span></div>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${link}" class="btn">🔍 Visualizar RNC no Sistema</a>
+        </div>
+
+        <p style="font-size: 13px; color: #999; text-align: center; margin-top: 20px;">
+          Esta notificação foi enviada automaticamente porque o campo "Gerou custo de cortesia?" foi marcado como "Sim".
+        </p>
+      `;
+
+      var htmlBody = createEmailTemplate('💰 RNC com Cortesia', content);
+
+      // Enviar email
+      var result = sendEmail(recipients, subject, htmlBody, rncNumber);
+
+      Logger.logInfo('notifyFinanceiroCortesia_SUCCESS', {
+        rncNumber: rncNumber,
+        valorCortesia: valorCortesia,
+        recipientsCount: recipients.length,
+        emailsSent: result.successCount
+      });
+
+      return result;
+
+    } catch (error) {
+      Logger.logError('notifyFinanceiroCortesia_ERROR', error, { rncNumber: rncNumber });
+      return {
+        success: false,
+        error: error.toString()
+      };
+    }
+  }
+
   // API Pública
   return {
     getUsersBySetor: getUsersBySetor,
@@ -885,6 +990,7 @@ var NotificationManager = (function() {
     notifyRncCreated: notifyRncCreated,
     notifyRncUpdated: notifyRncUpdated,
     notifyStatusChanged: notifyStatusChanged,
+    notifyFinanceiroCortesia: notifyFinanceiroCortesia,
     manualNotify: manualNotify
   };
 })();

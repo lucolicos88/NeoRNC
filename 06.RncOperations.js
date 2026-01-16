@@ -538,6 +538,31 @@ function updateRnc(rncNumber, formData, files) {
                     });
                 }
             }
+
+            // Deploy 127: Notificar Financeiro quando "Gerou custo de cortesia?" = "Sim"
+            var gerouCortesia = updates['Gerou custo de cortesia?'] || formData['Gerou custo de cortesia?'];
+            var cortesiaAnterior = currentRnc['Gerou custo de cortesia?'] || '';
+
+            // Só notificar se o campo foi alterado para "Sim" (evita reenvio)
+            if (gerouCortesia &&
+                gerouCortesia.toLowerCase() === 'sim' &&
+                cortesiaAnterior.toLowerCase() !== 'sim') {
+
+                // Merge dos dados para ter informações completas
+                var rncCompleta = Object.assign({}, currentRnc, updates);
+
+                var notifCortesiaResult = NotificationManager.notifyFinanceiroCortesia(
+                    rncNumber,
+                    rncCompleta
+                );
+                if (notifCortesiaResult.success) {
+                    Logger.logInfo('updateRnc_CORTESIA_NOTIFICATION_SENT', {
+                        rncNumber: rncNumber,
+                        valorCortesia: rncCompleta['Valor'] || '0.00',
+                        emailsSent: notifCortesiaResult.successCount
+                    });
+                }
+            }
         } catch (notifError) {
             Logger.logError('updateRnc_NOTIFICATION_ERROR', notifError, {
                 rncNumber: rncNumber
@@ -1160,8 +1185,9 @@ function prepareRncData(formData, rncNumber, user, isNew) {
     });
 
     // Definir transições válidas
+    // Deploy 127: Adicionado transição direta Abertura → Análise Ação (quando todos campos qualidade preenchidos)
     var validTransitions = {
-      'Abertura RNC': ['Análise Qualidade', 'Finalizada'],
+      'Abertura RNC': ['Análise Qualidade', 'Análise do problema e Ação Corretiva', 'Finalizada'],
       'Análise Qualidade': ['Análise do problema e Ação Corretiva', 'Finalizada'],
       'Análise do problema e Ação Corretiva': ['Finalizada'],
       'Finalizada': [] // Não pode sair de Finalizada
@@ -1336,7 +1362,7 @@ function determineNewStatus(currentRnc, updates) {
                 }
             }
 
-            // === REGRA 3: CAMPOS DE QUALIDADE = ANÁLISE QUALIDADE ===
+            // === REGRA 3: CAMPOS DE QUALIDADE ===
             if (!liderancaFilled) {
               var camposQualidade = [
                   'Setor onde ocorreu a não conformidade',
@@ -1347,21 +1373,39 @@ function determineNewStatus(currentRnc, updates) {
                   'Ação Corretiva Imediata'
               ];
 
+              // Deploy 127: Verificar se TODOS os campos de qualidade estão preenchidos
+              var todosCamposQualidadePreenchidos = true;
+              var algumCampoQualidadePreenchido = false;
+
               for (var j = 0; j < camposQualidade.length; j++) {
                   var campoQ = camposQualidade[j];
-                  var valorQ = updates[campoQ];
+                  // Verificar valor nos updates OU nos dados atuais da RNC
+                  var valorQ = updates[campoQ] || currentRnc[campoQ];
 
                   if (valorQ && String(valorQ).trim() !== '') {
-                      Logger.logInfo('determineNewStatus_QUALIDADE_FILLED', {
-                          campo: campoQ,
-                          currentStatus: currentStatus
-                      });
-
-                      if (currentStatus === CONFIG.STATUS_PIPELINE.ABERTURA) {
-                          proposedStatus = CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE;
-                          break;
-                      }
+                      algumCampoQualidadePreenchido = true;
+                  } else {
+                      todosCamposQualidadePreenchidos = false;
                   }
+              }
+
+              // Deploy 127: NOVA REGRA - Se TODOS os campos de qualidade preenchidos → Análise do problema e Ação Corretiva
+              if (todosCamposQualidadePreenchidos &&
+                  (currentStatus === CONFIG.STATUS_PIPELINE.ABERTURA ||
+                   currentStatus === CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE)) {
+                  Logger.logInfo('determineNewStatus_ALL_QUALIDADE_FILLED', {
+                      currentStatus: currentStatus,
+                      changing: currentStatus + ' -> Análise do problema e Ação Corretiva'
+                  });
+                  proposedStatus = CONFIG.STATUS_PIPELINE.ANALISE_ACAO;
+              }
+              // Regra existente: Se qualquer campo preenchido e está em Abertura → Análise Qualidade
+              else if (algumCampoQualidadePreenchido && currentStatus === CONFIG.STATUS_PIPELINE.ABERTURA) {
+                  Logger.logInfo('determineNewStatus_QUALIDADE_FILLED', {
+                      currentStatus: currentStatus,
+                      changing: currentStatus + ' -> Análise Qualidade'
+                  });
+                  proposedStatus = CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE;
               }
             }
           }
