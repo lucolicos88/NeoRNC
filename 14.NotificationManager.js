@@ -66,9 +66,14 @@ var NotificationManager = (function() {
             if (emails.indexOf(email) === -1) {
               emails.push(email);
             }
-            // Deploy 127.3: Adicionar email de notificações se existir e for diferente
-            if (emailNotificacoes && emailNotificacoes.trim() !== '' && emails.indexOf(emailNotificacoes) === -1) {
-              emails.push(emailNotificacoes.trim());
+            // Deploy 127.4: Suporte a MÚLTIPLOS emails alternativos (separados por ; ou ,)
+            if (emailNotificacoes && emailNotificacoes.trim() !== '') {
+              var emailsAlternativos = emailNotificacoes.split(/[;,]/).map(function(e) { return e.trim(); }).filter(function(e) { return e !== ''; });
+              emailsAlternativos.forEach(function(emailAlt) {
+                if (emailAlt && emails.indexOf(emailAlt) === -1) {
+                  emails.push(emailAlt);
+                }
+              });
             }
           }
         }
@@ -121,9 +126,14 @@ var NotificationManager = (function() {
         if (email && emails.indexOf(email) === -1) {
           emails.push(email);
         }
-        // Deploy 127.3: Adicionar email de notificações se existir e for diferente
-        if (emailNotificacoes && emailNotificacoes.trim() !== '' && emails.indexOf(emailNotificacoes) === -1) {
-          emails.push(emailNotificacoes.trim());
+        // Deploy 127.4: Suporte a MÚLTIPLOS emails alternativos (separados por ; ou ,)
+        if (emailNotificacoes && emailNotificacoes.trim() !== '') {
+          var emailsAlternativos = emailNotificacoes.split(/[;,]/).map(function(e) { return e.trim(); }).filter(function(e) { return e !== ''; });
+          emailsAlternativos.forEach(function(emailAlt) {
+            if (emailAlt && emails.indexOf(emailAlt) === -1) {
+              emails.push(emailAlt);
+            }
+          });
         }
       }
 
