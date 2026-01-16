@@ -204,7 +204,7 @@ const FIELD_MAPPING = {
   'Tipo de Falha': 'Tipo de Falha',
   'Análise da Causa Raiz (relatório)': 'Análise da Causa Raiz (relatório)',
   'Ação Corretiva Imediata': 'Ação Corretiva Imediata',
-  'Gerou custo de cortesia?': 'Gerou custo de cortesia?',
+  'Gerou custo ?': 'Gerou custo ?',
   'Req de Cortesia': 'Req de Cortesia',
   'Valor': 'Valor',
 

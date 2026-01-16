@@ -794,7 +794,7 @@ function initializeSheets(ss) {
     'Descrição do Problema', 'Prioridade', 'Observações',
     'Setor onde ocorreu a não conformidade', 'Data da Análise', 'Risco',
     'Tipo de Falha', 'Análise da Causa Raiz (relatório)', 'Ação Corretiva Imediata',
-    'Gerou custo de cortesia?', 'Req de Cortesia', 'Valor',
+    'Gerou custo ?', 'Req de Cortesia', 'Valor',
     'Plano de ação', 'Status da Ação Corretiva', 'Data limite para execução',
     'Data da conclusão da Ação', 'Responsável pela ação corretiva',
     'Última Edição', 'Editado Por'
@@ -3638,4 +3638,205 @@ function setSystemBackupFolder(folderId) {
  */
 function getSystemBackupFolder() {
   return BackupManager.getBackupFolderId();
+}
+
+// ============================================
+// DEPLOY 131: FUNÇÕES TERMO DE DESCONTO
+// ============================================
+
+/**
+ * Obtém configuração de testemunhas para o Termo de Desconto
+ * Busca dados da planilha 'Termo' com as testemunhas configuradas
+ *
+ * @return {Object} { success: boolean, data: { testemunha1: {...}, testemunha2: {...} } }
+ *
+ * @example
+ * var config = getTermoConfig();
+ * // Returns: { success: true, data: { testemunha1: { nome: 'João', rg: '123', cpf: '456' }, testemunha2: {...} } }
+ *
+ * @since Deploy 131
+ */
+function getTermoConfig() {
+  try {
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    var sheet = ss.getSheetByName('Termo');
+
+    if (!sheet) {
+      // Criar planilha se não existir
+      sheet = ss.insertSheet('Termo');
+      sheet.getRange(1, 1, 1, 6).setValues([['Testemunha1_Nome', 'Testemunha1_RG', 'Testemunha1_CPF', 'Testemunha2_Nome', 'Testemunha2_RG', 'Testemunha2_CPF']]);
+      return { success: true, data: { testemunha1: { nome: '', rg: '', cpf: '' }, testemunha2: { nome: '', rg: '', cpf: '' } } };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) {
+      return { success: true, data: { testemunha1: { nome: '', rg: '', cpf: '' }, testemunha2: { nome: '', rg: '', cpf: '' } } };
+    }
+
+    var headers = data[0];
+    var values = data[1] || [];
+
+    var config = {
+      testemunha1: {
+        nome: values[headers.indexOf('Testemunha1_Nome')] || '',
+        rg: values[headers.indexOf('Testemunha1_RG')] || '',
+        cpf: values[headers.indexOf('Testemunha1_CPF')] || ''
+      },
+      testemunha2: {
+        nome: values[headers.indexOf('Testemunha2_Nome')] || '',
+        rg: values[headers.indexOf('Testemunha2_RG')] || '',
+        cpf: values[headers.indexOf('Testemunha2_CPF')] || ''
+      }
+    };
+
+    return { success: true, data: config };
+
+  } catch (error) {
+    Logger.logError('getTermoConfig_ERROR', { error: error.toString() });
+    return { success: false, error: error.toString() };
+  }
+}
+
+/**
+ * Salva configuração de testemunhas para o Termo de Desconto
+ *
+ * @param {Object} config - Configuração com testemunhas
+ * @param {Object} config.testemunha1 - Dados da testemunha 1 (nome, rg, cpf)
+ * @param {Object} config.testemunha2 - Dados da testemunha 2 (nome, rg, cpf)
+ * @return {Object} { success: boolean, message: string }
+ *
+ * @example
+ * var result = saveTermoConfig({
+ *   testemunha1: { nome: 'João Silva', rg: '123456789', cpf: '111.222.333-44' },
+ *   testemunha2: { nome: 'Maria Santos', rg: '987654321', cpf: '555.666.777-88' }
+ * });
+ *
+ * @since Deploy 131
+ */
+function saveTermoConfig(config) {
+  try {
+    if (!config) {
+      return { success: false, error: 'Configuração não informada' };
+    }
+
+    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    var sheet = ss.getSheetByName('Termo');
+
+    if (!sheet) {
+      sheet = ss.insertSheet('Termo');
+    }
+
+    // Definir headers
+    var headers = ['Testemunha1_Nome', 'Testemunha1_RG', 'Testemunha1_CPF', 'Testemunha2_Nome', 'Testemunha2_RG', 'Testemunha2_CPF'];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+
+    // Definir valores
+    var t1 = config.testemunha1 || {};
+    var t2 = config.testemunha2 || {};
+    var values = [t1.nome || '', t1.rg || '', t1.cpf || '', t2.nome || '', t2.rg || '', t2.cpf || ''];
+
+    sheet.getRange(2, 1, 1, values.length).setValues([values]);
+
+    Logger.logInfo('saveTermoConfig_SUCCESS', { config: config });
+    return { success: true, message: 'Configuração do Termo salva com sucesso!' };
+
+  } catch (error) {
+    Logger.logError('saveTermoConfig_ERROR', { error: error.toString() });
+    return { success: false, error: error.toString() };
+  }
+}
+
+/**
+ * Gera o Termo de Ciência de Desconto para uma RNC
+ *
+ * @param {string} rncNumber - Número da RNC
+ * @param {string} mes - Mês para desconto
+ * @param {string} ano - Ano para desconto
+ * @return {Object} { success: boolean, data: { termo: string } }
+ *
+ * @example
+ * var result = gerarTermoDesconto('RNC-0001/2026', 'Janeiro', '2026');
+ * // Returns: { success: true, data: { termo: 'TERMO DE CIÊNCIA...' } }
+ *
+ * @since Deploy 131
+ */
+function gerarTermoDesconto(rncNumber, mes, ano) {
+  try {
+    if (!rncNumber) {
+      return { success: false, error: 'Número da RNC não informado' };
+    }
+
+    // Buscar dados da RNC
+    var rncResult = getRncByNumber(rncNumber);
+    if (!rncResult.success) {
+      return { success: false, error: 'RNC não encontrada: ' + rncNumber };
+    }
+    var rnc = rncResult.data;
+
+    // Buscar configuração de testemunhas
+    var termoConfig = getTermoConfig();
+    var testemunhas = termoConfig.success ? termoConfig.data : { testemunha1: {}, testemunha2: {} };
+
+    // Extrair dados da RNC
+    var justificativa = rnc['Justificativa'] || rnc['Justificativa do Colaborador'] || '';
+    var valor = rnc['Valor'] || rnc['Valor do Prejuízo'] || rnc['Valor Total'] || '0';
+    var requisicao = rnc['Requisição'] || rnc['Número da Requisição'] || '';
+    var colaborador = rnc['Responsável pela abertura da RNC'] || rnc['Colaborador'] || '';
+
+    // Formatar valor se necessário
+    if (typeof valor === 'number') {
+      valor = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    } else if (valor && !valor.toString().includes('R$')) {
+      valor = 'R$ ' + valor;
+    }
+
+    // Gerar texto do termo
+    var termoTexto = `
+TERMO DE CIÊNCIA DE DESCONTO
+
+Eu, ${colaborador}, declaro para os devidos fins que estou ciente do desconto a ser efetuado no meu salário referente ao mês de ${mes || '[MÊS]'} de ${ano || '[ANO]'}, no valor de ${valor}, referente ao ${justificativa || '[JUSTIFICATIVA]'}, conforme requisição ${requisicao || '[REQUISIÇÃO]'} da RNC n° ${rncNumber}.
+
+Declaro ainda que estou ciente de que o desconto será efetuado de acordo com o previsto na CLT, não ultrapassando o limite legal.
+
+
+___________________________________________
+Assinatura do Colaborador
+
+
+___________________________________________
+Testemunha 1: ${testemunhas.testemunha1.nome || '[NOME]'}
+RG: ${testemunhas.testemunha1.rg || '[RG]'}
+CPF: ${testemunhas.testemunha1.cpf || '[CPF]'}
+
+
+___________________________________________
+Testemunha 2: ${testemunhas.testemunha2.nome || '[NOME]'}
+RG: ${testemunhas.testemunha2.rg || '[RG]'}
+CPF: ${testemunhas.testemunha2.cpf || '[CPF]'}
+
+
+Data: _____/_____/_________
+
+Local: _______________________________
+`.trim();
+
+    Logger.logInfo('gerarTermoDesconto_SUCCESS', { rncNumber: rncNumber, mes: mes, ano: ano });
+
+    return {
+      success: true,
+      data: {
+        termo: termoTexto,
+        rnc: rncNumber,
+        colaborador: colaborador,
+        valor: valor,
+        mes: mes,
+        ano: ano,
+        testemunhas: testemunhas
+      }
+    };
+
+  } catch (error) {
+    Logger.logError('gerarTermoDesconto_ERROR', { rncNumber: rncNumber, error: error.toString() });
+    return { success: false, error: error.toString() };
+  }
 }

@@ -539,9 +539,9 @@ function updateRnc(rncNumber, formData, files) {
                 }
             }
 
-            // Deploy 127: Notificar Financeiro quando "Gerou custo de cortesia?" = "Sim"
-            var gerouCortesia = updates['Gerou custo de cortesia?'] || formData['Gerou custo de cortesia?'];
-            var cortesiaAnterior = currentRnc['Gerou custo de cortesia?'] || '';
+            // Deploy 127: Notificar Financeiro quando "Gerou custo ?" = "Sim"
+            var gerouCortesia = updates['Gerou custo ?'] || formData['Gerou custo ?'];
+            var cortesiaAnterior = currentRnc['Gerou custo ?'] || '';
 
             // Só notificar se o campo foi alterado para "Sim" (evita reenvio)
             if (gerouCortesia &&

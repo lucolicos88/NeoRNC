@@ -909,7 +909,7 @@ var NotificationManager = (function() {
 
   /**
    * Notifica o setor Financeiro sobre RNC com custo de cortesia.
-   * Deploy 127: Envia email quando "Gerou custo de cortesia?" = "Sim"
+   * Deploy 127: Envia email quando "Gerou custo ?" = "Sim"
    * Notifica usuários do setor Financeiro com detalhes da RNC e valor da cortesia.
    *
    * @param {string} rncNumber - Número da RNC com cortesia
@@ -918,7 +918,7 @@ var NotificationManager = (function() {
    *
    * @example
    * var result = notifyFinanceiroCortesia('RNC-2024-001', {
-   *   'Gerou custo de cortesia?': 'Sim',
+   *   'Gerou custo ?': 'Sim',
    *   'Valor': '150.00',
    *   'Req de Cortesia': 'REQ-001'
    * });
@@ -930,7 +930,7 @@ var NotificationManager = (function() {
       Logger.logInfo('notifyFinanceiroCortesia_START', { rncNumber: rncNumber });
 
       // Verificar se realmente tem cortesia
-      var gerouCortesia = rncData['Gerou custo de cortesia?'] || '';
+      var gerouCortesia = rncData['Gerou custo ?'] || '';
       if (gerouCortesia.toLowerCase() !== 'sim') {
         Logger.logDebug('notifyFinanceiroCortesia_NOT_CORTESIA', { rncNumber: rncNumber });
         return { success: false, message: 'RNC não possui cortesia' };
@@ -985,7 +985,7 @@ var NotificationManager = (function() {
         </div>
 
         <p style="font-size: 13px; color: #999; text-align: center; margin-top: 20px;">
-          Esta notificação foi enviada automaticamente porque o campo "Gerou custo de cortesia?" foi marcado como "Sim".
+          Esta notificação foi enviada automaticamente porque o campo "Gerou custo ?" foi marcado como "Sim".
         </p>
       `;
 

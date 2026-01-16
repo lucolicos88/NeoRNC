@@ -2500,6 +2500,10 @@ textarea.form-control,
                     <span>👥</span>
                     <span>Usuários</span>
                 </button>
+                <button class="config-tab" data-config-tab="termo">
+                    <span>📝</span>
+                    <span>Termo</span>
+                </button>
             </div>
             
             <!-- ABA SISTEMA -->
@@ -2789,6 +2793,78 @@ textarea.form-control,
                         <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #999;">
                             Carregando usuários...
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA TERMO DE DESCONTO - Deploy 131 -->
+            <div class="config-tab-content" id="config-tab-termo">
+                <div class="config-section">
+                    <div class="config-header">
+                        <div class="config-title">
+                            <span>📝</span>
+                            <span>Configurações do Termo de Desconto</span>
+                        </div>
+                    </div>
+
+                    <div style="padding: 20px; background: #f9f9f9; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+                            Configure aqui as testemunhas padrão que aparecerão no Termo de Ciência de Desconto.
+                            Esses dados serão usados ao gerar o termo a partir de uma RNC.
+                        </p>
+                    </div>
+
+                    <!-- Testemunha 1 -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 20px;">
+                        <h4 style="color: #009688; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <span>👤</span> Testemunha 1
+                        </h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label>Nome</label>
+                                <select id="termoTestemunha1" class="form-control">
+                                    <option value="">Selecione um colaborador...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>RG</label>
+                                <input type="text" id="termoRG1" class="form-control" placeholder="00.000.000-0">
+                            </div>
+                            <div class="form-group">
+                                <label>CPF</label>
+                                <input type="text" id="termoCPF1" class="form-control" placeholder="000.000.000-00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Testemunha 2 -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 20px;">
+                        <h4 style="color: #009688; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <span>👤</span> Testemunha 2
+                        </h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label>Nome</label>
+                                <select id="termoTestemunha2" class="form-control">
+                                    <option value="">Selecione um colaborador...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>RG</label>
+                                <input type="text" id="termoRG2" class="form-control" placeholder="00.000.000-0">
+                            </div>
+                            <div class="form-group">
+                                <label>CPF</label>
+                                <input type="text" id="termoCPF2" class="form-control" placeholder="000.000.000-00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botão Salvar -->
+                    <div style="text-align: right;">
+                        <button class="btn btn-primary" onclick="salvarConfigTermo()">
+                            💾 Salvar Configurações do Termo
+                        </button>
                     </div>
                 </div>
             </div>
@@ -6013,6 +6089,7 @@ async function loadRncForEdit(rncNumber) {
         // ✅ ADICIONAR BOTÕES AQUI
         addPrintButtonToEditForm(rncNumber);
         addHistoricoButtonToEditForm(rncNumber); // ✅ Deploy 34: Botão de histórico
+        addTermoButtonToEditForm(rncNumber); // ✅ Deploy 131: Botão Termo de Desconto
 
         document.getElementById('editForm').classList.remove('hidden');
         hideLoading();
@@ -6119,6 +6196,50 @@ function addHistoricoButtonToEditForm(rncNumber) {
     debugLog('info', '✅ Botão de histórico adicionado', {
         rncNumber,
         buttonId: historicoButton.id
+    });
+}
+
+// ✅ Deploy 131: Adicionar botão de Termo de Desconto no formulário de edição
+function addTermoButtonToEditForm(rncNumber) {
+    const editForm = document.getElementById('editForm');
+
+    if (!editForm) return;
+
+    // Remover botões de termo existentes
+    const existingButtons = editForm.querySelectorAll('.btn-termo-rnc');
+    existingButtons.forEach(btn => btn.remove());
+
+    let buttonContainer = editForm.querySelector('.form-actions, .modal-footer, .edit-actions');
+
+    if (!buttonContainer) {
+        const saveButton = editForm.querySelector('button[onclick*="saveEdit"], button[onclick*="save"]');
+        if (saveButton && saveButton.parentElement) {
+            buttonContainer = saveButton.parentElement;
+        }
+    }
+
+    if (!buttonContainer) {
+        buttonContainer = document.createElement('div');
+        buttonContainer.style.cssText = 'display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end;';
+        editForm.appendChild(buttonContainer);
+    }
+
+    const termoButton = document.createElement('button');
+    termoButton.type = 'button';
+    termoButton.className = 'btn btn-secondary btn-termo-rnc';
+    termoButton.id = 'termoRncBtn_' + rncNumber.replace('/', '_');
+    termoButton.onclick = function() { abrirModalTermo(rncNumber); };
+    termoButton.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+    termoButton.innerHTML = `
+        <span>📄</span>
+        <span>Termo de Desconto</span>
+    `;
+
+    buttonContainer.appendChild(termoButton);
+
+    debugLog('info', '✅ Botão de Termo de Desconto adicionado', {
+        rncNumber,
+        buttonId: termoButton.id
     });
 }
 
@@ -10537,7 +10658,203 @@ function clearFilters() {
                 await showErrorModal('Erro ao Salvar Configurações', error.message);
             }
         }
-        
+
+        // === CONFIGURAÇÕES DO TERMO DE DESCONTO - Deploy 131 ===
+
+        /**
+         * Carrega as configurações do Termo de Desconto
+         */
+        async function loadTermoConfig() {
+            try {
+                debugLog('info', '📝 Carregando configurações do Termo');
+
+                // Carregar colaboradores para os dropdowns
+                if (appContext && appContext.lists && appContext.lists.Colaboradores) {
+                    const colaboradores = appContext.lists.Colaboradores;
+                    const select1 = document.getElementById('termoTestemunha1');
+                    const select2 = document.getElementById('termoTestemunha2');
+
+                    if (select1 && select2) {
+                        let options = '<option value="">Selecione um colaborador...</option>';
+                        colaboradores.forEach(colab => {
+                            options += `<option value="${colab}">${colab}</option>`;
+                        });
+
+                        select1.innerHTML = options;
+                        select2.innerHTML = options;
+                    }
+                }
+
+                // Carregar valores salvos
+                const config = await apiCall('getTermoConfig');
+                if (config) {
+                    if (config.testemunha1) document.getElementById('termoTestemunha1').value = config.testemunha1;
+                    if (config.rg1) document.getElementById('termoRG1').value = config.rg1;
+                    if (config.cpf1) document.getElementById('termoCPF1').value = config.cpf1;
+                    if (config.testemunha2) document.getElementById('termoTestemunha2').value = config.testemunha2;
+                    if (config.rg2) document.getElementById('termoRG2').value = config.rg2;
+                    if (config.cpf2) document.getElementById('termoCPF2').value = config.cpf2;
+                }
+
+                debugLog('success', '✅ Configurações do Termo carregadas');
+
+            } catch (error) {
+                debugLog('error', '❌ Erro ao carregar configurações do Termo', { error: error.message });
+            }
+        }
+
+        /**
+         * Salva as configurações do Termo de Desconto
+         */
+        async function salvarConfigTermo() {
+            try {
+                showLoading('Salvando configurações do Termo...');
+
+                const config = {
+                    testemunha1: document.getElementById('termoTestemunha1').value,
+                    rg1: document.getElementById('termoRG1').value,
+                    cpf1: document.getElementById('termoCPF1').value,
+                    testemunha2: document.getElementById('termoTestemunha2').value,
+                    rg2: document.getElementById('termoRG2').value,
+                    cpf2: document.getElementById('termoCPF2').value
+                };
+
+                const result = await apiCall('saveTermoConfig', [config]);
+
+                hideLoading();
+
+                if (result.success) {
+                    await showConfigSuccessModal(
+                        'Configurações do Termo Salvas',
+                        `<strong>Testemunha 1:</strong> ${config.testemunha1 || 'Não definida'}<br>
+                         <strong>Testemunha 2:</strong> ${config.testemunha2 || 'Não definida'}`
+                    );
+                } else {
+                    throw new Error(result.message || 'Erro desconhecido');
+                }
+
+            } catch (error) {
+                debugLog('error', '❌ Erro ao salvar configurações do Termo', { error: error.message });
+                hideLoading();
+                await showErrorModal('Erro ao Salvar Configurações', error.message);
+            }
+        }
+
+        /**
+         * Abre modal para gerar o Termo de Desconto
+         */
+        async function abrirModalTermo(rncNumber) {
+            try {
+                debugLog('info', '📝 Abrindo modal do Termo de Desconto', { rncNumber });
+
+                // Carregar configurações do termo
+                const termoConfig = await apiCall('getTermoConfig');
+
+                // Gerar lista de meses
+                const meses = [
+                    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                ];
+                const anoAtual = new Date().getFullYear();
+                const mesAtual = new Date().getMonth();
+
+                let mesesOptions = '';
+                meses.forEach((mes, idx) => {
+                    const selected = idx === mesAtual ? 'selected' : '';
+                    mesesOptions += `<option value="${mes}" ${selected}>${mes}</option>`;
+                });
+
+                const modalHtml = `
+                    <div id="modalTermo" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+                        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                            <h3 style="margin-bottom: 1.5rem; color: #009688; display: flex; align-items: center; gap: 10px;">
+                                <span>📝</span> Gerar Termo de Desconto
+                            </h3>
+
+                            <p style="color: #666; margin-bottom: 20px;">
+                                Informe o mês/ano em que o desconto será realizado no holerite do colaborador.
+                            </p>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                                <div class="form-group">
+                                    <label>Mês</label>
+                                    <select id="termoMes" class="form-control">
+                                        ${mesesOptions}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Ano</label>
+                                    <input type="number" id="termoAno" class="form-control" value="${anoAtual}" min="2020" max="2030">
+                                </div>
+                            </div>
+
+                            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <h4 style="color: #666; margin-bottom: 10px; font-size: 14px;">Testemunhas Configuradas:</h4>
+                                <p style="margin: 5px 0; font-size: 13px;"><strong>1:</strong> ${termoConfig.testemunha1 || '<span style="color:red">Não configurada</span>'}</p>
+                                <p style="margin: 5px 0; font-size: 13px;"><strong>2:</strong> ${termoConfig.testemunha2 || '<span style="color:red">Não configurada</span>'}</p>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                                <button onclick="fecharModalTermo()" class="btn btn-secondary">Cancelar</button>
+                                <button onclick="gerarTermoDesconto('${rncNumber}')" class="btn btn-primary">📄 Gerar Termo</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            } catch (error) {
+                debugLog('error', '❌ Erro ao abrir modal do Termo', { error: error.message });
+                await showErrorModal('Erro', 'Não foi possível abrir o modal do Termo: ' + error.message);
+            }
+        }
+
+        function fecharModalTermo() {
+            const modal = document.getElementById('modalTermo');
+            if (modal) modal.remove();
+        }
+
+        /**
+         * Gera o Termo de Desconto e preenche a aba Termo
+         */
+        async function gerarTermoDesconto(rncNumber) {
+            try {
+                const mes = document.getElementById('termoMes').value;
+                const ano = document.getElementById('termoAno').value;
+
+                if (!mes || !ano) {
+                    await showErrorModal('Campos Obrigatórios', 'Informe o mês e ano para gerar o termo.');
+                    return;
+                }
+
+                fecharModalTermo();
+                showLoading('Gerando Termo de Desconto...');
+
+                const result = await apiCall('gerarTermoDesconto', [rncNumber, mes, ano]);
+
+                hideLoading();
+
+                if (result.success) {
+                    await showConfigSuccessModal(
+                        'Termo Gerado com Sucesso',
+                        `O Termo de Ciência de Desconto foi preenchido na aba <strong>Termo</strong> da planilha.<br><br>
+                         <strong>RNC:</strong> ${rncNumber}<br>
+                         <strong>Mês/Ano:</strong> ${mes}/${ano}`
+                    );
+                } else {
+                    throw new Error(result.message || 'Erro ao gerar termo');
+                }
+
+            } catch (error) {
+                debugLog('error', '❌ Erro ao gerar Termo de Desconto', { error: error.message });
+                hideLoading();
+                await showErrorModal('Erro ao Gerar Termo', error.message);
+            }
+        }
+
+        // === FIM CONFIGURAÇÕES DO TERMO ===
+
         async function loadLists() {
             try {
                 const lists = await apiCall('getLists');
