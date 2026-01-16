@@ -4325,6 +4325,11 @@ function forceRefreshActiveTab() {
                         if (activeContent) {
                             activeContent.classList.add('active');
                             console.log('✅ Config-tab ativada:', targetTab);
+
+                            // Deploy 132: Carregar dados específicos de cada aba
+                            if (targetTab === 'termo') {
+                                loadTermoConfig();
+                            }
                         } else {
                             console.error('❌ Config-tab não encontrada:', targetTab);
                         }
@@ -10668,26 +10673,39 @@ function clearFilters() {
             try {
                 debugLog('info', '📝 Carregando configurações do Termo');
 
-                // Carregar colaboradores para os dropdowns
+                // Deploy 132: Buscar lista de colaboradores da API se não estiver no appContext
+                let colaboradores = [];
                 if (appContext && appContext.lists && appContext.lists.Colaboradores) {
-                    const colaboradores = appContext.lists.Colaboradores;
-                    const select1 = document.getElementById('termoTestemunha1');
-                    const select2 = document.getElementById('termoTestemunha2');
-
-                    if (select1 && select2) {
-                        let options = '<option value="">Selecione um colaborador...</option>';
-                        colaboradores.forEach(colab => {
-                            options += `<option value="${colab}">${colab}</option>`;
-                        });
-
-                        select1.innerHTML = options;
-                        select2.innerHTML = options;
+                    colaboradores = appContext.lists.Colaboradores;
+                } else {
+                    // Buscar listas da API
+                    const lists = await apiCall('getLists');
+                    if (lists && lists.Colaboradores) {
+                        colaboradores = lists.Colaboradores;
+                        // Atualizar appContext para uso futuro
+                        if (!appContext.lists) appContext.lists = {};
+                        appContext.lists.Colaboradores = colaboradores;
                     }
+                }
+
+                // Preencher dropdowns
+                const select1 = document.getElementById('termoTestemunha1');
+                const select2 = document.getElementById('termoTestemunha2');
+
+                if (select1 && select2 && colaboradores.length > 0) {
+                    let options = '<option value="">Selecione um colaborador...</option>';
+                    colaboradores.forEach(colab => {
+                        options += `<option value="${colab}">${colab}</option>`;
+                    });
+
+                    select1.innerHTML = options;
+                    select2.innerHTML = options;
+                    debugLog('info', `📋 ${colaboradores.length} colaboradores carregados nos dropdowns`);
                 }
 
                 // Carregar valores salvos
                 const config = await apiCall('getTermoConfig');
-                if (config) {
+                if (config && !config.error) {
                     if (config.testemunha1) document.getElementById('termoTestemunha1').value = config.testemunha1;
                     if (config.rg1) document.getElementById('termoRG1').value = config.rg1;
                     if (config.cpf1) document.getElementById('termoCPF1').value = config.cpf1;

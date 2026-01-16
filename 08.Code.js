@@ -3661,35 +3661,35 @@ function getTermoConfig() {
     var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     var sheet = ss.getSheetByName('Termo');
 
+    // Deploy 132: Usar estrutura flat para compatibilidade com frontend
+    var emptyConfig = { testemunha1: '', rg1: '', cpf1: '', testemunha2: '', rg2: '', cpf2: '' };
+
     if (!sheet) {
       // Criar planilha se não existir
       sheet = ss.insertSheet('Termo');
-      sheet.getRange(1, 1, 1, 6).setValues([['Testemunha1_Nome', 'Testemunha1_RG', 'Testemunha1_CPF', 'Testemunha2_Nome', 'Testemunha2_RG', 'Testemunha2_CPF']]);
-      return { success: true, data: { testemunha1: { nome: '', rg: '', cpf: '' }, testemunha2: { nome: '', rg: '', cpf: '' } } };
+      sheet.getRange(1, 1, 1, 6).setValues([['Testemunha1', 'RG1', 'CPF1', 'Testemunha2', 'RG2', 'CPF2']]);
+      return emptyConfig;
     }
 
     var data = sheet.getDataRange().getValues();
     if (data.length < 2) {
-      return { success: true, data: { testemunha1: { nome: '', rg: '', cpf: '' }, testemunha2: { nome: '', rg: '', cpf: '' } } };
+      return emptyConfig;
     }
 
     var headers = data[0];
     var values = data[1] || [];
 
+    // Deploy 132: Estrutura flat
     var config = {
-      testemunha1: {
-        nome: values[headers.indexOf('Testemunha1_Nome')] || '',
-        rg: values[headers.indexOf('Testemunha1_RG')] || '',
-        cpf: values[headers.indexOf('Testemunha1_CPF')] || ''
-      },
-      testemunha2: {
-        nome: values[headers.indexOf('Testemunha2_Nome')] || '',
-        rg: values[headers.indexOf('Testemunha2_RG')] || '',
-        cpf: values[headers.indexOf('Testemunha2_CPF')] || ''
-      }
+      testemunha1: values[headers.indexOf('Testemunha1')] || '',
+      rg1: values[headers.indexOf('RG1')] || '',
+      cpf1: values[headers.indexOf('CPF1')] || '',
+      testemunha2: values[headers.indexOf('Testemunha2')] || '',
+      rg2: values[headers.indexOf('RG2')] || '',
+      cpf2: values[headers.indexOf('CPF2')] || ''
     };
 
-    return { success: true, data: config };
+    return config;
 
   } catch (error) {
     Logger.logError('getTermoConfig_ERROR', { error: error.toString() });
@@ -3726,14 +3726,19 @@ function saveTermoConfig(config) {
       sheet = ss.insertSheet('Termo');
     }
 
-    // Definir headers
-    var headers = ['Testemunha1_Nome', 'Testemunha1_RG', 'Testemunha1_CPF', 'Testemunha2_Nome', 'Testemunha2_RG', 'Testemunha2_CPF'];
+    // Deploy 132: Headers flat
+    var headers = ['Testemunha1', 'RG1', 'CPF1', 'Testemunha2', 'RG2', 'CPF2'];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 
-    // Definir valores
-    var t1 = config.testemunha1 || {};
-    var t2 = config.testemunha2 || {};
-    var values = [t1.nome || '', t1.rg || '', t1.cpf || '', t2.nome || '', t2.rg || '', t2.cpf || ''];
+    // Deploy 132: Valores flat
+    var values = [
+      config.testemunha1 || '',
+      config.rg1 || '',
+      config.cpf1 || '',
+      config.testemunha2 || '',
+      config.rg2 || '',
+      config.cpf2 || ''
+    ];
 
     sheet.getRange(2, 1, 1, values.length).setValues([values]);
 
@@ -3773,9 +3778,12 @@ function gerarTermoDesconto(rncNumber, mes, ano) {
     }
     var rnc = rncResult.data;
 
-    // Buscar configuração de testemunhas
+    // Deploy 132: Buscar configuração de testemunhas (estrutura flat)
     var termoConfig = getTermoConfig();
-    var testemunhas = termoConfig.success ? termoConfig.data : { testemunha1: {}, testemunha2: {} };
+    // Se retornou erro, usar valores vazios
+    if (termoConfig.error) {
+      termoConfig = { testemunha1: '', rg1: '', cpf1: '', testemunha2: '', rg2: '', cpf2: '' };
+    }
 
     // Extrair dados da RNC
     var justificativa = rnc['Justificativa'] || rnc['Justificativa do Colaborador'] || '';
@@ -3790,7 +3798,7 @@ function gerarTermoDesconto(rncNumber, mes, ano) {
       valor = 'R$ ' + valor;
     }
 
-    // Gerar texto do termo
+    // Deploy 132: Gerar texto do termo com estrutura flat
     var termoTexto = `
 TERMO DE CIÊNCIA DE DESCONTO
 
@@ -3804,15 +3812,15 @@ Assinatura do Colaborador
 
 
 ___________________________________________
-Testemunha 1: ${testemunhas.testemunha1.nome || '[NOME]'}
-RG: ${testemunhas.testemunha1.rg || '[RG]'}
-CPF: ${testemunhas.testemunha1.cpf || '[CPF]'}
+Testemunha 1: ${termoConfig.testemunha1 || '[NOME]'}
+RG: ${termoConfig.rg1 || '[RG]'}
+CPF: ${termoConfig.cpf1 || '[CPF]'}
 
 
 ___________________________________________
-Testemunha 2: ${testemunhas.testemunha2.nome || '[NOME]'}
-RG: ${testemunhas.testemunha2.rg || '[RG]'}
-CPF: ${testemunhas.testemunha2.cpf || '[CPF]'}
+Testemunha 2: ${termoConfig.testemunha2 || '[NOME]'}
+RG: ${termoConfig.rg2 || '[RG]'}
+CPF: ${termoConfig.cpf2 || '[CPF]'}
 
 
 Data: _____/_____/_________
@@ -3830,8 +3838,7 @@ Local: _______________________________
         colaborador: colaborador,
         valor: valor,
         mes: mes,
-        ano: ano,
-        testemunhas: testemunhas
+        ano: ano
       }
     };
 
