@@ -24,13 +24,14 @@ var NotificationManager = (function() {
    * Busca na planilha de permissões todos os usuários ativos do setor informado
    * e retorna uma lista única de emails sem duplicatas.
    * Deploy 124: Suporta múltiplos setores por usuário (campo "Setor" pode conter "Setor1;Setor2")
+   * Deploy 127.3: Suporta campo "Email Notificações" para enviar para email alternativo
    *
    * @param {string} setor - Nome do setor para buscar usuários
-   * @return {Array<string>} Lista de emails de usuários ativos do setor
+   * @return {Array<string>} Lista de emails de usuários ativos do setor (inclui emails alternativos)
    *
    * @example
    * var usuarios = getUsersBySetor('Qualidade');
-   * // Returns: ['user1@neoformula.com.br', 'user2@neoformula.com.br']
+   * // Returns: ['user1@neoformula.com.br', 'user1@hotmail.com', 'user2@neoformula.com.br']
    *
    * @since Deploy 120
    */
@@ -52,14 +53,23 @@ var NotificationManager = (function() {
       for (var i = 0; i < permissions.length; i++) {
         var setorField = permissions[i]['Setor'] || '';
         var email = permissions[i]['Email'];
+        // Deploy 127.3: Suporte a email alternativo para notificações
+        var emailNotificacoes = permissions[i]['Email Notificações'] || permissions[i]['Email Notificacoes'] || '';
 
         if (email && setorField) {
           // Deploy 124: Split por vírgula ou ponto-e-vírgula
           var setoresArray = setorField.split(/[;,]/).map(function(s) { return s.trim(); }).filter(function(s) { return s !== ''; });
 
           // Verificar se o setor buscado está na lista de setores do usuário
-          if (setoresArray.indexOf(setor) !== -1 && emails.indexOf(email) === -1) {
-            emails.push(email);
+          if (setoresArray.indexOf(setor) !== -1) {
+            // Adicionar email principal
+            if (emails.indexOf(email) === -1) {
+              emails.push(email);
+            }
+            // Deploy 127.3: Adicionar email de notificações se existir e for diferente
+            if (emailNotificacoes && emailNotificacoes.trim() !== '' && emails.indexOf(emailNotificacoes) === -1) {
+              emails.push(emailNotificacoes.trim());
+            }
           }
         }
       }
@@ -81,12 +91,14 @@ var NotificationManager = (function() {
    * Obtém lista completa de todos os administradores do sistema.
    * Busca na planilha de permissões todos os usuários com Role 'Admin' que estejam ativos
    * e retorna uma lista única de emails sem duplicatas.
+   * Deploy 126: Suporta múltiplos roles (ex: "Liderança;Admin")
+   * Deploy 127.3: Suporta campo "Email Notificações" para enviar para email alternativo
    *
-   * @return {Array<string>} Lista de emails dos administradores ativos
+   * @return {Array<string>} Lista de emails dos administradores ativos (inclui emails alternativos)
    *
    * @example
    * var admins = getAdminUsers();
-   * // Returns: ['admin1@neoformula.com.br', 'admin2@neoformula.com.br']
+   * // Returns: ['admin1@neoformula.com.br', 'admin1@hotmail.com', 'admin2@neoformula.com.br']
    *
    * @since Deploy 120
    */
@@ -102,8 +114,16 @@ var NotificationManager = (function() {
 
       for (var i = 0; i < admins.length; i++) {
         var email = admins[i]['Email'];
+        // Deploy 127.3: Suporte a email alternativo para notificações
+        var emailNotificacoes = admins[i]['Email Notificações'] || admins[i]['Email Notificacoes'] || '';
+
+        // Adicionar email principal
         if (email && emails.indexOf(email) === -1) {
           emails.push(email);
+        }
+        // Deploy 127.3: Adicionar email de notificações se existir e for diferente
+        if (emailNotificacoes && emailNotificacoes.trim() !== '' && emails.indexOf(emailNotificacoes) === -1) {
+          emails.push(emailNotificacoes.trim());
         }
       }
 
