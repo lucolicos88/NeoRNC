@@ -6719,12 +6719,14 @@ async function confirmDeleteAttachment(rncNumber, fileId, fileName) {
                 const formData = new FormData(form);
                 const data = {};
                 
-                // Filtrar campos de arquivo
+                // Deploy 127.1: Filtrar campos de arquivo (corrigido fileInputEdit)
                 for (let [key, value] of formData.entries()) {
-                    if (key !== 'Anexo de Documentos' && 
-                        key !== 'fileInput' && 
+                    if (key !== 'Anexo de Documentos' &&
+                        key !== 'fileInput' &&
+                        key !== 'fileInputEdit' &&
                         key !== 'fileUpload' &&
-                        !key.toLowerCase().includes('anexo')) {
+                        !key.toLowerCase().includes('anexo') &&
+                        !key.toLowerCase().includes('file')) {
                         data[key] = value;
                     }
                 }
