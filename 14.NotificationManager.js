@@ -92,8 +92,9 @@ var NotificationManager = (function() {
    */
   function getAdminUsers() {
     try {
+      // Deploy 126: Usar operador 'contains' para suportar múltiplos roles (ex: "Liderança;Admin")
       var admins = Database.findData(CONFIG.SHEETS.PERMISSOES, {
-        'Role': 'Admin',
+        'Role': { operator: 'contains', value: 'Admin' },
         'Ativo': 'Sim'
       });
 

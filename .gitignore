@@ -4,3 +4,6 @@ archives/*
 
 # Credenciais OAuth (clasp)
 oauth-client.json
+
+# Arquivos temporários do Claude Code
+tmpclaude-*
