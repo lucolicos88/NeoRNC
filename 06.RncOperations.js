@@ -1185,9 +1185,9 @@ function prepareRncData(formData, rncNumber, user, isNew) {
     });
 
     // Definir transições válidas
-    // Deploy 127.1: Fluxo obrigatório Abertura → Qualidade → Ação (sem pular etapas)
+    // Deploy 127.2: Permite Abertura → Ação quando TODOS campos qualidade preenchidos
     var validTransitions = {
-      'Abertura RNC': ['Análise Qualidade', 'Finalizada'],
+      'Abertura RNC': ['Análise Qualidade', 'Análise do problema e Ação Corretiva', 'Finalizada'],
       'Análise Qualidade': ['Análise do problema e Ação Corretiva', 'Finalizada'],
       'Análise do problema e Ação Corretiva': ['Finalizada'],
       'Finalizada': [] // Não pode sair de Finalizada
@@ -1389,22 +1389,26 @@ function determineNewStatus(currentRnc, updates) {
                   }
               }
 
-              // Deploy 127.1: REGRAS CORRIGIDAS - Fluxo obrigatório: Abertura → Qualidade → Ação
-              // REGRA 1: Qualquer campo preenchido + está em Abertura → vai para Análise Qualidade
-              if (algumCampoQualidadePreenchido && currentStatus === CONFIG.STATUS_PIPELINE.ABERTURA) {
-                  Logger.logInfo('determineNewStatus_QUALIDADE_FILLED', {
-                      currentStatus: currentStatus,
-                      changing: currentStatus + ' -> Análise Qualidade'
-                  });
-                  proposedStatus = CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE;
-              }
-              // REGRA 2: TODOS campos preenchidos + já está em Análise Qualidade → vai para Análise Ação
-              else if (todosCamposQualidadePreenchidos && currentStatus === CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE) {
+              // Deploy 127.2: REGRAS ATUALIZADAS - TODOS preenchidos vai direto para Ação
+              // REGRA 1 (PRIORIDADE): TODOS campos preenchidos → vai direto para Análise Ação
+              // Funciona tanto de Abertura quanto de Análise Qualidade
+              if (todosCamposQualidadePreenchidos &&
+                  (currentStatus === CONFIG.STATUS_PIPELINE.ABERTURA ||
+                   currentStatus === CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE)) {
                   Logger.logInfo('determineNewStatus_ALL_QUALIDADE_FILLED', {
                       currentStatus: currentStatus,
                       changing: currentStatus + ' -> Análise do problema e Ação Corretiva'
                   });
                   proposedStatus = CONFIG.STATUS_PIPELINE.ANALISE_ACAO;
+              }
+              // REGRA 2: Apenas ALGUNS campos preenchidos + está em Abertura → vai para Análise Qualidade
+              else if (algumCampoQualidadePreenchido && !todosCamposQualidadePreenchidos &&
+                       currentStatus === CONFIG.STATUS_PIPELINE.ABERTURA) {
+                  Logger.logInfo('determineNewStatus_QUALIDADE_FILLED', {
+                      currentStatus: currentStatus,
+                      changing: currentStatus + ' -> Análise Qualidade'
+                  });
+                  proposedStatus = CONFIG.STATUS_PIPELINE.ANALISE_QUALIDADE;
               }
             }
           }
